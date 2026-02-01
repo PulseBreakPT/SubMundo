@@ -4902,7 +4902,7 @@ async def get_player_badges(current_user: dict = Depends(get_current_user)):
         "max_heat_reached": player.get("max_heat_reached", 0),
         "high_heat_duration": player.get("high_heat_duration", 0),
         "npcs_met": len(npc_relationships),
-        "good_relationships": len([r for r in npc_relationships if r.get("level", 0) >= 50]),
+        "good_relationships": len([r for r in npc_relationships if isinstance(r.get("level"), (int, float)) and r.get("level", 0) >= 50]),
         "reputation": player.get("reputation", 0),
         "gang_created": 1 if player.get("gang_id") and await db.gangs.find_one({"leader_id": current_user["id"]}) else 0,
         "gang_members": 0,
