@@ -4750,8 +4750,8 @@ async def get_detailed_stats(current_user: dict = Depends(get_current_user)):
     # Estatísticas sociais
     reputation = player.get("reputation", 0)
     npcs_met = len(npc_relationships)
-    good_relationships = len([r for r in npc_relationships if r.get("level", 0) >= 50])
-    excellent_relationships = len([r for r in npc_relationships if r.get("level", 0) >= 80])
+    good_relationships = len([r for r in npc_relationships if isinstance(r.get("level"), (int, float)) and r.get("level", 0) >= 50])
+    excellent_relationships = len([r for r in npc_relationships if isinstance(r.get("level"), (int, float)) and r.get("level", 0) >= 80])
     
     # Gang stats
     gang = None
