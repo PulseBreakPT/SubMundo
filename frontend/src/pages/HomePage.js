@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
 import { useCountdown, useMissionTimer } from '../hooks/useCountdown';
@@ -7,15 +8,19 @@ import { Button, Badge } from '../components/UI';
 import { 
   DollarSign, Flame, Star, Zap, Gift, Target, 
   Skull, Wallet, Clock, ChevronRight, Shield,
-  TrendingUp, Users
+  TrendingUp, Users, Car, Radio, Swords
 } from 'lucide-react';
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { 
     gameState, 
     activeMission, 
     myGang,
+    gangWars,
+    activeVehicle,
+    cityEvents,
     actionLoading,
     performQuickAction, 
     claimDailyReward,
@@ -72,6 +77,28 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Active Events Banner */}
+      {cityEvents.length > 0 && (
+        <div 
+          className="bg-primary/10 border border-primary p-4 cursor-pointer hover:bg-primary/20 transition-colors"
+          onClick={() => navigate('/eventos')}
+          data-testid="events-banner"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Radio size={24} className="text-primary animate-pulse" />
+              <div>
+                <p className="text-primary font-ui uppercase text-sm">Eventos Ativos</p>
+                <p className="text-text-primary">
+                  {cityEvents.map(e => e.name).join(' • ')}
+                </p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-primary" />
+          </div>
+        </div>
+      )}
+
       {/* Main Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
@@ -125,6 +152,55 @@ export default function HomePage() {
           />
         </div>
       </Card>
+
+      {/* Active Vehicle */}
+      {activeVehicle && (
+        <Card 
+          title="Veículo Ativo" 
+          icon={Car}
+          onClick={() => navigate('/veiculos')}
+          className="cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-surface-highlight border border-border flex items-center justify-center">
+                <Car size={24} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-text-primary font-body">{activeVehicle.name}</p>
+                <div className="flex gap-3 text-xs text-text-secondary mt-1">
+                  <span>Vel: {activeVehicle.speed}</span>
+                  <span>Furt: {activeVehicle.stealth}</span>
+                  <span>Cond: {activeVehicle.condition}%</span>
+                </div>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-text-secondary" />
+          </div>
+        </Card>
+      )}
+
+      {/* Active Gang Wars */}
+      {gangWars.length > 0 && (
+        <Card 
+          title="Guerras Ativas" 
+          icon={Swords}
+          onClick={() => navigate('/gangue')}
+          className="cursor-pointer border-warning"
+        >
+          <div className="space-y-2">
+            {gangWars.slice(0, 2).map(war => (
+              <div key={war.id} className="flex items-center justify-between p-2 bg-surface-highlight border border-border">
+                <div>
+                  <p className="text-text-primary text-sm">{war.neighborhood_name}</p>
+                  <p className="text-text-secondary text-xs">{war.attacker_gang_name} vs {war.defender_gang_name}</p>
+                </div>
+                <Badge variant="warning">EM GUERRA</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Active Mission */}
       {activeMission && (
@@ -265,12 +341,14 @@ export default function HomePage() {
             <Badge variant="gold">[{myGang.tag}]</Badge>
           ) : null
         }
+        onClick={() => navigate('/gangue')}
+        className="cursor-pointer"
       >
         {myGang ? (
           <div className="flex items-center justify-between">
             <div>
               <p className="text-text-secondary text-sm">
-                {myGang.members_count} membros • {myGang.territories?.length || 0} territórios
+                {myGang.members_count || 1} membros • {myGang.territories?.length || 0} territórios
               </p>
               <p className="text-gold text-lg font-body mt-1">
                 Cofre: €{myGang.treasury?.toFixed(0) || 0}
