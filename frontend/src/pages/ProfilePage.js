@@ -31,7 +31,7 @@ const iconMap = {
   'lock': Lock, 'flame': Flame, 'fire': Flame, 'users': Users, 'link': Link,
   'star': Star, 'flag': Flag, 'map': Map, 'medal': Medal, 'sunrise': Sunrise,
   'moon': Moon, 'calendar': Calendar, 'heart': Heart, 'award': Award,
-  'archive': Archive, 'car': Car, 'tool': Tool, 'zap': Zap,
+  'archive': Archive, 'car': Car, 'tool': Settings, 'zap': Zap,
   'dollar-sign': DollarSign, 'trending-up': TrendingUp, 'refresh-cw': RefreshCw
 };
 
