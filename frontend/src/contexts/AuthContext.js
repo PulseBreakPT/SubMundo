@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   
   const tokenRef = useRef(token);
+  const hasInitialized = useRef(false);
   tokenRef.current = token;
 
   const api = useCallback(() => {
@@ -32,11 +33,20 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const currentToken = tokenRef.current;
+      const storedToken = localStorage.getItem('submundo_token');
+      const currentToken = storedToken || tokenRef.current;
+      
       if (!currentToken) {
         setLoading(false);
         return;
       }
+      
+      // Sync token state if needed
+      if (storedToken && storedToken !== token) {
+        setToken(storedToken);
+        tokenRef.current = storedToken;
+      }
+      
       try {
         const response = await axios.get(`${API}/auth/me`, {
           headers: { Authorization: `Bearer ${currentToken}` }
@@ -53,7 +63,12 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    fetchUser();
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      fetchUser();
+    } else if (token) {
+      fetchUser();
+    }
   }, [token]);
 
   const login = async (email, password) => {
