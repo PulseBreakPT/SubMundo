@@ -184,6 +184,16 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/contactos"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ContactsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/novidades"
         element={
           <PublicLayout>
