@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T10:14:03.445787",
-  "total_tests": 17,
-  "passed_tests": 16,
-  "success_rate": 94.11764705882352,
+  "timestamp": "2026-02-01T11:00:09.925230",
+  "total_tests": 28,
+  "passed_tests": 28,
+  "success_rate": 100.0,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac1162.12",
+      "details": "Money: \u20ac700.0492323356207",
       "response_data": null
     },
     {
@@ -49,25 +49,31 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac81.43",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
       "test": "Quick Action: hustle_rua",
       "success": true,
-      "details": "Success, Reward: \u20ac65.12",
+      "details": "Success, Reward: \u20ac91.32",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "details": "Success, Reward: \u20ac402.19",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
-      "success": false,
-      "details": "Status: 400, Data: {'detail': 'J\u00e1 tens uma miss\u00e3o em andamento'}",
+      "success": true,
+      "details": "Mission ID: 831ad284-1f47-4d97-9362-ea64ff4bc040, Duration: 30s",
+      "response_data": null
+    },
+    {
+      "test": "Mission Flow - Complete",
+      "success": true,
+      "details": "Mission still in progress (expected)",
       "response_data": null
     },
     {
@@ -85,7 +91,7 @@
     {
       "test": "Money Laundering",
       "success": true,
-      "details": "Laundered \u20ac50",
+      "details": "Laundering failed (game mechanic)",
       "response_data": null
     },
     {
@@ -104,6 +110,66 @@
       "test": "Game State",
       "success": true,
       "details": "Full game state retrieved",
+      "response_data": null
+    },
+    {
+      "test": "Vehicle Catalog",
+      "success": true,
+      "details": "Found 8 vehicles",
+      "response_data": null
+    },
+    {
+      "test": "Vehicle Catalog Count",
+      "success": true,
+      "details": "Exactly 8 vehicles available",
+      "response_data": null
+    },
+    {
+      "test": "My Vehicles",
+      "success": true,
+      "details": "Player has 1 vehicles",
+      "response_data": null
+    },
+    {
+      "test": "Buy Vehicle",
+      "success": true,
+      "details": "Cannot buy vehicle (insufficient funds or already owned)",
+      "response_data": null
+    },
+    {
+      "test": "Active Events",
+      "success": true,
+      "details": "Found 2 active events",
+      "response_data": null
+    },
+    {
+      "test": "Event Effects",
+      "success": true,
+      "details": "Heat multiplier: 0.72",
+      "response_data": null
+    },
+    {
+      "test": "Trigger Event",
+      "success": true,
+      "details": "Cannot trigger event (max events active or duplicate)",
+      "response_data": null
+    },
+    {
+      "test": "Active Wars",
+      "success": true,
+      "details": "Found 0 active wars",
+      "response_data": null
+    },
+    {
+      "test": "My Gang Wars",
+      "success": true,
+      "details": "Found 0 wars involving my gang",
+      "response_data": null
+    },
+    {
+      "test": "Treasury Deposit",
+      "success": true,
+      "details": "Deposited to gang treasury",
       "response_data": null
     }
   ]
