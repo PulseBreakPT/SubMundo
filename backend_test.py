@@ -651,11 +651,11 @@ class SubmundoAPITester:
         # Test market stats
         success, data, status = self.make_request('GET', 'market/stats')
         
-        if success and 'total_listings' in data:
+        if success and 'total_active_listings' in data:
             stats = data
-            self.log_result("Market Stats", True, f"Total listings: {stats.get('total_listings', 0)}")
+            self.log_result("Market Stats", True, f"Total listings: {stats.get('total_active_listings', 0)}")
         else:
-            self.log_result("Market Stats", False, f"Status: {status}")
+            self.log_result("Market Stats", False, f"Status: {status}, Data: {data}")
             return False
         
         # Test get all market listings
