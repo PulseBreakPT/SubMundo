@@ -185,33 +185,33 @@ const AppRoutes = () => {
       <Route
         path="/novidades"
         element={
-          <Layout>
+          <PublicLayout>
             <NewsPage />
-          </Layout>
+          </PublicLayout>
         }
       />
       <Route
         path="/faq"
         element={
-          <Layout>
+          <PublicLayout>
             <FAQPage />
-          </Layout>
+          </PublicLayout>
         }
       />
       <Route
         path="/privacidade"
         element={
-          <Layout>
+          <PublicLayout>
             <PrivacyPage />
-          </Layout>
+          </PublicLayout>
         }
       />
       <Route
         path="/termos"
         element={
-          <Layout>
+          <PublicLayout>
             <TermsPage />
-          </Layout>
+          </PublicLayout>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
