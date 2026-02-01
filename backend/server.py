@@ -2960,6 +2960,253 @@ async def get_market_stats(current_user: dict = Depends(get_current_user)):
         "market_fee": f"{MARKET_FEE * 100}%"
     }
 
+# ============= NEWS & ANNOUNCEMENTS =============
+
+NEWS_DATA = [
+    {
+        "id": "news_001",
+        "title": "Sistema de Propriedades Lançado!",
+        "summary": "Agora podes comprar apartamentos, casas, armazéns e muito mais!",
+        "content": "O novo sistema de propriedades chegou ao SUBMUNDO! Compra propriedades em diferentes bairros da cidade e gera rendimento passivo. Cada tipo de propriedade tem características únicas e está disponível em bairros específicos. Mantém as tuas propriedades em boas condições para maximizar os lucros!",
+        "category": "feature",
+        "icon": "building",
+        "date": "2026-02-01",
+        "is_new": True,
+        "version": "1.2.0"
+    },
+    {
+        "id": "news_002",
+        "title": "Negócios Ilegais Disponíveis",
+        "summary": "Compra estabelecimentos e fabrica produtos para vender.",
+        "content": "Expande o teu império criminal com os novos negócios! Laboratórios, oficinas clandestinas, falsificadores e muito mais. Cada negócio permite fabricar produtos únicos que podes usar ou vender no Mercado Negro. As tuas skills afetam o tempo de produção!",
+        "category": "feature",
+        "icon": "factory",
+        "date": "2026-02-01",
+        "is_new": True,
+        "version": "1.2.0"
+    },
+    {
+        "id": "news_003",
+        "title": "Mercado Negro Aberto",
+        "summary": "Compra e vende com outros jogadores no mercado central.",
+        "content": "O Mercado Negro está oficialmente aberto! Vende os teus produtos fabricados e itens do inventário a outros jogadores. Taxa de apenas 5% por transação. Acompanha as estatísticas do mercado e descobre os itens mais procurados!",
+        "category": "feature",
+        "icon": "store",
+        "date": "2026-02-01",
+        "is_new": True,
+        "version": "1.2.0"
+    },
+    {
+        "id": "news_004",
+        "title": "Guerras de Gangues Melhoradas",
+        "summary": "Sistema de guerras por territórios completamente renovado.",
+        "content": "As guerras de gangues foram aprimoradas! Agora com sistema de poder baseado em membros e reputação, custos estratégicos e recompensas maiores. Conquista territórios para a tua gangue e domina a cidade!",
+        "category": "update",
+        "icon": "swords",
+        "date": "2026-01-28",
+        "is_new": False,
+        "version": "1.1.0"
+    },
+    {
+        "id": "news_005",
+        "title": "Eventos da Cidade",
+        "summary": "Eventos aleatórios que afetam toda a cidade.",
+        "content": "Fica atento aos eventos da cidade! Festivais, apagões, operações policiais e muito mais podem afetar os teus planos. Alguns eventos são oportunidades de ouro, outros requerem cautela extra.",
+        "category": "update",
+        "icon": "radio",
+        "date": "2026-01-25",
+        "is_new": False,
+        "version": "1.1.0"
+    },
+    {
+        "id": "news_006",
+        "title": "Sistema de Veículos",
+        "summary": "12 veículos disponíveis para compra e personalização.",
+        "content": "Desde bicicletas silenciosas até supercars exóticos. Cada veículo oferece bónus únicos de velocidade, furtividade e capacidade de carga. Mantém os teus veículos em boas condições para máxima performance!",
+        "category": "feature",
+        "icon": "car",
+        "date": "2026-01-20",
+        "is_new": False,
+        "version": "1.0.0"
+    },
+    {
+        "id": "news_007",
+        "title": "Bem-vindo ao SUBMUNDO",
+        "summary": "O jogo de crime text-based inspirado em GTA Online.",
+        "content": "SUBMUNDO é um jogo de crime totalmente text-based onde as tuas decisões têm consequências reais. Completa missões, junta-te a gangues, controla territórios e constrói o teu império criminoso. Cada escolha molda o teu destino nas ruas da cidade.",
+        "category": "announcement",
+        "icon": "megaphone",
+        "date": "2026-01-15",
+        "is_new": False,
+        "version": "1.0.0"
+    },
+]
+
+FAQ_DATA = [
+    {
+        "id": "faq_001",
+        "category": "geral",
+        "question": "O que é o SUBMUNDO?",
+        "answer": "SUBMUNDO é um jogo de crime text-based inspirado em GTA Online. Assumes o papel de um criminoso a tentar subir na hierarquia do submundo. Completa missões, gere negócios ilegais, junta-te a gangues e compete com outros jogadores pela dominância da cidade."
+    },
+    {
+        "id": "faq_002",
+        "category": "geral",
+        "question": "O jogo é gratuito?",
+        "answer": "Sim, SUBMUNDO é totalmente gratuito. Não há compras dentro do jogo nem vantagens pagas. Todos os jogadores têm as mesmas oportunidades de sucesso."
+    },
+    {
+        "id": "faq_003",
+        "category": "economia",
+        "question": "Qual a diferença entre dinheiro limpo e sujo?",
+        "answer": "Dinheiro sujo é obtido através de atividades criminosas e não pode ser usado para compras legais. Precisas de o lavar através do sistema de lavagem de dinheiro para o converter em dinheiro limpo, mas há uma taxa e risco de ser apanhado."
+    },
+    {
+        "id": "faq_004",
+        "category": "economia",
+        "question": "Como funciona a lavagem de dinheiro?",
+        "answer": "Podes lavar dinheiro sujo através da opção no menu de economia. Há uma taxa que varia entre 20-40% (reduzida pela skill de Negociação) e um risco de ser apanhado baseado no teu heat. Se fores apanhado, perdes todo o dinheiro da transação."
+    },
+    {
+        "id": "faq_005",
+        "category": "economia",
+        "question": "O que é o Heat?",
+        "answer": "Heat representa a atenção policial sobre ti. Quanto mais crimes cometes, maior o heat. Heat alto aumenta a chance de ser apanhado em missões e lavagem de dinheiro. Reduz o heat fazendo trabalhos legais ou esperando."
+    },
+    {
+        "id": "faq_006",
+        "category": "propriedades",
+        "question": "Como funcionam as propriedades?",
+        "answer": "Propriedades geram rendimento passivo por hora. Cada tipo está disponível em bairros específicos e o preço varia com o valor económico do bairro. A condição da propriedade afeta o rendimento - mantém a manutenção em dia!"
+    },
+    {
+        "id": "faq_007",
+        "category": "propriedades",
+        "question": "Quantas propriedades posso ter?",
+        "answer": "Não há limite! Podes comprar quantas propriedades quiseres, desde que tenhas dinheiro limpo suficiente. Quanto mais propriedades, maior o rendimento passivo."
+    },
+    {
+        "id": "faq_008",
+        "category": "negocios",
+        "question": "Como funciona o sistema de negócios?",
+        "answer": "Compra um estabelecimento (laboratório, oficina, etc.) no seu bairro específico. Depois podes fabricar produtos usando receitas, que consomem dinheiro e tempo. Os produtos fabricados podem ser usados ou vendidos no Mercado Negro."
+    },
+    {
+        "id": "faq_009",
+        "category": "negocios",
+        "question": "Posso ter vários negócios?",
+        "answer": "Podes ter um negócio de cada tipo (máximo 6). Cada negócio só pode produzir um item de cada vez, por isso mais negócios significa mais produção simultânea."
+    },
+    {
+        "id": "faq_010",
+        "category": "mercado",
+        "question": "Como funciona o Mercado Negro?",
+        "answer": "O Mercado Negro é onde jogadores vendem itens entre si. Podes listar itens fabricados ou do inventário por um preço à tua escolha. Há uma taxa de 5% em cada venda. Outros jogadores podem comprar as tuas listagens."
+    },
+    {
+        "id": "faq_011",
+        "category": "mercado",
+        "question": "Posso cancelar uma listagem?",
+        "answer": "Sim! Podes cancelar qualquer listagem ativa a qualquer momento. Os itens são devolvidos ao teu inventário/stock sem custos."
+    },
+    {
+        "id": "faq_012",
+        "category": "gangues",
+        "question": "Como crio ou junto-me a uma gangue?",
+        "answer": "Na página de Gangues podes criar a tua própria gangue (se ainda não pertences a nenhuma) ou juntar-te a uma existente. Criar gangue custa dinheiro, juntar-se depende das regras definidas pelo líder."
+    },
+    {
+        "id": "faq_013",
+        "category": "gangues",
+        "question": "O que são guerras de gangues?",
+        "answer": "Guerras de gangues permitem conquistar territórios de outros ou de zonas neutras. Apenas líderes e oficiais podem iniciar guerras. O resultado depende do poder combinado dos membros de cada gangue."
+    },
+    {
+        "id": "faq_014",
+        "category": "missoes",
+        "question": "Como funcionam as missões?",
+        "answer": "Missões consomem energia e têm diferentes níveis de risco e recompensa. O sucesso depende do teu nível, skills, veículo ativo e heat atual. Missões legais dão dinheiro limpo, missões ilegais dão dinheiro sujo."
+    },
+    {
+        "id": "faq_015",
+        "category": "missoes",
+        "question": "Como recupero energia?",
+        "answer": "A energia regenera automaticamente ao longo do tempo (1 ponto por minuto). Também podes usar itens como Adrenalina para recuperar energia instantaneamente."
+    },
+    {
+        "id": "faq_016",
+        "category": "conta",
+        "question": "Como mudo a minha password?",
+        "answer": "Atualmente não há opção de mudança de password no jogo. Se precisares de ajuda com a tua conta, contacta o suporte."
+    },
+    {
+        "id": "faq_017",
+        "category": "conta",
+        "question": "Posso apagar a minha conta?",
+        "answer": "Para apagar a tua conta e todos os dados associados, contacta o suporte através dos canais oficiais. A eliminação é permanente e irreversível."
+    },
+]
+
+@api_router.get("/news")
+async def get_news(limit: int = 10, category: Optional[str] = None):
+    """Get game news and announcements - public endpoint"""
+    news = NEWS_DATA.copy()
+    
+    if category:
+        news = [n for n in news if n["category"] == category]
+    
+    # Sort by date descending
+    news.sort(key=lambda x: x["date"], reverse=True)
+    
+    return {"news": news[:limit], "total": len(NEWS_DATA)}
+
+@api_router.get("/news/{news_id}")
+async def get_news_item(news_id: str):
+    """Get a specific news item - public endpoint"""
+    news_item = next((n for n in NEWS_DATA if n["id"] == news_id), None)
+    if not news_item:
+        raise HTTPException(status_code=404, detail="Notícia não encontrada")
+    return news_item
+
+@api_router.get("/faq")
+async def get_faq(category: Optional[str] = None):
+    """Get frequently asked questions - public endpoint"""
+    faqs = FAQ_DATA.copy()
+    
+    if category:
+        faqs = [f for f in faqs if f["category"] == category]
+    
+    # Group by category
+    categories = {}
+    for faq in faqs:
+        cat = faq["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(faq)
+    
+    return {"faqs": faqs, "by_category": categories, "total": len(FAQ_DATA)}
+
+@api_router.get("/info/stats")
+async def get_game_stats():
+    """Get public game statistics"""
+    total_players = await db.players.count_documents({})
+    total_gangs = await db.gangs.count_documents({})
+    total_missions = await db.missions.count_documents({"status": "completed"})
+    total_properties = await db.player_properties.count_documents({})
+    total_businesses = await db.player_businesses.count_documents({})
+    
+    # Get top gang
+    top_gang = await db.gangs.find_one({}, {"_id": 0, "name": 1, "reputation": 1}, sort=[("reputation", -1)])
+    
+    return {
+        "total_players": total_players,
+        "total_gangs": total_gangs,
+        "total_missions_completed": total_missions,
+        "total_properties_owned": total_properties,
+        "total_businesses_owned": total_businesses,
+        "top_gang": top_gang
+    }
+
 # ============= GAME STATE =============
 
 @api_router.get("/game/state")
