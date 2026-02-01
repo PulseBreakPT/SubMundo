@@ -1094,6 +1094,10 @@ async def start_territory_war(neighborhood_id: str, current_user: dict = Depends
         "cost": war_cost
     })
     
+    # Convert datetime for JSON response
+    new_war["started_at"] = new_war["started_at"].isoformat()
+    new_war["ends_at"] = new_war["ends_at"].isoformat()
+    
     return {
         "success": True,
         "message": f"Guerra iniciada por {neighborhood['name']}!",
