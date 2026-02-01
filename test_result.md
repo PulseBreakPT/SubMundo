@@ -241,6 +241,18 @@ backend:
         agent: "testing"
         comment: "✅ Sistema de perfil avançado funcionando perfeitamente. Testado todos os 10 endpoints: detailed-stats (estatísticas completas em 6 categorias), badges (sistema de conquistas), progress-history (histórico para gráficos), goals (CRUD de metas pessoais), compare (comparação entre jogadores), activity-log (log de atividades), leaderboard-position (posição nos rankings), search-players (busca de jogadores). Corrigidos 3 bugs de tipos durante o teste. Todos os endpoints respondem corretamente."
 
+  - task: "Sistema Bancário Avançado"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "Solicitado teste do novo sistema bancário avançado: GET /api/bank/status, POST /api/bank/deposit, POST /api/bank/withdraw, POST /api/bank/transfer, GET /api/bank/transactions, GET /api/bank/investments, POST /api/bank/invest, GET /api/bank/loans, POST /api/bank/loan, GET /api/bank/robbery-targets. Sistema completo com juros, taxas, limites diários, segurança e empréstimos."
+
 frontend:
   - task: "Página de Propriedades"
     implemented: true
