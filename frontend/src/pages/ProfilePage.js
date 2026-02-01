@@ -779,36 +779,20 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           icon={DollarSign}
-          label="Dinheiro Limpo"
-          value={`€${formatNumber(player.clean_money || 0, 2)}`}
+          label="Dinheiro na Mão"
+          value={`€${formatNumber(player.cash ?? (player.clean_money || 0) + (player.dirty_money || 0), 2)}`}
+          color="warning"
+        />
+        <StatCard
+          icon={Wallet}
+          label="No Banco"
+          value={`€${formatNumber(player.bank_balance || 0, 2)}`}
           color="success"
         />
-        <div className="bg-surface border border-border border-l-2 border-l-warning p-4 rounded">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-text-secondary uppercase tracking-wider font-ui mb-1">
-                Dinheiro Sujo
-              </p>
-              <p className="text-2xl font-body font-semibold text-warning">
-                €{formatNumber(player.dirty_money || 0, 2)}
-              </p>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={ArrowRightLeft}
-              onClick={() => setShowLaunderModal(true)}
-              disabled={player.dirty_money <= 0}
-              data-testid="launder-money-btn"
-            >
-              Lavar
-            </Button>
-          </div>
-        </div>
         <StatCard
           icon={Wallet}
           label="Património Total"
-          value={`€${formatNumber(detailedStats?.economy?.net_worth || (player.clean_money + player.dirty_money), 2)}`}
+          value={`€${formatNumber(detailedStats?.economy?.net_worth || ((player.cash ?? (player.clean_money || 0)) + (player.bank_balance || 0)), 2)}`}
           color="gold"
         />
       </div>
