@@ -1,0 +1,124 @@
+{
+  "identity": {
+    "name": "SUBMUNDO",
+    "aesthetic": "Cyberpunk Noir / Text-Based Crime MMO",
+    "emotional_tone": "Gritty, Dangerous, High-Stakes, Underground",
+    "visual_style": "Absolute Black, Neon Red Accents, Terminal/Data-Dense Layouts"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Chakra Petch, sans-serif",
+      "body": "JetBrains Mono, monospace",
+      "ui": "Rajdhani, sans-serif"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-6xl font-bold tracking-tighter uppercase",
+      "h2": "text-2xl md:text-4xl font-bold tracking-tight uppercase",
+      "h3": "text-xl md:text-2xl font-semibold tracking-wide uppercase",
+      "body": "text-sm md:text-base leading-relaxed",
+      "caption": "text-xs tracking-widest uppercase opacity-70"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#050505",
+      "surface": "#0A0A0A",
+      "surface_highlight": "#121212",
+      "primary": "#FF003C",
+      "primary_glow": "rgba(255, 0, 60, 0.5)",
+      "secondary": "#00F0FF",
+      "text_primary": "#E0E0E0",
+      "text_secondary": "#A0A0A0",
+      "border": "#333333",
+      "success": "#00FF9D",
+      "warning": "#FFD600",
+      "error": "#FF003C"
+    },
+    "gradients": {
+      "primary": "linear-gradient(135deg, #FF003C 0%, #990024 100%)",
+      "dark_overlay": "linear-gradient(to bottom, rgba(5,5,5,0) 0%, #050505 100%)"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid #333333",
+    "radius": "0px",
+    "shadows": {
+      "neon": "0 0 10px rgba(255, 0, 60, 0.3), 0 0 20px rgba(255, 0, 60, 0.1)",
+      "card": "0 4px 6px -1px rgba(0, 0, 0, 0.5)"
+    },
+    "effects": {
+      "glitch": "hover:text-primary hover:translate-x-1 transition-all duration-75",
+      "scanline": "background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px;"
+    }
+  },
+  "layout": {
+    "grid_system": "grid-cols-4 md:grid-cols-12 gap-4",
+    "spacing": {
+      "container_padding": "p-4 md:p-8",
+      "section_gap": "gap-8"
+    },
+    "containers": {
+      "card": "bg-[#0A0A0A] border border-[#333333] p-4 relative overflow-hidden",
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#FF003C] text-white hover:bg-[#D40032] rounded-none font-bold uppercase tracking-widest px-6 py-3 transition-all hover:shadow-[0_0_15px_rgba(255,0,60,0.4)] clip-path-polygon-[0_0,100%_0,100%_80%,90%_100%,0_100%]",
+      "secondary": "bg-transparent border border-[#333333] text-[#E0E0E0] hover:border-[#FF003C] hover:text-[#FF003C] rounded-none uppercase tracking-widest px-6 py-3 transition-all",
+      "ghost": "text-[#A0A0A0] hover:text-white uppercase tracking-widest text-sm"
+    },
+    "inputs": {
+      "default": "bg-[#050505] border border-[#333333] text-[#E0E0E0] rounded-none focus:border-[#FF003C] focus:ring-1 focus:ring-[#FF003C] placeholder:text-[#555555]"
+    },
+    "cards": {
+      "stat_card": "bg-[#0A0A0A] border-l-2 border-[#FF003C] p-4 flex flex-col justify-between h-full"
+    }
+  },
+  "image_urls": {
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1641277132336-ae9d6432b8c5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwzfHxkYXJrJTIwY2l0eSUyMHN0cmVldCUyMG5pZ2h0JTIwbmVvbnxlbnwwfHx8fDE3Njk5Mzk2MjR8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Red neon city street - Main Hero Background",
+        "category": "hero"
+      }
+    ],
+    "icons": [
+      {
+        "url": "https://images.unsplash.com/photo-1660142127899-2121326e118f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwzfHxwb2xpY2UlMjBjYXIlMjBsaWdodHMlMjBuaWdodHxlbnwwfHx8fDE3Njk5Mzk2Mjh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Police Car Lights - Police System",
+        "category": "system_icon"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1669849191824-7576396f64b6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxnYW5nJTIwc2lsaG91ZXR0ZSUyMHVyYmFuJTIwbmlnaHR8ZW58MHx8fHwxNzY5OTM5NjM0fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Gang Silhouette - Gang System",
+        "category": "system_icon"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Use 'Chakra Petch' or 'Rajdhani' from Google Fonts. Add the import link in index.html.",
+    "CRITICAL: Force Dark Mode. Do not implement a light mode toggle. The game is strictly dark.",
+    "CRITICAL: Use sharp corners (rounded-none) for ALL components (buttons, cards, inputs). This is a strict design rule.",
+    "CRITICAL: Use the 'Red Neon' (#FF003C) sparingly as an accent color for active states, primary buttons, and critical alerts.",
+    "CRITICAL: Implement a 'Sidebar' for desktop and 'Bottom Navigation' for mobile. Use media queries to switch.",
+    "CRITICAL: Use 'JetBrains Mono' for all numerical data (money, stats, heat).",
+    "CRITICAL: Add a subtle 'scanline' overlay or noise texture to the background to give it a retro-terminal feel.",
+    "CRITICAL: All interactive elements must have a hover state that involves a color shift or a slight translation (glitch effect).",
+    "CRITICAL: Use 'lucide-react' for icons. Style them with the primary neon color.",
+    "CRITICAL: Ensure all text has sufficient contrast. Use #E0E0E0 for body text, not #FFFFFF (too harsh).",
+    "CRITICAL: For the 'City Map', use a grid of interactive 'Neighborhood Cards' rather than a literal map image, fitting the text-based RPG style."
+  ],
+  "universal_guidelines": [
+    "Don't make generic centered layouts.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) but keep it dark/tinted.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures, noise overlays, custom cursors.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Components MUST use named exports.",
+    "Pages MUST use default exports.",
+    "Use 'sonner' for toasts."
+  ]
+}
