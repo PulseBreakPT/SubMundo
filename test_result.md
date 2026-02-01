@@ -243,15 +243,18 @@ backend:
 
   - task: "Sistema Bancário Avançado"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "user"
         comment: "Solicitado teste do novo sistema bancário avançado: GET /api/bank/status, POST /api/bank/deposit, POST /api/bank/withdraw, POST /api/bank/transfer, GET /api/bank/transactions, GET /api/bank/investments, POST /api/bank/invest, GET /api/bank/loans, POST /api/bank/loan, GET /api/bank/robbery-targets. Sistema completo com juros, taxas, limites diários, segurança e empréstimos."
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema bancário avançado funcionando perfeitamente! Testados todos os 10 endpoints: GET /bank/status (status da conta), POST /bank/deposit (depósito €100), POST /bank/withdraw (levantamento €50 com taxa), POST /bank/transfer (transferência entre jogadores), GET /bank/transactions (histórico), GET /bank/investments (7 opções de investimento), POST /bank/invest (criação de investimento), GET /bank/loans (informações de crédito), POST /bank/loan (empréstimo €500), GET /bank/robbery-targets (alvos para roubo). Corrigido bug de timezone em calculate_daily_interest. Sistema completo com juros diários, taxas, limites e segurança funcionando corretamente."
 
 frontend:
   - task: "Página de Propriedades"
