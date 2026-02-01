@@ -155,26 +155,26 @@ export default function NewsPage() {
   }
   
   return (
-    <div className="space-y-6 pb-20 md:pb-6">
+    <div className="space-y-4 sm:space-y-6 pb-20 md:pb-6">
       <div>
-        <h1 className="font-heading text-2xl text-primary flex items-center gap-2">
-          <Newspaper size={28} /> Novidades
+        <h1 className="font-heading text-xl sm:text-2xl text-primary flex items-center gap-2">
+          <Newspaper size={24} className="sm:w-7 sm:h-7" /> Novidades
         </h1>
-        <p className="text-text-secondary text-sm">Atualizações e anúncios do SUBMUNDO</p>
+        <p className="text-text-secondary text-xs sm:text-sm">Atualizações e anúncios do SUBMUNDO</p>
       </div>
       
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Filters - horizontal scroll on mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
         {[
           { value: 'all', label: 'Todas' },
-          { value: 'feature', label: 'Funcionalidades' },
-          { value: 'update', label: 'Atualizações' },
+          { value: 'feature', label: 'Funções' },
+          { value: 'update', label: 'Updates' },
           { value: 'announcement', label: 'Anúncios' },
         ].map(f => (
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-ui transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-ui transition-all whitespace-nowrap flex-shrink-0 ${
               filter === f.value
                 ? 'bg-primary text-background'
                 : 'bg-surface border border-border text-text-secondary hover:text-text-primary'
@@ -185,13 +185,22 @@ export default function NewsPage() {
         ))}
       </div>
       
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Mobile: Modal for details, Desktop: Side panel */}
+      {selectedNews && (
+        <div className="lg:hidden fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-surface w-full sm:max-w-lg sm:rounded-lg max-h-[90vh] overflow-y-auto rounded-t-2xl">
+            <NewsDetail news={selectedNews} onClose={() => setSelectedNews(null)} />
+          </div>
+        </div>
+      )}
+      
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         {/* News List */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {filteredNews.length === 0 ? (
-            <div className="bg-surface border border-border rounded-lg p-8 text-center">
-              <Newspaper size={48} className="mx-auto text-text-secondary mb-4" />
-              <p className="text-text-secondary">Nenhuma notícia nesta categoria.</p>
+            <div className="bg-surface border border-border rounded-lg p-6 sm:p-8 text-center">
+              <Newspaper size={40} className="mx-auto text-text-secondary mb-4 sm:w-12 sm:h-12" />
+              <p className="text-text-secondary text-sm">Nenhuma notícia nesta categoria.</p>
             </div>
           ) : (
             filteredNews.map(item => (
@@ -205,8 +214,8 @@ export default function NewsPage() {
           )}
         </div>
         
-        {/* News Detail */}
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        {/* News Detail - Desktop only */}
+        <div className="hidden lg:block lg:sticky lg:top-4 lg:self-start">
           {selectedNews ? (
             <NewsDetail news={selectedNews} onClose={() => setSelectedNews(null)} />
           ) : (
