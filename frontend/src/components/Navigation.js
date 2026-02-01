@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store } from 'lucide-react';
+import { NavLink, Link } from 'react-router-dom';
+import { Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store, Newspaper, HelpCircle, Shield, ScrollText } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Início' },
@@ -19,7 +19,14 @@ const sidebarItems = [
   { path: '/mercado', icon: Store, label: 'Mercado' },
   { path: '/eventos', icon: Radio, label: 'Eventos' },
   { path: '/gangue', icon: Users, label: 'Gangue' },
+  { path: '/novidades', icon: Newspaper, label: 'Novidades' },
   { path: '/perfil', icon: User, label: 'Perfil' },
+];
+
+const footerLinks = [
+  { path: '/faq', label: 'FAQ' },
+  { path: '/privacidade', label: 'Privacidade' },
+  { path: '/termos', label: 'Termos' },
 ];
 
 export const BottomNav = () => {
@@ -87,9 +94,20 @@ export const Sidebar = () => {
         </ul>
       </nav>
       
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-2">
+        <div className="hidden lg:flex flex-wrap gap-2 text-[10px]">
+          {footerLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className="text-text-secondary hover:text-primary transition-all"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
         <p className="text-text-secondary text-[10px] text-center lg:text-left uppercase tracking-widest">
-          v1.2.0
+          v1.3.0
         </p>
       </div>
     </aside>
