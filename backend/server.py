@@ -15,6 +15,16 @@ from jose import jwt, JWTError
 import random
 import math
 
+# Import Advanced Game Engine
+from game_engine import (
+    TimeWeatherSystem, PoliceAISystem, RelationshipSystem,
+    NotorietySystem, HeistSystem, DynamicEconomySystem,
+    ProceduralMissionGenerator, TerritoryControlSystem,
+    DynamicEventSystem, TimeOfDay, WeatherType, NotorietyRank,
+    PoliceAlertLevel, get_game_state_modifiers,
+    calculate_mission_difficulty_adjusted
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
