@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -15,40 +15,46 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('submundo_token'));
+  const [token, setToken] = useState(() => localStorage.getItem('submundo_token'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
 
   const api = useCallback(() => {
-    const instance = axios.create({
+    const currentToken = tokenRef.current;
+    return axios.create({
       baseURL: API,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
     });
-    return instance;
-  }, [token]);
-
-  const fetchUser = useCallback(async () => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const response = await api().get('/auth/me');
-      setUser(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Erro ao buscar utilizador:', err);
-      localStorage.removeItem('submundo_token');
-      setToken(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, api]);
+  }, []);
 
   useEffect(() => {
+    const fetchUser = async () => {
+      const currentToken = tokenRef.current;
+      if (!currentToken) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await axios.get(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        setUser(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Erro ao buscar utilizador:', err);
+        localStorage.removeItem('submundo_token');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUser();
-  }, [fetchUser]);
+  }, [token]);
 
   const login = async (email, password) => {
     try {
@@ -87,7 +93,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const refreshUser = async () => {
-    await fetchUser();
+    const currentToken = tokenRef.current;
+    if (!currentToken) return;
+    try {
+      const response = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      setUser(response.data);
+    } catch (err) {
+      console.error('Erro ao atualizar utilizador:', err);
+    }
   };
 
   return (

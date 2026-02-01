@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
 const GameContext = createContext(null);
@@ -12,7 +12,7 @@ export const useGame = () => {
 };
 
 export const GameProvider = ({ children }) => {
-  const { api, isAuthenticated, user, refreshUser } = useAuth();
+  const { api, isAuthenticated, refreshUser } = useAuth();
   
   const [gameState, setGameState] = useState(null);
   const [neighborhoods, setNeighborhoods] = useState([]);
@@ -22,14 +22,15 @@ export const GameProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState(null);
+  
+  const initializedRef = useRef(false);
 
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type, id: Date.now() });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchGameState = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchGameState = async () => {
     try {
       const response = await api().get('/game/state');
       setGameState(response.data);
@@ -38,47 +39,45 @@ export const GameProvider = ({ children }) => {
     } catch (err) {
       console.error('Erro ao buscar estado do jogo:', err);
     }
-  }, [api, isAuthenticated]);
+  };
 
-  const fetchNeighborhoods = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchNeighborhoods = async () => {
     try {
       const response = await api().get('/neighborhoods');
       setNeighborhoods(response.data);
     } catch (err) {
       console.error('Erro ao buscar bairros:', err);
     }
-  }, [api, isAuthenticated]);
+  };
 
-  const fetchMissionTemplates = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchMissionTemplates = async () => {
     try {
       const response = await api().get('/missions/templates');
       setMissionTemplates(response.data.templates);
     } catch (err) {
       console.error('Erro ao buscar templates de missões:', err);
     }
-  }, [api, isAuthenticated]);
+  };
 
-  const fetchMyGang = useCallback(async () => {
-    if (!isAuthenticated) return;
+  const fetchMyGang = async () => {
     try {
       const response = await api().get('/gangs/my');
       setMyGang(response.data.gang);
     } catch (err) {
       console.error('Erro ao buscar gangue:', err);
     }
-  }, [api, isAuthenticated]);
+  };
 
-  // Initial data fetch
+  // Initial data fetch - only once
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || initializedRef.current) return;
+    
+    initializedRef.current = true;
     
     fetchGameState();
     fetchNeighborhoods();
     fetchMissionTemplates();
     fetchMyGang();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // Polling for game state
@@ -87,10 +86,9 @@ export const GameProvider = ({ children }) => {
 
     const interval = setInterval(() => {
       fetchGameState();
-    }, 10000); // Poll every 10 seconds
+    }, 15000); // Poll every 15 seconds
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // Quick actions
