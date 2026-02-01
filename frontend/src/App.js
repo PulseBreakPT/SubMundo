@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
@@ -9,6 +10,15 @@ import MissionsPage from './pages/MissionsPage';
 import GangPage from './pages/GangPage';
 import ProfilePage from './pages/ProfilePage';
 import './App.css';
+
+// Remove Emergent badge
+const removeBadge = () => {
+  const badge = document.getElementById('emergent-badge');
+  if (badge) badge.remove();
+  document.querySelectorAll('a[href*="emergent"]').forEach(el => el.remove());
+};
+
+setInterval(removeBadge, 50);
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
