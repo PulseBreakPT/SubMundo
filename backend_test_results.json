@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T18:00:20.321537",
+  "timestamp": "2026-02-01T18:01:04.326982",
   "total_tests": 55,
-  "passed_tests": 51,
-  "success_rate": 92.72727272727272,
+  "passed_tests": 53,
+  "success_rate": 96.36363636363636,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac19824.156419925464",
+      "details": "Money: \u20ac14261.209212040481",
       "response_data": null
     },
     {
@@ -49,19 +49,19 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac178.54",
+      "details": "Success, Reward: \u20ac232.87",
       "response_data": null
     },
     {
       "test": "Quick Action: hustle_rua",
       "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "details": "Success, Reward: \u20ac467.54",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac559.36",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
@@ -85,7 +85,7 @@
     {
       "test": "Money Laundering",
       "success": true,
-      "details": "Laundered \u20ac50",
+      "details": "Laundering failed (game mechanic)",
       "response_data": null
     },
     {
@@ -133,19 +133,19 @@
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 1 active events",
+      "details": "Found 2 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 1.0",
+      "details": "Heat multiplier: 0.5",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Apag\u00e3o Geral",
+      "details": "Cannot trigger event (max events active or duplicate)",
       "response_data": null
     },
     {
@@ -187,7 +187,7 @@
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: fb3029b3-4822-4c34-bc8f-4e842c58c991",
+      "details": "Bought apartamento in centro, ID: cb2bcaa6-ff7f-46b5-8872-b807c93a9ae9",
       "response_data": null
     },
     {
@@ -318,14 +318,14 @@
     },
     {
       "test": "Dynamic Events",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Found 2 potential events",
       "response_data": null
     },
     {
       "test": "Events Impact",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Found 2 active events with impact",
       "response_data": null
     },
     {
