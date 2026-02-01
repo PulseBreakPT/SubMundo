@@ -157,13 +157,19 @@ export default function ProfilePage() {
             <h1 className="font-heading text-2xl md:text-3xl text-text-primary">
               {player.username}
             </h1>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
               <Badge variant="gold">
                 <Star size={12} className="mr-1" />
                 Nível {player.level}
               </Badge>
-              {player.gang_id && (
+              {notoriety && (
                 <Badge variant="primary">
+                  <Crown size={12} className="mr-1" />
+                  {notoriety.rank?.name || 'Desconhecido'}
+                </Badge>
+              )}
+              {player.gang_id && (
+                <Badge variant="secondary">
                   <Shield size={12} className="mr-1" />
                   Em Gangue
                 </Badge>
@@ -196,6 +202,109 @@ export default function ProfilePage() {
           />
         </div>
       </Card>
+
+      {/* Notoriety Section */}
+      {notoriety && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <Crown className="text-gold" size={20} />
+            <h2 className="font-heading text-lg text-text-primary">Notoriedade no Submundo</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Current Rank */}
+            <div className="bg-surface-highlight p-4 border border-border">
+              <p className="text-xs text-text-secondary uppercase tracking-wider mb-2">Rank Actual</p>
+              <p className="text-2xl font-heading text-gold">{notoriety.rank?.name}</p>
+              <p className="text-sm text-text-secondary mt-1">{notoriety.points} pontos de notoriedade</p>
+              
+              {notoriety.next_rank && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-text-secondary mb-1">
+                    <span>Próximo: {notoriety.next_rank.name}</span>
+                    <span>{Math.round(notoriety.next_rank.progress)}%</span>
+                  </div>
+                  <div className="h-2 bg-surface rounded overflow-hidden">
+                    <div 
+                      className="h-full bg-gold transition-all"
+                      style={{ width: `${notoriety.next_rank.progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Benefits */}
+            <div className="bg-surface-highlight p-4 border border-border">
+              <p className="text-xs text-text-secondary uppercase tracking-wider mb-2">Benefícios do Rank</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Desconto em Preços</span>
+                  <span className="text-success">-{notoriety.benefits?.price_discount}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Bónus Recrutamento</span>
+                  <span className="text-primary">+{notoriety.benefits?.recruitment_bonus}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Respeito</span>
+                  <span className="text-gold">+{notoriety.benefits?.respect_modifier}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Missões Especiais</span>
+                  <span className={notoriety.benefits?.special_missions ? 'text-success' : 'text-error'}>
+                    {notoriety.benefits?.special_missions ? 'Desbloqueadas' : 'Bloqueadas'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Police Status Section */}
+      {policeStatus && (
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Shield className={policeStatus.alert_level?.value > 2 ? 'text-error animate-pulse' : 'text-text-secondary'} size={20} />
+              <h2 className="font-heading text-lg text-text-primary">Status Policial</h2>
+            </div>
+            <Badge variant={policeStatus.alert_level?.value > 2 ? 'error' : policeStatus.alert_level?.value > 0 ? 'warning' : 'success'}>
+              {policeStatus.alert_level?.name}
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-2xl font-body text-error">{player.heat_individual}%</p>
+              <p className="text-xs text-text-secondary">Teu Heat</p>
+            </div>
+            <div>
+              <p className="text-2xl font-body text-warning">{policeStatus.neighborhood_heat}%</p>
+              <p className="text-xs text-text-secondary">Heat do Bairro</p>
+            </div>
+            <div>
+              <p className="text-2xl font-body text-primary">{policeStatus.response?.units_deployed}</p>
+              <p className="text-xs text-text-secondary">Unidades Activas</p>
+            </div>
+            <div>
+              <p className="text-2xl font-body text-text-primary">{policeStatus.neighborhood_info?.response_time}min</p>
+              <p className="text-xs text-text-secondary">Tempo Resposta</p>
+            </div>
+          </div>
+          
+          {policeStatus.response?.helicopter && (
+            <div className="mt-3 p-2 bg-error/10 border border-error/30 text-error text-sm text-center">
+              ⚠️ Helicóptero policial activo na zona!
+            </div>
+          )}
+          
+          <p className="text-xs text-text-secondary mt-3 text-center italic">
+            "{policeStatus.advice}"
+          </p>
+        </Card>
+      )}
 
       {/* Money Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
