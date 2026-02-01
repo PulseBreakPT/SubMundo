@@ -1,49 +1,43 @@
 {
-  "timestamp": "2026-02-01T11:00:09.925230",
-  "total_tests": 28,
-  "passed_tests": 28,
-  "success_rate": 100.0,
+  "timestamp": "2026-02-01T12:54:30.655503",
+  "total_tests": 31,
+  "passed_tests": 27,
+  "success_rate": 87.09677419354838,
   "results": [
     {
       "test": "User Registration",
       "success": true,
-      "details": "User already exists (expected)",
-      "response_data": null
-    },
-    {
-      "test": "User Login",
-      "success": true,
-      "details": "",
+      "details": "New user registered successfully",
       "response_data": null
     },
     {
       "test": "Get Current User",
       "success": true,
-      "details": "User ID: 540989bb-8cc9-4336-b17c-dfcaa4a936a6",
+      "details": "User ID: 430c51d8-a36a-4865-9b03-f3a6122e80f4",
       "response_data": null
     },
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac700.0492323356207",
+      "details": "Money: \u20ac1000.0",
       "response_data": null
     },
     {
       "test": "Daily Reward Claim",
       "success": true,
-      "details": "Already claimed today (expected)",
+      "details": "Reward: \u20ac289.6",
       "response_data": null
     },
     {
       "test": "Get Neighborhoods",
       "success": true,
-      "details": "Found 6 neighborhoods",
+      "details": "Found 10 neighborhoods",
       "response_data": null
     },
     {
       "test": "Get Mission Templates",
       "success": true,
-      "details": "Found 8 templates",
+      "details": "Found 18 templates",
       "response_data": null
     },
     {
@@ -55,19 +49,19 @@
     {
       "test": "Quick Action: hustle_rua",
       "success": true,
-      "details": "Success, Reward: \u20ac91.32",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac402.19",
+      "details": "Success, Reward: \u20ac198.81",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
       "success": true,
-      "details": "Mission ID: 831ad284-1f47-4d97-9362-ea64ff4bc040, Duration: 30s",
+      "details": "Mission ID: 6d1a113b-2fa6-4105-861c-952c06fd5d90, Duration: 30s",
       "response_data": null
     },
     {
@@ -79,25 +73,25 @@
     {
       "test": "Get Gangs",
       "success": true,
-      "details": "Found 1 gangs",
+      "details": "Found 0 gangs",
       "response_data": null
     },
     {
       "test": "Create Gang",
       "success": true,
-      "details": "User already in gang or gang exists (expected)",
+      "details": "Gang: TestGang_1769950469",
       "response_data": null
     },
     {
       "test": "Money Laundering",
       "success": true,
-      "details": "Laundering failed (game mechanic)",
+      "details": "Laundered \u20ac50",
       "response_data": null
     },
     {
       "test": "Global Rankings",
       "success": true,
-      "details": "Found 2 players",
+      "details": "Found 1 players",
       "response_data": null
     },
     {
@@ -115,43 +109,49 @@
     {
       "test": "Vehicle Catalog",
       "success": true,
-      "details": "Found 8 vehicles",
+      "details": "Found 12 vehicles",
       "response_data": null
     },
     {
       "test": "Vehicle Catalog Count",
-      "success": true,
-      "details": "Exactly 8 vehicles available",
+      "success": false,
+      "details": "Expected 8 vehicles, found 12",
       "response_data": null
     },
     {
       "test": "My Vehicles",
       "success": true,
-      "details": "Player has 1 vehicles",
+      "details": "Player has 0 vehicles",
       "response_data": null
     },
     {
       "test": "Buy Vehicle",
       "success": true,
-      "details": "Cannot buy vehicle (insufficient funds or already owned)",
+      "details": "Bought Bicicleta",
+      "response_data": null
+    },
+    {
+      "test": "Activate Vehicle",
+      "success": true,
+      "details": "Vehicle activated successfully",
       "response_data": null
     },
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 2 active events",
+      "details": "Found 0 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 0.72",
+      "details": "Heat multiplier: 1.0",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Cannot trigger event (max events active or duplicate)",
+      "details": "Event triggered: Visita VIP",
       "response_data": null
     },
     {
@@ -170,6 +170,24 @@
       "test": "Treasury Deposit",
       "success": true,
       "details": "Deposited to gang treasury",
+      "response_data": null
+    },
+    {
+      "test": "Property Types",
+      "success": false,
+      "details": "Status: 200",
+      "response_data": null
+    },
+    {
+      "test": "Business Types",
+      "success": false,
+      "details": "Status: 200",
+      "response_data": null
+    },
+    {
+      "test": "Market Stats",
+      "success": false,
+      "details": "Status: 200",
       "response_data": null
     }
   ]
