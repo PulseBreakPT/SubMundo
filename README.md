@@ -22,15 +22,16 @@ SUBMUNDO é um RPG de crime organizado baseado em browser, ambientado em Lisboa.
 | Sistema | Página | Descrição |
 |---------|--------|-----------|
 | **Autenticação** | Login/Registo | Sistema completo de auth com JWT |
-| **Dashboard** | HomePage | Stats, energia, dinheiro, ações rápidas |
+| **Dashboard** | HomePage | Stats, energia, dinheiro, ações rápidas, análise de nível, status policial, dicas |
 | **Missões** | MissionsPage | Missões legais e criminais com timer |
-| **Gangues** | GangPage | Criar/gerir gangue, membros, territórios |
+| **Gangues** | GangPage | Criar/gerir gangue, membros, territórios, análise de guerras |
 | **Veículos** | VehiclesPage | Comprar/vender veículos |
 | **Propriedades** | PropertiesPage | Comprar propriedades, rendimentos |
 | **Negócios** | BusinessPage | Negócios ilegais, crafting |
 | **Mapa** | MapPage | Bairros com lore detalhada |
-| **Mercado** | MarketPage | Mercado negro entre jogadores |
-| **Eventos** | EventsPage | Eventos da cidade |
+| **Mercado** | MarketPage | Mercado negro com preços dinâmicos |
+| **Eventos** | EventsPage | Eventos da cidade, previsões, impacto |
+| **Contactos** | ContactsPage | **NOVO** - NPCs, relacionamentos, interações |
 | **Perfil** | ProfilePage | Skills, achievements, lavagem |
 | **Clima/Tempo** | Header | Sistema dinâmico baseado na hora real |
 | **Notoriedade** | ProfilePage | Ranks e benefícios |
@@ -41,150 +42,156 @@ SUBMUNDO é um RPG de crime organizado baseado em browser, ambientado em Lisboa.
 
 ---
 
-## ⚠️ Features Pendentes (Backend Pronto, Falta UI)
+## 🆕 Novas Features (Última Actualização)
 
-### 1. Sistema de Relacionamentos com NPCs
-**Arquivo:** `backend/game_engine.py` → `RelationshipSystem`
+### 1. Sistema de Relacionamentos com NPCs ✅
+**Página:** `ContactsPage.js`
 
-**O que existe:**
-- Níveis de relacionamento (Enemy → Trusted)
-- Cálculo de efeitos por nível (preços, traição, qualidade de info)
-- Sistema de mudança de relacionamento por ações
+**Funcionalidades:**
+- Lista de todos os contactos/NPCs com níveis de relacionamento visual
+- 7 níveis: Inimigo → Hostil → Desconfiado → Neutro → Amigável → Aliado → De Confiança
+- Interações disponíveis: Dar Presente, Negociar, Pedir Favor, Partilhar Info
+- Efeitos de relacionamento: modificadores de preço, qualidade de informação, chance de ajuda
+- Histórico de interações por NPC
+- Secção de rivais conhecidos com informações de ameaça
 
-**O que falta no Frontend:**
-- Página de Contactos/NPCs
-- Lista de NPCs conhecidos com níveis de confiança
-- Interações disponíveis por NPC
-- Histórico de transações
-
----
-
-### 2. Sistema de Economia Dinâmica
-**Arquivo:** `backend/game_engine.py` → `DynamicEconomySystem`
-
-**O que existe:**
-- Cálculo de preços baseado em oferta/procura
-- Simulação de flutuações de mercado
-- Taxa de inflação do jogo
-- Modificadores por bairro e eventos
-
-**O que falta no Frontend:**
-- Preços flutuantes no Mercado
-- Indicador de tendência de preços (subindo/descendo)
-- Gráfico de histórico de preços
-- Alertas de boas oportunidades
+**Endpoints:**
+- `GET /api/npcs/contacts` - Lista contactos com relacionamentos
+- `GET /api/npcs/{id}/relationship` - Detalhes de relacionamento
+- `POST /api/npcs/{id}/interact` - Interagir com NPC
 
 ---
 
-### 3. Sistema de Controlo Territorial Avançado
-**Arquivo:** `backend/game_engine.py` → `TerritoryControlSystem`
+### 2. Sistema de Economia Dinâmica ✅
+**Integrado em:** `MarketPage.js`
 
-**O que existe:**
-- Cálculo de rendimento de territórios
-- Cálculo de poder militar de gangues
-- Simulação de resultado de guerras
-- Bónus de defesa territorial
+**Funcionalidades:**
+- Preços flutuantes por categoria (drogas, armas, documentos, etc.)
+- Indicadores de tendência (subindo/descendo/estável)
+- Visualização de oferta vs procura
+- Preços afectados por eventos da cidade
+- Mini-gráficos de supply/demand
 
-**O que falta no Frontend:**
-- Previsão de resultado de guerras antes de declarar
-- Visualização de poder militar da gangue
-- Comparação de forças com gangue alvo
+**Endpoints:**
+- `GET /api/economy/market-prices` - Preços dinâmicos actuais
+- `GET /api/economy/price-history/{category}` - Histórico 24h
+- `POST /api/economy/simulate-fluctuation` - Simular flutuação
+
+---
+
+### 3. Sistema de Territórios Avançado ✅
+**Integrado em:** `GangPage.js` (tab Territórios)
+
+**Funcionalidades:**
+- Análise completa de poder da gangue
+- Previsão de resultado de guerras (% de vitória)
+- Comparação de poder militar antes de atacar
 - Estimativa de perdas em caso de guerra
+- Recomendações (Atacar/Evitar) baseadas em análise
+- Visualização de todos os territórios com status
+
+**Endpoints:**
+- `GET /api/territories/analysis` - Análise completa com previsões
+- `GET /api/territories/{id}/power` - Análise de território específico
 
 ---
 
-### 4. Sistema de Eventos Dinâmicos
-**Arquivo:** `backend/game_engine.py` → `DynamicEventSystem`
+### 4. Sistema de Eventos Dinâmicos ✅
+**Integrado em:** `EventsPage.js`
 
-**O que existe:**
-- Triggers baseados no estado do jogo
-- Eventos condicionais (crime alto → crackdown)
-- Cálculo de impacto de eventos por jogador
-- Sistema de probabilidades
-
-**O que falta no Frontend:**
-- Eventos que aparecem baseados em condições reais
-- Notificações de eventos a começar
-- Previsão de eventos futuros
+**Funcionalidades:**
+- 4 tabs: Ativos, Previsões, Impacto, Condições
+- Eventos reactivos baseados no estado do jogo
+- Previsões de eventos futuros com probabilidades
+- Impacto personalizado no jogador (modificadores)
 - Conselhos baseados em eventos activos
+- Estatísticas da cidade em tempo real
+
+**Endpoints:**
+- `GET /api/events/dynamic` - Eventos potenciais baseados em condições
+- `GET /api/events/impact` - Impacto dos eventos no jogador
+- `GET /api/events/predictions` - Previsões de eventos futuros
 
 ---
 
-## 📁 Arquivos de Lógica Não Utilizados
+### 5. Integração de gameLogic.js ✅
+**Integrado em:** `HomePage.js`
 
-### `frontend/src/utils/gameLogic.js` (867 linhas)
-**Status:** ❌ Não importado em nenhuma página
-
-**Sistemas disponíveis:**
-```javascript
-- GAME_CONSTANTS      // Constantes do jogo
-- LevelSystem         // Cálculos de XP, níveis, títulos
-- HeatSystem          // Níveis de perigo, modificadores
-- EconomySystem       // Formatação, lavagem, rendimentos
-- MissionSystem       // Cálculo de sucesso, recomendações
-- VehicleSystem       // Stats, reparação, adequação
-- GangSystem          // Poder, guerras, contribuições
-- TimeSystem          // Formatação, countdown
-- NotificationSystem  // Mensagens dinâmicas
-- Validators          // Validação de inputs
-```
-
-**Como usar:**
-```javascript
-import { LevelSystem, HeatSystem } from '../utils/gameLogic';
-
-// Exemplo: Calcular título do nível
-const title = LevelSystem.getLevelTitle(player.level);
-
-// Exemplo: Obter conselhos de heat
-const advice = HeatSystem.getHeatAdvice(player.heat_individual);
-```
+**Sistemas agora activos:**
+- `LevelSystem` - Títulos de nível, bónus por nível
+- `HeatSystem` - Status de perigo, conselhos de heat
+- `getTipsAndStrategies` - Dicas estratégicas na homepage
 
 ---
 
-### `frontend/src/data/lore.js` (1373 linhas)
-**Status:** ❌ Não importado em nenhuma página
+### 6. Integração de lore.js ✅
+**Integrado em:** Múltiplas páginas
 
-**Dados disponíveis:**
-```javascript
-- GAME_LORE           // História principal, timeline
-- NEIGHBORHOODS_LORE  // Lore detalhada de bairros
-- GANGS_LORE          // Informações de gangues
-- VEHICLES_LORE       // História dos veículos
-- MISSIONS_LORE       // Sistema de missões
-- ECONOMY_LORE        // Sistema económico
-- EVENTS_LORE         // Tipos de eventos
-- PROGRESSION_LORE    // Níveis e progressão
-- TIPS_AND_STRATEGIES // Dicas para jogadores
-- IMPORTANT_NPCS      // Contactos e rivais
-- QUOTES              // Citações para loading
-- GLOSSARY            // Termos do submundo
-```
-
-**Como usar:**
-```javascript
-import { QUOTES, GLOSSARY, getRandomLoadingQuote } from '../data/lore';
-
-// Exemplo: Citação aleatória
-const quote = getRandomLoadingQuote();
-
-// Exemplo: Obter termo do glossário
-const term = GLOSSARY.terms.find(t => t.term === 'Heat');
-```
+**Dados agora activos:**
+- `QUOTES` - Citações de sabedoria na homepage e eventos
+- `IMPORTANT_NPCS` - Informações de contactos e rivais
+- `GANGS_LORE` - Regras de guerra na GangPage
+- `EVENTS_LORE` - Dicas de eventos na EventsPage
+- `getRandomWisdomQuote()` - Citações aleatórias
 
 ---
 
-## 📋 Lore Pendente de Integração
+## 💰 Sistema Económico (Rebalanceado)
 
-| Dados | Onde Mostrar | Descrição |
-|-------|--------------|-----------|
-| `GAME_LORE` | Página "Sobre" ou Intro | História principal do jogo |
-| `GANGS_LORE` | GangPage | Info detalhada de gangues existentes |
-| `VEHICLES_LORE` | VehiclesPage | História e contexto de cada veículo |
-| `TIPS_AND_STRATEGIES` | HomePage ou FAQ | Dicas para iniciantes e avançados |
-| `IMPORTANT_NPCS` | Nova página "Contactos" | Lista de NPCs com serviços |
-| `QUOTES` | Loading screens | Citações temáticas |
-| `GLOSSARY` | FAQ ou página dedicada | Definições de termos do jogo |
+### Filosofia do Rebalanceamento
+A economia foi completamente revista para proporcionar uma progressão mais desafiante e gratificante.
+
+### Valores Económicos
+
+#### Recompensas de Missões
+| Missão | Antes | Depois | Mudança |
+|--------|-------|--------|---------|
+| Roubo de Carteira | €50-150 | €20-80 | -50% |
+| Assalto a Loja | €500-2000 | €250-800 | -60% |
+| Hacking Bancário | €800-3000 | €400-1200 | -60% |
+| Assalto a Banco | €5000-20000 | €2000-8000 | -60% |
+| Trabalho Honesto | €100-250 | €40-120 | -55% |
+
+#### Veículos
+| Veículo | Antes | Depois | Mudança |
+|---------|-------|--------|---------|
+| Bicicleta | €500 | €800 | +60% |
+| Scooter | €2000 | €5000 | +150% |
+| Carro Usado | €5000 | €15000 | +200% |
+| Mota Desportiva | €15000 | €35000 | +133% |
+| Sedan Luxo | €30000 | €75000 | +150% |
+| SUV Blindado | €50000 | €120000 | +140% |
+| Desportivo Exótico | €100000 | €250000 | +150% |
+| Supercar | €200000 | €500000 | +150% |
+
+#### Propriedades
+| Propriedade | Preço Antes | Preço Depois | Rendimento/h |
+|-------------|-------------|--------------|--------------|
+| Apartamento | €5000 | €15000 | €25 (era €50) |
+| Casa | €15000 | €40000 | €60 (era €120) |
+| Armazém | €25000 | €65000 | €100 (era €200) |
+| Fábrica | €50000 | €120000 | €200 (era €400) |
+| Mansão | €100000 | €250000 | €400 (era €800) |
+| Bunker | €75000 | €180000 | €250 (era €500) |
+
+#### Negócios
+| Negócio | Antes | Depois |
+|---------|-------|--------|
+| Laboratório | €30000 | €75000 |
+| Oficina | €40000 | €95000 |
+| Falsificador | €35000 | €85000 |
+| Garage | €45000 | €110000 |
+| Destilaria | €25000 | €60000 |
+| Centro Hacking | €50000 | €125000 |
+
+#### Sistema Económico Geral
+| Parâmetro | Antes | Depois |
+|-----------|-------|--------|
+| Dinheiro inicial | €1000 | €250 |
+| Daily reward | €100-500 | €30-150 |
+| Taxa mercado | 5% | 10% |
+| Taxa lavagem | 20-40% | 30-50% |
+| Margem crafting | ~200% | ~50-70% |
 
 ---
 
@@ -204,6 +211,33 @@ const term = GLOSSARY.terms.find(t => t.term === 'Heat');
 | GET | `/api/weather` | Clima e tempo actuais |
 | GET | `/api/notoriety` | Notoriedade do jogador |
 | GET | `/api/police-status` | Status policial |
+
+### NPCs e Relacionamentos (NOVO)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/npcs/contacts` | Lista de contactos com relacionamentos |
+| GET | `/api/npcs/{id}/relationship` | Detalhes de relacionamento |
+| POST | `/api/npcs/{id}/interact` | Interagir com NPC |
+
+### Economia Dinâmica (NOVO)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/economy/market-prices` | Preços dinâmicos do mercado |
+| GET | `/api/economy/price-history/{cat}` | Histórico de preços |
+| POST | `/api/economy/simulate-fluctuation` | Simular flutuação |
+
+### Territórios Avançados (NOVO)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/territories/analysis` | Análise completa de territórios |
+| GET | `/api/territories/{id}/power` | Poder de território específico |
+
+### Eventos Dinâmicos (NOVO)
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/events/dynamic` | Eventos baseados em condições |
+| GET | `/api/events/impact` | Impacto no jogador |
+| GET | `/api/events/predictions` | Previsões de eventos |
 
 ### Missões
 | Método | Endpoint | Descrição |
@@ -229,7 +263,7 @@ const term = GLOSSARY.terms.find(t => t.term === 'Heat');
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET | `/api/neighborhoods` | Lista de bairros |
-| GET | `/api/vehicles` | Veículos disponíveis |
+| GET | `/api/vehicles/catalog` | Veículos disponíveis |
 | GET | `/api/events` | Eventos activos |
 | GET | `/api/faq` | Perguntas frequentes |
 | GET | `/api/news` | Novidades |
@@ -241,7 +275,7 @@ const term = GLOSSARY.terms.find(t => t.term === 'Heat');
 ```
 /app
 ├── backend/
-│   ├── server.py           # API principal (~3800 linhas)
+│   ├── server.py           # API principal (~4200 linhas)
 │   ├── game_engine.py      # Lógica avançada (~1400 linhas)
 │   └── requirements.txt
 │
@@ -250,11 +284,16 @@ const term = GLOSSARY.terms.find(t => t.term === 'Heat');
 │   │   ├── components/     # Componentes reutilizáveis
 │   │   ├── contexts/       # AuthContext, GameContext
 │   │   ├── data/
-│   │   │   └── lore.js     # Dados de lore (~1370 linhas)
+│   │   │   └── lore.js     # Dados de lore (~1370 linhas) ✅ INTEGRADO
 │   │   ├── hooks/          # Custom hooks
 │   │   ├── pages/          # Páginas da aplicação
+│   │   │   ├── ContactsPage.js  # NOVO - NPCs e relacionamentos
+│   │   │   ├── EventsPage.js    # ACTUALIZADO - 4 tabs
+│   │   │   ├── GangPage.js      # ACTUALIZADO - Análise territórios
+│   │   │   ├── HomePage.js      # ACTUALIZADO - gameLogic integrado
+│   │   │   └── MarketPage.js    # ACTUALIZADO - Preços dinâmicos
 │   │   └── utils/
-│   │       └── gameLogic.js # Lógica frontend (~870 linhas)
+│   │       └── gameLogic.js # Lógica frontend (~890 linhas) ✅ INTEGRADO
 │   └── package.json
 │
 └── README.md               # Esta documentação
@@ -287,13 +326,13 @@ sudo supervisorctl status
 
 ## 📊 Estatísticas do Código
 
-| Componente | Linhas |
-|------------|--------|
-| Backend (server.py) | ~3800 |
-| Game Engine (game_engine.py) | ~1415 |
-| Game Logic (gameLogic.js) | ~867 |
-| Lore Data (lore.js) | ~1373 |
-| **Total de Lógica Adicional** | **~3655** |
+| Componente | Linhas | Status |
+|------------|--------|--------|
+| Backend (server.py) | ~4200 | ✅ Actualizado |
+| Game Engine (game_engine.py) | ~1415 | ✅ Integrado |
+| Game Logic (gameLogic.js) | ~890 | ✅ Integrado |
+| Lore Data (lore.js) | ~1373 | ✅ Integrado |
+| **Total de Código** | **~7878** | |
 
 ---
 
@@ -314,23 +353,32 @@ sudo supervisorctl status
 - [x] Missões procedurais
 - [x] Lore de bairros
 
-### Fase 3 - Pendente 🔄
-- [ ] Sistema de relacionamentos com NPCs
-- [ ] Economia dinâmica com preços flutuantes
-- [ ] Controlo territorial avançado
-- [ ] Eventos dinâmicos reactivos
-- [ ] Integração completa de gameLogic.js
-- [ ] Integração completa de lore.js
+### Fase 3 - Sistemas Avançados ✅
+- [x] Sistema de relacionamentos com NPCs
+- [x] Economia dinâmica com preços flutuantes
+- [x] Controlo territorial avançado
+- [x] Eventos dinâmicos reactivos
+- [x] Integração completa de gameLogic.js
+- [x] Integração completa de lore.js
+- [x] Rebalanceamento económico
+
+### Fase 4 - Futuras Melhorias 🔄
+- [ ] Sistema de PvP directo
+- [ ] Leilões no mercado negro
+- [ ] Missões cooperativas
+- [ ] Sistema de reputação entre jogadores
+- [ ] Eventos sazonais
 
 ---
 
 ## 📝 Notas de Desenvolvimento
 
-- Os ficheiros `gameLogic.js` e `lore.js` contêm lógica e dados prontos a usar
-- Basta importar nas páginas relevantes para activar as features
-- O backend já tem os sistemas implementados, falta criar os endpoints específicos para alguns
-- A arquitectura está preparada para expansão modular
+- Todos os sistemas de backend estão funcionais e testados
+- A economia foi rebalanceada para progressão mais desafiante
+- gameLogic.js e lore.js estão agora integrados nas páginas relevantes
+- O sistema de relacionamentos permite interacções significativas com NPCs
+- Previsões de guerras ajudam na tomada de decisões estratégicas
 
 ---
 
-*Última actualização: Fevereiro 2026*
+*Última actualização: Julho 2025*
