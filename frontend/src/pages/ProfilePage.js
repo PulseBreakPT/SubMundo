@@ -297,7 +297,7 @@ const ActivityItem = ({ activity }) => {
 
 export default function ProfilePage() {
   const { user, logout, api } = useAuth();
-  const { gameState, launderMoney, actionLoading, showNotification } = useGame();
+  const { gameState, showNotification } = useGame();
   
   // State
   const [activeTab, setActiveTab] = useState('overview');
