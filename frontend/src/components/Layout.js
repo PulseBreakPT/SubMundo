@@ -8,9 +8,9 @@ export const Layout = ({ children }) => {
       <Sidebar />
       <BottomNav />
       
-      <main className="md:ml-20 lg:ml-56 pb-20 md:pb-0">
+      <main className="md:ml-20 lg:ml-56 pb-24 md:pb-0">
         <Header />
-        <div className="p-4 md:p-6 lg:p-8">
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>
