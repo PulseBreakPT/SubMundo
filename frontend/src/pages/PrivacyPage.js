@@ -11,7 +11,8 @@ import {
   User, Users, Target, DollarSign, Building, Factory, Car,
   Unlock, Award, Crown, Star, Zap, Gift, Trophy, Activity,
   Server, Cpu, HardDrive, Wifi, Cookie, Fingerprint, MapPin,
-  Plus, Minus, ArrowUp, ArrowDown, AlertCircle, CheckCircle, XCircle
+  Plus, Minus, ArrowUp, ArrowDown, AlertCircle, CheckCircle, XCircle,
+  ScrollText
 } from 'lucide-react';
 import clsx from 'clsx';
 
