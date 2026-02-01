@@ -152,6 +152,115 @@ NPCS_CONFIG = [
     {"id": "boss_carvalho", "name": "Chefe Carvalho", "role": "Crime Boss", "location": "centro", "description": "Controla grande parte do crime organizado. Respeitado e temido.", "services": ["contracts", "protection"], "relationship_effects": {"positive": "contracts", "negative": "hit"}},
 ]
 
+# ============= PROPERTY & BUSINESS SYSTEM =============
+
+PROPERTY_TYPES = [
+    {"id": "apartamento", "name": "Apartamento", "description": "Espaço compacto no centro urbano.", "base_price": 5000, "income_per_hour": 50, "maintenance_cost": 20, "capacity": 1, "allowed_neighborhoods": ["centro", "comercial", "universidade"]},
+    {"id": "casa", "name": "Casa", "description": "Residência confortável com espaço extra.", "base_price": 15000, "income_per_hour": 120, "maintenance_cost": 50, "capacity": 2, "allowed_neighborhoods": ["suburbio", "praia", "elite"]},
+    {"id": "armazem", "name": "Armazém", "description": "Espaço amplo para guardar mercadoria.", "base_price": 25000, "income_per_hour": 200, "maintenance_cost": 80, "capacity": 10, "allowed_neighborhoods": ["porto", "industrial", "comercial"]},
+    {"id": "fabrica", "name": "Fábrica Clandestina", "description": "Instalação secreta para operações ilegais.", "base_price": 50000, "income_per_hour": 400, "maintenance_cost": 150, "capacity": 5, "allowed_neighborhoods": ["industrial", "porto", "favela"]},
+    {"id": "mansao", "name": "Mansão", "description": "Propriedade de luxo com todas as comodidades.", "base_price": 100000, "income_per_hour": 800, "maintenance_cost": 300, "capacity": 8, "allowed_neighborhoods": ["elite", "praia"]},
+    {"id": "bunker", "name": "Bunker Subterrâneo", "description": "Refúgio secreto e fortificado.", "base_price": 75000, "income_per_hour": 500, "maintenance_cost": 200, "capacity": 15, "allowed_neighborhoods": ["industrial", "suburbio"]},
+]
+
+BUSINESS_TYPES = [
+    {
+        "id": "laboratorio",
+        "name": "Laboratório",
+        "description": "Produz substâncias sintéticas de alta qualidade.",
+        "neighborhood": "favela",
+        "price": 30000,
+        "maintenance_cost": 500,
+        "icon": "flask",
+        "products": ["droga_sintetica", "medicamento_ilegal", "estimulante"]
+    },
+    {
+        "id": "oficina",
+        "name": "Oficina Clandestina",
+        "description": "Modifica e fabrica armas fora do radar.",
+        "neighborhood": "porto",
+        "price": 40000,
+        "maintenance_cost": 600,
+        "icon": "wrench",
+        "products": ["arma_modificada", "silenciador_custom", "colete_reforçado"]
+    },
+    {
+        "id": "falsificador",
+        "name": "Falsificador",
+        "description": "Especialista em documentos e identidades falsas.",
+        "neighborhood": "centro",
+        "price": 35000,
+        "maintenance_cost": 450,
+        "icon": "file-text",
+        "products": ["documento_falso", "passaporte_falso", "carta_conducao_falsa"]
+    },
+    {
+        "id": "garage",
+        "name": "Garage Tunning",
+        "description": "Personaliza e melhora veículos para fugas.",
+        "neighborhood": "suburbio",
+        "price": 45000,
+        "maintenance_cost": 550,
+        "icon": "car",
+        "products": ["turbo_kit", "blindagem_leve", "kit_fuga"]
+    },
+    {
+        "id": "destilaria",
+        "name": "Destilaria Ilegal",
+        "description": "Produz bebidas contrabandeadas de alta qualidade.",
+        "neighborhood": "noite",
+        "price": 25000,
+        "maintenance_cost": 350,
+        "icon": "wine",
+        "products": ["whisky_premium", "vodka_artesanal", "licor_raro"]
+    },
+    {
+        "id": "centro_hacking",
+        "name": "Centro de Hacking",
+        "description": "Operações digitais e cibercrimes.",
+        "neighborhood": "comercial",
+        "price": 50000,
+        "maintenance_cost": 700,
+        "icon": "terminal",
+        "products": ["malware_custom", "dados_roubados", "crypto_mixer"]
+    },
+]
+
+CRAFTING_RECIPES = [
+    # Laboratório (Favela)
+    {"id": "droga_sintetica", "name": "Droga Sintética", "description": "Substância potente para revenda.", "business_type": "laboratorio", "cost": 500, "time_minutes": 30, "sell_value": 1500, "quantity": 5, "skill_bonus": "hacking", "heat_risk": 15},
+    {"id": "medicamento_ilegal", "name": "Medicamento Ilegal", "description": "Fármacos sem receita.", "business_type": "laboratorio", "cost": 300, "time_minutes": 20, "sell_value": 800, "quantity": 10, "skill_bonus": None, "heat_risk": 5},
+    {"id": "estimulante", "name": "Estimulante Extremo", "description": "Boost de energia temporário.", "business_type": "laboratorio", "cost": 800, "time_minutes": 45, "sell_value": 2500, "quantity": 3, "skill_bonus": "hacking", "heat_risk": 20},
+    
+    # Oficina Clandestina (Porto)
+    {"id": "arma_modificada", "name": "Arma Modificada", "description": "Arma com performance melhorada.", "business_type": "oficina", "cost": 1500, "time_minutes": 60, "sell_value": 4000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 25},
+    {"id": "silenciador_custom", "name": "Silenciador Custom", "description": "Silenciador de alta qualidade.", "business_type": "oficina", "cost": 800, "time_minutes": 30, "sell_value": 2000, "quantity": 2, "skill_bonus": "stealth", "heat_risk": 10},
+    {"id": "colete_reforcado", "name": "Colete Reforçado", "description": "Proteção balística melhorada.", "business_type": "oficina", "cost": 2000, "time_minutes": 90, "sell_value": 5000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 15},
+    
+    # Falsificador (Centro)
+    {"id": "documento_falso", "name": "Documento Falso", "description": "ID falsa de alta qualidade.", "business_type": "falsificador", "cost": 400, "time_minutes": 25, "sell_value": 1200, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 8},
+    {"id": "passaporte_falso", "name": "Passaporte Falso", "description": "Passaporte internacional falso.", "business_type": "falsificador", "cost": 1000, "time_minutes": 60, "sell_value": 3000, "quantity": 1, "skill_bonus": "negotiation", "heat_risk": 20},
+    {"id": "carta_conducao_falsa", "name": "Carta de Condução Falsa", "description": "Habilitação falsificada.", "business_type": "falsificador", "cost": 300, "time_minutes": 15, "sell_value": 800, "quantity": 5, "skill_bonus": None, "heat_risk": 5},
+    
+    # Garage Tunning (Subúrbio)
+    {"id": "turbo_kit", "name": "Kit Turbo", "description": "Aumenta velocidade do veículo.", "business_type": "garage", "cost": 2500, "time_minutes": 120, "sell_value": 6000, "quantity": 1, "skill_bonus": "driving", "heat_risk": 5},
+    {"id": "blindagem_leve", "name": "Blindagem Leve", "description": "Proteção básica para veículo.", "business_type": "garage", "cost": 3000, "time_minutes": 150, "sell_value": 7500, "quantity": 1, "skill_bonus": "driving", "heat_risk": 8},
+    {"id": "kit_fuga", "name": "Kit de Fuga", "description": "Equipamento para fugas rápidas.", "business_type": "garage", "cost": 1500, "time_minutes": 60, "sell_value": 4000, "quantity": 1, "skill_bonus": "stealth", "heat_risk": 3},
+    
+    # Destilaria (Noite)
+    {"id": "whisky_premium", "name": "Whisky Premium", "description": "Bebida de alta qualidade.", "business_type": "destilaria", "cost": 600, "time_minutes": 45, "sell_value": 1800, "quantity": 6, "skill_bonus": "negotiation", "heat_risk": 3},
+    {"id": "vodka_artesanal", "name": "Vodka Artesanal", "description": "Destilado puro.", "business_type": "destilaria", "cost": 400, "time_minutes": 30, "sell_value": 1200, "quantity": 8, "skill_bonus": None, "heat_risk": 2},
+    {"id": "licor_raro", "name": "Licor Raro", "description": "Bebida exclusiva e cara.", "business_type": "destilaria", "cost": 1000, "time_minutes": 90, "sell_value": 3500, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 5},
+    
+    # Centro de Hacking (Comercial)
+    {"id": "malware_custom", "name": "Malware Custom", "description": "Software malicioso personalizado.", "business_type": "centro_hacking", "cost": 2000, "time_minutes": 60, "sell_value": 5500, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 30},
+    {"id": "dados_roubados", "name": "Dados Roubados", "description": "Informação sensível de empresas.", "business_type": "centro_hacking", "cost": 1500, "time_minutes": 45, "sell_value": 4000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 25},
+    {"id": "crypto_mixer", "name": "Crypto Mixer", "description": "Serviço de lavagem de criptomoedas.", "business_type": "centro_hacking", "cost": 3000, "time_minutes": 30, "sell_value": 8000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 15},
+]
+
+# Market fee percentage
+MARKET_FEE = 0.05  # 5%
+
 CONTRACTS_CONFIG = [
     {"id": "assassination", "name": "Assassinato", "description": "Eliminar um alvo específico", "base_reward": 10000, "risk": 9, "heat_impact": 50, "reputation_impact": 20, "duration_hours": 24},
     {"id": "kidnapping", "name": "Rapto", "description": "Sequestrar e manter refém", "base_reward": 15000, "risk": 8, "heat_impact": 40, "reputation_impact": 15, "duration_hours": 48},
