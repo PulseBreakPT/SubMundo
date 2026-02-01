@@ -337,7 +337,167 @@ export default function GangPage() {
           {/* Territories Tab */}
           {activeTab === 'territories' && (
             <div className="space-y-4">
-              {myGang.territories?.length === 0 ? (
+              {/* Gang Power Analysis */}
+              {territoryAnalysis && (
+                <Card title="Poder da Gangue" icon={Zap} className="border-gold">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-3xl font-mono text-gold">{territoryAnalysis.our_gang?.power?.toFixed(0) || 0}</p>
+                      <p className="text-xs text-text-secondary uppercase">Poder Total</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-mono text-primary">{territoryAnalysis.our_gang?.members_count || 0}</p>
+                      <p className="text-xs text-text-secondary uppercase">Membros</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-mono text-success">{territoryAnalysis.our_gang?.territories_count || 0}</p>
+                      <p className="text-xs text-text-secondary uppercase">Territórios</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-mono text-secondary">
+                        {territoryAnalysis.territories?.filter(t => t.can_attack).length || 0}
+                      </p>
+                      <p className="text-xs text-text-secondary uppercase">Alvos Possíveis</p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Territory Analysis Grid */}
+              {loadingAnalysis ? (
+                <Card>
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-text-secondary">A analisar territórios...</p>
+                  </div>
+                </Card>
+              ) : territoryAnalysis ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {territoryAnalysis.territories?.map((territory) => (
+                    <div
+                      key={territory.id}
+                      className={clsx(
+                        'bg-surface border p-4',
+                        territory.status === 'controlled' ? 'border-gold' : 
+                        territory.status === 'enemy_controlled' ? 'border-error' : 'border-border'
+                      )}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={clsx(
+                            'w-10 h-10 flex items-center justify-center border',
+                            territory.status === 'controlled' ? 'bg-gold/20 border-gold' :
+                            territory.status === 'enemy_controlled' ? 'bg-error/20 border-error' :
+                            'bg-surface-highlight border-border'
+                          )}>
+                            <Map size={20} className={
+                              territory.status === 'controlled' ? 'text-gold' :
+                              territory.status === 'enemy_controlled' ? 'text-error' :
+                              'text-text-secondary'
+                            } />
+                          </div>
+                          <div>
+                            <h3 className="font-heading text-lg text-text-primary">{territory.name}</h3>
+                            <Badge 
+                              variant={
+                                territory.status === 'controlled' ? 'gold' :
+                                territory.status === 'enemy_controlled' ? 'error' : 'secondary'
+                              }
+                            >
+                              {territory.status === 'controlled' ? 'NOSSO' :
+                               territory.status === 'enemy_controlled' ? territory.controller :
+                               'NEUTRO'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-success text-lg font-mono">€{territory.potential_income?.toFixed(0) || 0}</p>
+                          <p className="text-xs text-text-secondary">rendimento/h</p>
+                        </div>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="flex gap-4 text-sm mb-3">
+                        <span className="text-primary">Valor: {territory.economic_value}</span>
+                        <span className="text-error">Heat: {territory.heat_level}%</span>
+                      </div>
+
+                      {/* War Prediction */}
+                      {territory.war_prediction && territory.can_attack && (
+                        <div className={clsx(
+                          'p-3 rounded-lg mb-3',
+                          territory.war_prediction.attacker_chance > 60 ? 'bg-success/10 border border-success/30' :
+                          territory.war_prediction.attacker_chance > 40 ? 'bg-warning/10 border border-warning/30' :
+                          'bg-error/10 border border-error/30'
+                        )}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-text-secondary uppercase">Previsão de Guerra</span>
+                            <Badge 
+                              variant={
+                                territory.war_prediction.attacker_chance > 60 ? 'success' :
+                                territory.war_prediction.attacker_chance > 40 ? 'warning' : 'error'
+                              }
+                            >
+                              {territory.war_prediction.recommendation}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-text-secondary">Nossa chance:</span>
+                              <span className={clsx(
+                                'ml-2 font-mono',
+                                territory.war_prediction.attacker_chance > 50 ? 'text-success' : 'text-error'
+                              )}>
+                                {territory.war_prediction.attacker_chance?.toFixed(0) || 0}%
+                              </span>
+                            </div>
+                            {territory.war_prediction.our_power && (
+                              <div>
+                                <span className="text-text-secondary">Nosso poder:</span>
+                                <span className="ml-2 font-mono text-primary">
+                                  {territory.war_prediction.our_power?.toFixed(0)}
+                                </span>
+                              </div>
+                            )}
+                            {territory.war_prediction.enemy_power && (
+                              <div>
+                                <span className="text-text-secondary">Poder inimigo:</span>
+                                <span className="ml-2 font-mono text-error">
+                                  {territory.war_prediction.enemy_power?.toFixed(0)}
+                                </span>
+                              </div>
+                            )}
+                            {territory.war_prediction.estimated_losses && (
+                              <div>
+                                <span className="text-text-secondary">Perdas estimadas:</span>
+                                <span className="ml-2 font-mono text-warning">
+                                  {territory.war_prediction.estimated_losses?.toFixed(0)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Button */}
+                      {territory.can_attack && isLeader && (
+                        <Button
+                          variant={territory.war_prediction?.attacker_chance > 50 ? 'primary' : 'secondary'}
+                          fullWidth
+                          icon={Swords}
+                          onClick={() => {
+                            setSelectedNeighborhood(territory);
+                            setShowWarModal(true);
+                          }}
+                          disabled={actionLoading}
+                        >
+                          Atacar Território
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : myGang.territories?.length === 0 ? (
                 <Card>
                   <div className="text-center py-8">
                     <Map size={48} className="mx-auto text-text-secondary mb-4" />
@@ -375,6 +535,18 @@ export default function GangPage() {
                   })}
                 </div>
               )}
+
+              {/* Gang Warfare Lore */}
+              <Card title="Regras de Guerra" icon={Info}>
+                <div className="space-y-3 text-sm text-text-secondary">
+                  {GANGS_LORE.systemInfo.warfare.rules.map((rule, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-primary">•</span>
+                      <span>{rule}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
           )}
         </>
