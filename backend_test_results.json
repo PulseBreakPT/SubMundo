@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T18:56:34.664879",
-  "total_tests": 65,
-  "passed_tests": 60,
-  "success_rate": 92.3076923076923,
+  "timestamp": "2026-02-01T19:14:12.740971",
+  "total_tests": 72,
+  "passed_tests": 68,
+  "success_rate": 94.44444444444444,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac39471.22",
+      "details": "Money: \u20ac25371.22",
       "response_data": null
     },
     {
@@ -49,7 +49,7 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "details": "Success, Reward: \u20ac77.73",
       "response_data": null
     },
     {
@@ -61,7 +61,7 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac37.94",
+      "details": "Success, Reward: \u20ac395.64",
       "response_data": null
     },
     {
@@ -91,7 +91,7 @@
     {
       "test": "Global Rankings",
       "success": true,
-      "details": "Found 2 players",
+      "details": "Found 3 players",
       "response_data": null
     },
     {
@@ -139,13 +139,13 @@
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 0.5",
+      "details": "Heat multiplier: 1.0",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Boom Econ\u00f3mico",
+      "details": "Event triggered: Tr\u00e9gua entre Gangues",
       "response_data": null
     },
     {
@@ -187,25 +187,7 @@
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: f114174b-aa5c-4ec9-be91-4c4dde585890",
-      "response_data": null
-    },
-    {
-      "test": "Collect Property Income",
-      "success": true,
-      "details": "Must wait 1 hour to collect (expected)",
-      "response_data": null
-    },
-    {
-      "test": "Property Maintenance",
-      "success": true,
-      "details": "Property in perfect condition (expected)",
-      "response_data": null
-    },
-    {
-      "test": "Sell Property",
-      "success": true,
-      "details": "Sold for \u20ac0",
+      "details": "Cannot buy property (insufficient funds or limit reached)",
       "response_data": null
     },
     {
@@ -361,7 +343,7 @@
     {
       "test": "Profile Goals - Create",
       "success": true,
-      "details": "Created goal with ID: 66e56874-d7f9-4aa3-85cf-5070faff90a9",
+      "details": "Created goal with ID: 38700b9b-6b97-42d6-97cd-9ba7f5751098",
       "response_data": null
     },
     {
@@ -379,19 +361,79 @@
     {
       "test": "Profile Activity Log",
       "success": true,
-      "details": "Found 31 activity entries",
+      "details": "Found 36 activity entries",
       "response_data": null
     },
     {
       "test": "Profile Leaderboard Position",
+      "success": true,
+      "details": "Player rankings retrieved: 3 categories",
+      "response_data": null
+    },
+    {
+      "test": "Profile Search Players",
+      "success": true,
+      "details": "Found 1 players matching 'test'",
+      "response_data": null
+    },
+    {
+      "test": "Bank Status",
+      "success": true,
+      "details": "Bank balance: \u20ac0.0",
+      "response_data": null
+    },
+    {
+      "test": "Bank Deposit",
+      "success": true,
+      "details": "Deposited \u20ac100, new balance: \u20ac100.0",
+      "response_data": null
+    },
+    {
+      "test": "Bank Status After Deposit",
+      "success": true,
+      "details": "Bank balance: \u20ac100.1",
+      "response_data": null
+    },
+    {
+      "test": "Bank Withdraw",
+      "success": true,
+      "details": "Withdrew \u20ac50, fee: \u20ac0.25, new balance: \u20ac50.099999999999994",
+      "response_data": null
+    },
+    {
+      "test": "Bank Investments",
       "success": false,
       "details": "Status: 200",
       "response_data": null
     },
     {
-      "test": "Profile Search Players",
-      "success": false,
-      "details": "Status: 200",
+      "test": "Bank Loans Info",
+      "success": true,
+      "details": "Max loan: \u20ac2000.0, Available: \u20ac2000.0",
+      "response_data": null
+    },
+    {
+      "test": "Request Loan",
+      "success": true,
+      "details": "Loan approved: \u20ac500, ID: 7dc17951-2b94-4dac-a983-b79e6df126b9",
+      "response_data": null
+    },
+    {
+      "test": "Bank Transactions",
+      "success": true,
+      "details": "Found 5 transactions",
+      "response_data": null
+    },
+    {
+      "test": "Bank Robbery Targets",
+      "success": true,
+      "details": "Found 2 targets, Can rob: True",
+      "response_data": null
+    },
+    {
+      "test": "Bank Transfer",
+      "success": true,
+      "details": "Transfer failed as expected (invalid recipient or insufficient funds)",
       "response_data": null
     }
   ]
