@@ -4,10 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge, Modal, Input } from '../components/UI';
 import { useMissionTimer } from '../hooks/useCountdown';
+import { GangSystem } from '../utils/gameLogic';
+import { GANGS_LORE } from '../data/lore';
 import { 
   Users, Crown, Shield, DollarSign, Map, 
   Plus, LogOut, Swords, ChevronRight, Clock,
-  Wallet, Target, AlertTriangle
+  Wallet, Target, AlertTriangle, TrendingUp, Eye,
+  Info, Zap
 } from 'lucide-react';
 import clsx from 'clsx';
 
