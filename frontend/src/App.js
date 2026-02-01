@@ -19,6 +19,7 @@ import FAQPage from './pages/FAQPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ContactsPage from './pages/ContactsPage';
+import BankPage from './pages/BankPage';
 import './App.css';
 
 // Remove Emergent badge
