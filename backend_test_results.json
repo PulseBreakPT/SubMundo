@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T12:56:56.658732",
-  "total_tests": 43,
-  "passed_tests": 41,
-  "success_rate": 95.34883720930233,
+  "timestamp": "2026-02-01T18:00:20.321537",
+  "total_tests": 55,
+  "passed_tests": 51,
+  "success_rate": 92.72727272727272,
   "results": [
     {
       "test": "User Registration",
@@ -19,13 +19,13 @@
     {
       "test": "Get Current User",
       "success": true,
-      "details": "User ID: 430c51d8-a36a-4865-9b03-f3a6122e80f4",
+      "details": "User ID: 5e123495-cca6-4ca4-a992-04cecaedb251",
       "response_data": null
     },
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac10658.552089508412",
+      "details": "Money: \u20ac19824.156419925464",
       "response_data": null
     },
     {
@@ -49,7 +49,7 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "details": "Success, Reward: \u20ac178.54",
       "response_data": null
     },
     {
@@ -61,7 +61,7 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac233.17",
+      "details": "Success, Reward: \u20ac559.36",
       "response_data": null
     },
     {
@@ -85,13 +85,13 @@
     {
       "test": "Money Laundering",
       "success": true,
-      "details": "Laundering failed (game mechanic)",
+      "details": "Laundered \u20ac50",
       "response_data": null
     },
     {
       "test": "Global Rankings",
       "success": true,
-      "details": "Found 1 players",
+      "details": "Found 2 players",
       "response_data": null
     },
     {
@@ -133,19 +133,19 @@
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 2 active events",
+      "details": "Found 1 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 0.6000000000000001",
+      "details": "Heat multiplier: 1.0",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Cannot trigger event (max events active or duplicate)",
+      "details": "Event triggered: Apag\u00e3o Geral",
       "response_data": null
     },
     {
@@ -175,7 +175,7 @@
     {
       "test": "My Properties",
       "success": true,
-      "details": "Player has 1 properties",
+      "details": "Player has 0 properties",
       "response_data": null
     },
     {
@@ -187,7 +187,7 @@
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: b7b26e84-9ec1-4e3f-aa0a-51dd020a065c",
+      "details": "Bought apartamento in centro, ID: fb3029b3-4822-4c34-bc8f-4e842c58c991",
       "response_data": null
     },
     {
@@ -260,6 +260,78 @@
       "test": "Buy from Market",
       "success": true,
       "details": "No listings available to buy from (expected)",
+      "response_data": null
+    },
+    {
+      "test": "NPC Contacts",
+      "success": true,
+      "details": "Found 10 NPC contacts",
+      "response_data": null
+    },
+    {
+      "test": "NPC Relationship Details",
+      "success": true,
+      "details": "Relationship level: neutral",
+      "response_data": null
+    },
+    {
+      "test": "NPC Interaction (Gift)",
+      "success": true,
+      "details": "Gained 0 relationship points",
+      "response_data": null
+    },
+    {
+      "test": "Market Prices",
+      "success": true,
+      "details": "Found prices for 6 categories",
+      "response_data": null
+    },
+    {
+      "test": "Market Price Categories",
+      "success": true,
+      "details": "Found 2 expected categories",
+      "response_data": null
+    },
+    {
+      "test": "Price History (Drugs)",
+      "success": true,
+      "details": "Found 24 price history entries",
+      "response_data": null
+    },
+    {
+      "test": "Simulate Market Fluctuation",
+      "success": true,
+      "details": "Simulated fluctuations for 0 categories",
+      "response_data": null
+    },
+    {
+      "test": "Territories Analysis",
+      "success": true,
+      "details": "Found analysis for 10 territories",
+      "response_data": null
+    },
+    {
+      "test": "War Predictions",
+      "success": true,
+      "details": "War chance for first territory: 0%",
+      "response_data": null
+    },
+    {
+      "test": "Dynamic Events",
+      "success": false,
+      "details": "Status: 200",
+      "response_data": null
+    },
+    {
+      "test": "Events Impact",
+      "success": false,
+      "details": "Status: 200",
+      "response_data": null
+    },
+    {
+      "test": "Events Predictions",
+      "success": true,
+      "details": "Found 2 event predictions",
       "response_data": null
     }
   ]
