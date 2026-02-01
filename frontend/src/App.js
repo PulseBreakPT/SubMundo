@@ -11,6 +11,9 @@ import GangPage from './pages/GangPage';
 import ProfilePage from './pages/ProfilePage';
 import VehiclesPage from './pages/VehiclesPage';
 import EventsPage from './pages/EventsPage';
+import PropertiesPage from './pages/PropertiesPage';
+import BusinessPage from './pages/BusinessPage';
+import MarketPage from './pages/MarketPage';
 import './App.css';
 
 // Remove Emergent badge
