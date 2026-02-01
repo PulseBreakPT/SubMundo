@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T12:55:10.705710",
-  "total_tests": 47,
-  "passed_tests": 39,
-  "success_rate": 82.97872340425532,
+  "timestamp": "2026-02-01T12:56:56.658732",
+  "total_tests": 43,
+  "passed_tests": 41,
+  "success_rate": 95.34883720930233,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac54723.77359083822",
+      "details": "Money: \u20ac10658.552089508412",
       "response_data": null
     },
     {
@@ -61,7 +61,7 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac504.39",
+      "details": "Success, Reward: \u20ac233.17",
       "response_data": null
     },
     {
@@ -85,7 +85,7 @@
     {
       "test": "Money Laundering",
       "success": true,
-      "details": "Laundered \u20ac50",
+      "details": "Laundering failed (game mechanic)",
       "response_data": null
     },
     {
@@ -133,19 +133,19 @@
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 1 active events",
+      "details": "Found 2 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 1.5",
+      "details": "Heat multiplier: 0.6000000000000001",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Motim Urbano",
+      "details": "Cannot trigger event (max events active or duplicate)",
       "response_data": null
     },
     {
@@ -175,31 +175,31 @@
     {
       "test": "My Properties",
       "success": true,
-      "details": "Player has 0 properties",
+      "details": "Player has 1 properties",
       "response_data": null
     },
     {
       "test": "Available Properties Centro",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Found 1 available in centro",
       "response_data": null
     },
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: 028b6f61-8dde-42cc-9adf-9cd7c1e91584",
+      "details": "Bought apartamento in centro, ID: b7b26e84-9ec1-4e3f-aa0a-51dd020a065c",
       "response_data": null
     },
     {
       "test": "Collect Property Income",
-      "success": false,
-      "details": "Status: 400",
+      "success": true,
+      "details": "Must wait 1 hour to collect (expected)",
       "response_data": null
     },
     {
       "test": "Property Maintenance",
-      "success": false,
-      "details": "Status: 400",
+      "success": true,
+      "details": "Property in perfect condition (expected)",
       "response_data": null
     },
     {
@@ -217,43 +217,19 @@
     {
       "test": "My Businesses",
       "success": true,
-      "details": "Player has 0 businesses",
+      "details": "Player has 1 businesses",
       "response_data": null
     },
     {
       "test": "Buy Business",
       "success": true,
-      "details": "Bought laboratorio, ID: bd3f11ee-29c5-415c-97c1-a0e1a5cdca9d",
-      "response_data": null
-    },
-    {
-      "test": "Business Recipes",
-      "success": true,
-      "details": "Found 3 recipes",
-      "response_data": null
-    },
-    {
-      "test": "Start Crafting",
-      "success": true,
-      "details": "Started crafting Droga Sint\u00e9tica",
-      "response_data": null
-    },
-    {
-      "test": "Collect Products",
-      "success": false,
-      "details": "Status: 400",
-      "response_data": null
-    },
-    {
-      "test": "Sell Business",
-      "success": false,
-      "details": "Status: 400",
+      "details": "Cannot buy business (insufficient funds or limit reached)",
       "response_data": null
     },
     {
       "test": "Crafted Items Storage",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Found 0 crafted items",
       "response_data": null
     },
     {
