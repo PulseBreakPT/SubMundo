@@ -1141,9 +1141,9 @@ async def quick_action(action: QuickActionRequest, current_user: dict = Depends(
     player = await db.players.find_one({"id": current_user["id"]})
     
     actions_config = {
-        "roubo_rapido": {"energy_cost": 5, "risk": 2, "reward_range": (20, 100), "heat": 3, "reputation": 1, "skill": "stealth"},
-        "hustle_rua": {"energy_cost": 8, "risk": 3, "reward_range": (50, 200), "heat": 5, "reputation": 2, "skill": "negotiation"},
-        "evento_aleatorio": {"energy_cost": 3, "risk": 1, "reward_range": (10, 500), "heat": 0, "reputation": 1, "skill": None},
+        "roubo_rapido": {"energy_cost": 8, "risk": 3, "reward_range": (10, 50), "heat": 5, "reputation": 1, "skill": "stealth"},
+        "hustle_rua": {"energy_cost": 12, "risk": 4, "reward_range": (25, 100), "heat": 8, "reputation": 2, "skill": "negotiation"},
+        "evento_aleatorio": {"energy_cost": 5, "risk": 2, "reward_range": (5, 150), "heat": 2, "reputation": 1, "skill": None},
     }
     
     if action.action_type not in actions_config:
