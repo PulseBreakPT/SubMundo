@@ -17,7 +17,6 @@ const BusinessIcon = ({ type, size = 24 }) => {
   const Icon = icons[type] || Factory;
   return <Icon size={size} />;
 };
-};
 
 const BusinessCard = ({ business, onViewRecipes, onCollect, onSell, loading }) => {
   const [expanded, setExpanded] = useState(false);
