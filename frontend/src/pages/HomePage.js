@@ -6,7 +6,7 @@ import { useCountdown, useMissionTimer } from '../hooks/useCountdown';
 import { StatCard, Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge } from '../components/UI';
 import { LevelSystem, HeatSystem, getTipsAndStrategies } from '../utils/gameLogic';
-import { QUOTES, getRandomWisdomQuote, NEIGHBORHOODS_LORE } from '../data/lore';
+import { getRandomWisdomQuote } from '../data/lore';
 import { 
   DollarSign, Flame, Star, Zap, Gift, Target, 
   Skull, Wallet, Clock, ChevronRight, Shield,
@@ -35,14 +35,25 @@ export default function HomePage() {
   // Calculate level info using LevelSystem
   const levelInfo = useMemo(() => {
     if (!player?.level) return null;
-    return LevelSystem.getLevelInfo(player.level);
+    const title = LevelSystem.getLevelTitle(player.level);
+    const bonuses = LevelSystem.getLevelBonuses(player.level);
+    return {
+      title: title.title,
+      color: title.color,
+      bonuses
+    };
   }, [player?.level]);
 
   // Calculate heat status using HeatSystem  
   const heatStatus = useMemo(() => {
-    if (!player?.heat) return null;
-    return HeatSystem.getHeatStatus(player.heat);
-  }, [player?.heat]);
+    if (player?.heat_individual === undefined) return null;
+    const danger = HeatSystem.getDangerLevel(player.heat_individual);
+    const advice = HeatSystem.getHeatAdvice(player.heat_individual);
+    return {
+      ...danger,
+      effects: advice
+    };
+  }, [player?.heat_individual]);
 
   // Get random tips
   const tips = useMemo(() => {
