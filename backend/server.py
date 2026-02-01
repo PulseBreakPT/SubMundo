@@ -1116,6 +1116,8 @@ async def create_gang(gang: GangCreate, current_user: dict = Depends(get_current
     
     await add_player_history(current_user["id"], "gang_created", {"gang_name": gang.name})
     
+    # Remove MongoDB _id before returning
+    new_gang.pop("_id", None)
     new_gang["created_at"] = new_gang["created_at"].isoformat()
     return new_gang
 
@@ -1316,6 +1318,9 @@ async def start_territory_war(neighborhood_id: str, current_user: dict = Depends
     
     await db.gang_wars.insert_one(new_war)
     
+    # Remove MongoDB _id before returning
+    new_war.pop("_id", None)
+    
     await db.neighborhoods.update_one(
         {"id": neighborhood_id},
         {"$inc": {"heat_level": 20}}
@@ -1479,6 +1484,8 @@ async def buy_vehicle(vehicle_id: str, current_user: dict = Depends(get_current_
         "price": vehicle_template["price"]
     })
     
+    # Remove MongoDB _id before returning
+    new_vehicle.pop("_id", None)
     new_vehicle["purchased_at"] = new_vehicle["purchased_at"].isoformat()
     
     return {"success": True, "message": f"Compraste {vehicle_template['name']}!", "vehicle": new_vehicle}
@@ -1608,6 +1615,8 @@ async def trigger_random_event(current_user: dict = Depends(get_current_user)):
     
     await db.city_events.insert_one(event)
     
+    # Remove MongoDB _id before returning
+    event.pop("_id", None)
     event["started_at"] = event["started_at"].isoformat()
     event["ends_at"] = event["ends_at"].isoformat()
     
