@@ -640,11 +640,11 @@ class SubmundoAPITester:
         # Test get crafted items in storage
         success, data, status = self.make_request('GET', 'businesses/crafted-items')
         
-        if success and 'crafted_items' in data:
-            crafted_items = data['crafted_items']
+        if success and 'items' in data:
+            crafted_items = data['items']
             self.log_result("Crafted Items Storage", True, f"Found {len(crafted_items)} crafted items")
         else:
-            self.log_result("Crafted Items Storage", False, f"Status: {status}")
+            self.log_result("Crafted Items Storage", False, f"Status: {status}, Data: {data}")
 
     def test_market_system(self):
         """Test Market System endpoints"""
