@@ -1,11 +1,58 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
-import { Zap, DollarSign, Flame, Shield, Star } from 'lucide-react';
+import { Zap, DollarSign, Flame, Shield, Star, Sun, Moon, Cloud, CloudRain, CloudLightning, CloudFog, Thermometer, Sunrise, Sunset } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
+import { useState, useEffect } from 'react';
 
 export const Header = () => {
   const { user } = useAuth();
   const { gameState } = useGame();
+  const [weather, setWeather] = useState(null);
+
+  // Buscar clima/tempo
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/weather`);
+        if (response.ok) {
+          const data = await response.json();
+          setWeather(data);
+        }
+      } catch (error) {
+        console.log('Weather fetch error:', error);
+      }
+    };
+    
+    fetchWeather();
+    // Atualizar a cada 5 minutos
+    const interval = setInterval(fetchWeather, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Ícones de tempo/clima
+  const getTimeIcon = (timeId) => {
+    const icons = {
+      dawn: <Sunrise size={12} className="text-orange-400" />,
+      morning: <Sun size={12} className="text-yellow-400" />,
+      afternoon: <Sun size={12} className="text-yellow-500" />,
+      evening: <Sunset size={12} className="text-orange-500" />,
+      night: <Moon size={12} className="text-blue-300" />,
+      late_night: <Moon size={12} className="text-indigo-400" />
+    };
+    return icons[timeId] || <Sun size={12} />;
+  };
+
+  const getWeatherIcon = (weatherId) => {
+    const icons = {
+      clear: <Sun size={12} className="text-yellow-400" />,
+      cloudy: <Cloud size={12} className="text-gray-400" />,
+      rain: <CloudRain size={12} className="text-blue-400" />,
+      storm: <CloudLightning size={12} className="text-purple-400" />,
+      fog: <CloudFog size={12} className="text-gray-300" />,
+      heat: <Thermometer size={12} className="text-red-400" />
+    };
+    return icons[weatherId] || <Cloud size={12} />;
+  };
 
   if (!user) return null;
 
@@ -17,10 +64,39 @@ export const Header = () => {
       data-testid="header"
     >
       <div className="flex items-center justify-between gap-2 sm:gap-4">
-        {/* Mobile: Logo */}
-        <div className="md:hidden flex-shrink-0">
+        {/* Mobile: Logo + Weather */}
+        <div className="md:hidden flex-shrink-0 flex items-center gap-2">
           <h1 className="text-primary font-heading text-base sm:text-lg font-bold tracking-wider">SUBMUNDO</h1>
+          {weather && (
+            <div className="flex items-center gap-1 bg-surface-highlight/50 px-1.5 py-0.5 rounded text-[10px]">
+              {getTimeIcon(weather.time_of_day?.id)}
+              {getWeatherIcon(weather.weather?.id)}
+            </div>
+          )}
         </div>
+        
+        {/* Desktop: Weather Info */}
+        {weather && (
+          <div className="hidden md:flex items-center gap-2 bg-surface-highlight/30 px-2 py-1 rounded border border-border/50">
+            <div className="flex items-center gap-1">
+              {getTimeIcon(weather.time_of_day?.id)}
+              <span className="text-xs text-text-secondary">{weather.time_of_day?.label}</span>
+            </div>
+            <div className="w-px h-3 bg-border"></div>
+            <div className="flex items-center gap-1">
+              {getWeatherIcon(weather.weather?.id)}
+              <span className="text-xs text-text-secondary">{weather.weather?.label}</span>
+            </div>
+            {weather.effects?.stealth_bonus !== 0 && (
+              <>
+                <div className="w-px h-3 bg-border"></div>
+                <span className={`text-xs ${weather.effects.stealth_bonus > 0 ? 'text-success' : 'text-error'}`}>
+                  {weather.effects.stealth_bonus > 0 ? '+' : ''}{weather.effects.stealth_bonus} Furtividade
+                </span>
+              </>
+            )}
+          </div>
+        )}
         
         {/* Stats Bar */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-6 overflow-x-auto scrollbar-hide flex-1 justify-end md:justify-start">
