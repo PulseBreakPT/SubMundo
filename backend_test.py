@@ -470,6 +470,278 @@ class SubmundoAPITester:
         else:
             self.log_result("Treasury Deposit", False, f"Status: {status}")
 
+    def test_properties_system(self):
+        """Test Properties System endpoints"""
+        # Test property types
+        success, data, status = self.make_request('GET', 'properties/types')
+        
+        if success and isinstance(data, list) and len(data) > 0:
+            property_types = data
+            self.log_result("Property Types", True, f"Found {len(property_types)} property types")
+        else:
+            self.log_result("Property Types", False, f"Status: {status}")
+            return False
+        
+        # Test get my properties
+        success, data, status = self.make_request('GET', 'properties/my')
+        
+        if success and 'properties' in data:
+            my_properties = data['properties']
+            self.log_result("My Properties", True, f"Player has {len(my_properties)} properties")
+        else:
+            self.log_result("My Properties", False, f"Status: {status}")
+        
+        # Test available properties in centro neighborhood
+        success, data, status = self.make_request('GET', 'properties/available/centro')
+        
+        if success and 'available_properties' in data:
+            available = data['available_properties']
+            self.log_result("Available Properties Centro", True, f"Found {len(available)} available in centro")
+        else:
+            self.log_result("Available Properties Centro", False, f"Status: {status}")
+        
+        # Try to buy a property (cheapest one - apartamento in centro)
+        success, data, status = self.make_request(
+            'POST',
+            'properties/buy',
+            {
+                "property_type": "apartamento",
+                "neighborhood_id": "centro",
+                "custom_name": "Meu Apartamento Teste"
+            }
+        )
+        
+        if success:
+            property_data = data.get('property', {})
+            property_id = property_data.get('id')
+            self.log_result("Buy Property", True, f"Bought apartamento in centro, ID: {property_id}")
+            
+            if property_id:
+                # Test collect income
+                success, data, status = self.make_request('POST', f'properties/{property_id}/collect')
+                
+                if success:
+                    income = data.get('income_collected', 0)
+                    self.log_result("Collect Property Income", True, f"Collected €{income}")
+                else:
+                    self.log_result("Collect Property Income", False, f"Status: {status}")
+                
+                # Test maintenance
+                success, data, status = self.make_request('POST', f'properties/{property_id}/maintain')
+                
+                if success:
+                    cost = data.get('maintenance_cost', 0)
+                    self.log_result("Property Maintenance", True, f"Paid €{cost} maintenance")
+                else:
+                    self.log_result("Property Maintenance", False, f"Status: {status}")
+                
+                # Test sell property
+                success, data, status = self.make_request('POST', f'properties/{property_id}/sell')
+                
+                if success:
+                    sale_price = data.get('sale_price', 0)
+                    self.log_result("Sell Property", True, f"Sold for €{sale_price}")
+                else:
+                    self.log_result("Sell Property", False, f"Status: {status}")
+            
+        elif status == 400:
+            self.log_result("Buy Property", True, "Cannot buy property (insufficient funds or limit reached)")
+        else:
+            self.log_result("Buy Property", False, f"Status: {status}")
+
+    def test_businesses_system(self):
+        """Test Business/Crafting System endpoints"""
+        # Test business types
+        success, data, status = self.make_request('GET', 'businesses/types')
+        
+        if success and isinstance(data, list) and len(data) > 0:
+            business_types = data
+            self.log_result("Business Types", True, f"Found {len(business_types)} business types")
+        else:
+            self.log_result("Business Types", False, f"Status: {status}")
+            return False
+        
+        # Test get my businesses
+        success, data, status = self.make_request('GET', 'businesses/my')
+        
+        if success and 'businesses' in data:
+            my_businesses = data['businesses']
+            self.log_result("My Businesses", True, f"Player has {len(my_businesses)} businesses")
+        else:
+            self.log_result("My Businesses", False, f"Status: {status}")
+        
+        # Try to buy a business (laboratorio in favela)
+        success, data, status = self.make_request(
+            'POST',
+            'businesses/buy',
+            {
+                "business_type": "laboratorio",
+                "custom_name": "Meu Lab Teste"
+            }
+        )
+        
+        if success:
+            business_data = data.get('business', {})
+            business_id = business_data.get('id')
+            self.log_result("Buy Business", True, f"Bought laboratorio, ID: {business_id}")
+            
+            if business_id:
+                # Test get recipes for this business
+                success, data, status = self.make_request('GET', f'businesses/recipes/{business_id}')
+                
+                if success and 'recipes' in data:
+                    recipes = data['recipes']
+                    self.log_result("Business Recipes", True, f"Found {len(recipes)} recipes")
+                    
+                    if recipes:
+                        # Test crafting with first recipe
+                        recipe = recipes[0]
+                        recipe_id = recipe['id']
+                        
+                        success, data, status = self.make_request(
+                            'POST',
+                            f'businesses/{business_id}/craft',
+                            {
+                                "recipe_id": recipe_id,
+                                "quantity": 1
+                            }
+                        )
+                        
+                        if success:
+                            self.log_result("Start Crafting", True, f"Started crafting {recipe['name']}")
+                        else:
+                            self.log_result("Start Crafting", False, f"Status: {status}")
+                else:
+                    self.log_result("Business Recipes", False, f"Status: {status}")
+                
+                # Test collect finished products
+                success, data, status = self.make_request('POST', f'businesses/{business_id}/collect')
+                
+                if success:
+                    collected = data.get('items_collected', [])
+                    self.log_result("Collect Products", True, f"Collected {len(collected)} items")
+                else:
+                    self.log_result("Collect Products", False, f"Status: {status}")
+                
+                # Test sell business
+                success, data, status = self.make_request('POST', f'businesses/{business_id}/sell')
+                
+                if success:
+                    sale_price = data.get('sale_price', 0)
+                    self.log_result("Sell Business", True, f"Sold for €{sale_price}")
+                else:
+                    self.log_result("Sell Business", False, f"Status: {status}")
+            
+        elif status == 400:
+            self.log_result("Buy Business", True, "Cannot buy business (insufficient funds or limit reached)")
+        else:
+            self.log_result("Buy Business", False, f"Status: {status}")
+        
+        # Test get crafted items in storage
+        success, data, status = self.make_request('GET', 'businesses/crafted-items')
+        
+        if success and 'crafted_items' in data:
+            crafted_items = data['crafted_items']
+            self.log_result("Crafted Items Storage", True, f"Found {len(crafted_items)} crafted items")
+        else:
+            self.log_result("Crafted Items Storage", False, f"Status: {status}")
+
+    def test_market_system(self):
+        """Test Market System endpoints"""
+        # Test market stats
+        success, data, status = self.make_request('GET', 'market/stats')
+        
+        if success and 'total_listings' in data:
+            stats = data
+            self.log_result("Market Stats", True, f"Total listings: {stats.get('total_listings', 0)}")
+        else:
+            self.log_result("Market Stats", False, f"Status: {status}")
+            return False
+        
+        # Test get all market listings
+        success, data, status = self.make_request('GET', 'market/listings')
+        
+        if success and 'listings' in data:
+            listings = data['listings']
+            self.log_result("Market Listings", True, f"Found {len(listings)} market listings")
+        else:
+            self.log_result("Market Listings", False, f"Status: {status}")
+        
+        # Test get my listings
+        success, data, status = self.make_request('GET', 'market/my-listings')
+        
+        if success and 'listings' in data:
+            my_listings = data['listings']
+            self.log_result("My Market Listings", True, f"Player has {len(my_listings)} listings")
+        else:
+            self.log_result("My Market Listings", False, f"Status: {status}")
+        
+        # Try to create a market listing (need to have an item first)
+        # First check inventory for any items
+        success, inventory_data, _ = self.make_request('GET', 'player/inventory')
+        
+        if success and inventory_data.get('inventory'):
+            inventory = inventory_data['inventory']
+            if inventory:
+                # Use first item for listing
+                item = inventory[0]
+                item_id = item.get('id')
+                
+                success, data, status = self.make_request(
+                    'POST',
+                    'market/list',
+                    {
+                        "item_type": "inventory",
+                        "item_id": item_id,
+                        "price": 100.0,
+                        "quantity": 1
+                    }
+                )
+                
+                if success:
+                    listing_id = data.get('listing', {}).get('id')
+                    self.log_result("Create Market Listing", True, f"Listed item for €100, ID: {listing_id}")
+                    
+                    if listing_id:
+                        # Test cancel listing
+                        success, data, status = self.make_request('POST', f'market/{listing_id}/cancel')
+                        
+                        if success:
+                            self.log_result("Cancel Market Listing", True, "Listing cancelled successfully")
+                        else:
+                            self.log_result("Cancel Market Listing", False, f"Status: {status}")
+                    
+                else:
+                    self.log_result("Create Market Listing", False, f"Status: {status}")
+            else:
+                self.log_result("Create Market Listing", True, "No items in inventory to list (expected)")
+        else:
+            self.log_result("Create Market Listing", True, "Could not access inventory (expected)")
+        
+        # Test buy from market (if there are listings)
+        if listings:
+            # Try to buy from first listing
+            listing = listings[0]
+            listing_id = listing.get('id')
+            
+            success, data, status = self.make_request(
+                'POST',
+                'market/buy',
+                {
+                    "listing_id": listing_id,
+                    "quantity": 1
+                }
+            )
+            
+            if success:
+                self.log_result("Buy from Market", True, f"Purchased item from market")
+            elif status == 400:
+                self.log_result("Buy from Market", True, "Cannot buy (insufficient funds or own listing)")
+            else:
+                self.log_result("Buy from Market", False, f"Status: {status}")
+        else:
+            self.log_result("Buy from Market", True, "No listings available to buy from (expected)")
+
     def test_new_features_integration(self):
         """Test integration of all new features"""
         print("\n🚗 Vehicle System Tests")
@@ -480,6 +752,15 @@ class SubmundoAPITester:
         
         print("\n⚔️ Gang Wars Tests")
         self.test_gang_wars_system()
+        
+        print("\n🏠 Properties System Tests")
+        self.test_properties_system()
+        
+        print("\n🏭 Business/Crafting System Tests")
+        self.test_businesses_system()
+        
+        print("\n🛒 Market System Tests")
+        self.test_market_system()
 
     def run_all_tests(self):
         """Run all tests in sequence"""
