@@ -47,6 +47,24 @@ export default function GangPage() {
     fetchGangs();
   }, []);
 
+  useEffect(() => {
+    if (myGang && activeTab === 'territories') {
+      fetchTerritoryAnalysis();
+    }
+  }, [myGang, activeTab]);
+
+  const fetchTerritoryAnalysis = async () => {
+    setLoadingAnalysis(true);
+    try {
+      const response = await api().get('/territories/analysis');
+      setTerritoryAnalysis(response.data);
+    } catch (err) {
+      console.error('Erro ao buscar análise de territórios:', err);
+    } finally {
+      setLoadingAnalysis(false);
+    }
+  };
+
   const fetchGangs = async () => {
     setLoadingGangs(true);
     try {
