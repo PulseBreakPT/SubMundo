@@ -5571,6 +5571,1166 @@ async def search_players(
     
     return {"results": results, "count": len(results)}
 
+# ============= ADVANCED BANKING SYSTEM =============
+
+# Bank configuration
+BANK_CONFIG = {
+    "name": "Banco Submundo",
+    "interest_rate_daily": 0.001,  # 0.1% diário
+    "interest_rate_premium": 0.002,  # 0.2% para premium
+    "max_daily_interest": 10000,  # Máximo de juros por dia
+    "withdrawal_fee_percent": 0.5,  # 0.5% taxa de levantamento
+    "transfer_fee_percent": 1.0,  # 1% taxa de transferência
+    "instant_transfer_fee": 2.0,  # 2% para transferência instantânea
+    "min_deposit": 10,
+    "min_withdrawal": 10,
+    "min_transfer": 50,
+    "max_daily_withdrawal": 100000,  # Limite diário
+    "max_daily_transfer": 50000,
+    "vault_rental_cost": 500,  # Custo por cofre
+    "vault_capacity": 50000,  # Capacidade do cofre
+    "loan_interest_rate": 5.0,  # 5% juros em empréstimos
+    "max_loan_multiplier": 2.0,  # Pode pedir até 2x o seu nível * 1000
+    "loan_duration_days": 7,
+    "security_levels": [
+        {"level": 1, "name": "Básico", "protection": 50, "cost": 0},
+        {"level": 2, "name": "Avançado", "protection": 75, "cost": 1000},
+        {"level": 3, "name": "Elite", "protection": 90, "cost": 5000},
+        {"level": 4, "name": "Máximo", "protection": 99, "cost": 25000}
+    ],
+    "robbery_cooldown_hours": 24,
+    "robbery_min_level": 5,
+    "robbery_success_base": 30,
+    "robbery_max_steal_percent": 25
+}
+
+# Investment options
+INVESTMENT_OPTIONS = [
+    {
+        "id": "savings",
+        "name": "Poupança Básica",
+        "description": "Conta poupança com juros diários",
+        "min_amount": 100,
+        "duration_days": 0,
+        "interest_rate": 0.1,
+        "risk": 0,
+        "locked": False
+    },
+    {
+        "id": "fixed_7d",
+        "name": "Depósito a Prazo (7 dias)",
+        "description": "Investimento bloqueado por 7 dias com maior retorno",
+        "min_amount": 1000,
+        "duration_days": 7,
+        "interest_rate": 1.5,
+        "risk": 0,
+        "locked": True
+    },
+    {
+        "id": "fixed_30d",
+        "name": "Depósito a Prazo (30 dias)",
+        "description": "Investimento bloqueado por 30 dias",
+        "min_amount": 5000,
+        "duration_days": 30,
+        "interest_rate": 5.0,
+        "risk": 0,
+        "locked": True
+    },
+    {
+        "id": "stocks_safe",
+        "name": "Ações Seguras",
+        "description": "Investimento em empresas estáveis",
+        "min_amount": 500,
+        "duration_days": 1,
+        "interest_rate": 0.5,
+        "risk": 10,
+        "max_loss": 5,
+        "max_gain": 15,
+        "locked": False
+    },
+    {
+        "id": "stocks_risky",
+        "name": "Ações de Alto Risco",
+        "description": "Investimento volátil com alto potencial",
+        "min_amount": 1000,
+        "duration_days": 1,
+        "interest_rate": 2.0,
+        "risk": 40,
+        "max_loss": 30,
+        "max_gain": 50,
+        "locked": False
+    },
+    {
+        "id": "crypto",
+        "name": "Criptomoedas",
+        "description": "Investimento em crypto volátil",
+        "min_amount": 500,
+        "duration_days": 1,
+        "interest_rate": 3.0,
+        "risk": 60,
+        "max_loss": 50,
+        "max_gain": 100,
+        "locked": False
+    },
+    {
+        "id": "real_estate_fund",
+        "name": "Fundo Imobiliário",
+        "description": "Investimento em imóveis",
+        "min_amount": 10000,
+        "duration_days": 30,
+        "interest_rate": 8.0,
+        "risk": 5,
+        "locked": True
+    },
+    {
+        "id": "gang_bonds",
+        "name": "Títulos de Gangue",
+        "description": "Financiamento de operações de gangue",
+        "min_amount": 2500,
+        "duration_days": 14,
+        "interest_rate": 12.0,
+        "risk": 25,
+        "locked": True,
+        "requires_gang": True
+    }
+]
+
+# Bank transaction types
+TRANSACTION_TYPES = ["deposit", "withdrawal", "transfer_in", "transfer_out", "interest", "fee", 
+                     "investment", "investment_return", "loan", "loan_payment", "robbery_loss", 
+                     "robbery_gain", "vault_rental", "security_upgrade"]
+
+class BankDeposit(BaseModel):
+    amount: float
+
+class BankWithdrawal(BaseModel):
+    amount: float
+
+class BankTransfer(BaseModel):
+    recipient_id: str
+    amount: float
+    instant: bool = False
+    message: Optional[str] = None
+
+class BankInvestment(BaseModel):
+    investment_id: str
+    amount: float
+
+class BankLoan(BaseModel):
+    amount: float
+
+class VaultDeposit(BaseModel):
+    amount: float
+
+class SecurityUpgrade(BaseModel):
+    level: int
+
+async def add_bank_transaction(player_id: str, transaction_type: str, amount: float, 
+                                balance_after: float, details: dict = None):
+    """Adiciona uma transação bancária ao histórico"""
+    transaction = {
+        "id": str(uuid.uuid4()),
+        "player_id": player_id,
+        "type": transaction_type,
+        "amount": amount,
+        "balance_after": balance_after,
+        "details": details or {},
+        "timestamp": datetime.now(timezone.utc)
+    }
+    await db.bank_transactions.insert_one(transaction)
+    return transaction
+
+async def calculate_daily_interest(player_id: str):
+    """Calcula e aplica juros diários"""
+    player = await db.players.find_one({"id": player_id})
+    if not player:
+        return 0
+    
+    bank_balance = player.get("bank_balance", 0)
+    if bank_balance <= 0:
+        return 0
+    
+    # Verificar último cálculo de juros
+    last_interest = player.get("last_interest_calc")
+    now = datetime.now(timezone.utc)
+    
+    if last_interest:
+        if isinstance(last_interest, str):
+            last_interest = datetime.fromisoformat(last_interest.replace('Z', '+00:00'))
+        hours_since = (now - last_interest).total_seconds() / 3600
+        if hours_since < 24:
+            return 0
+    
+    # Calcular juros
+    security_level = player.get("bank_security_level", 1)
+    base_rate = BANK_CONFIG["interest_rate_daily"]
+    
+    # Bónus por nível de segurança
+    security_bonus = (security_level - 1) * 0.0005
+    final_rate = base_rate + security_bonus
+    
+    interest = min(bank_balance * final_rate, BANK_CONFIG["max_daily_interest"])
+    
+    if interest > 0:
+        new_balance = bank_balance + interest
+        await db.players.update_one(
+            {"id": player_id},
+            {
+                "$inc": {"bank_balance": interest, "total_interest_earned": interest},
+                "$set": {"last_interest_calc": now}
+            }
+        )
+        await add_bank_transaction(player_id, "interest", interest, new_balance, 
+                                    {"rate": final_rate, "original_balance": bank_balance})
+    
+    return interest
+
+async def process_investments(player_id: str):
+    """Processa investimentos maduros"""
+    now = datetime.now(timezone.utc)
+    
+    # Buscar investimentos activos
+    investments = await db.player_investments.find({
+        "player_id": player_id,
+        "status": "active"
+    }).to_list(100)
+    
+    results = []
+    
+    for inv in investments:
+        maturity_date = inv.get("maturity_date")
+        if maturity_date:
+            if isinstance(maturity_date, str):
+                maturity_date = datetime.fromisoformat(maturity_date.replace('Z', '+00:00'))
+            
+            if now >= maturity_date:
+                # Investimento maduro
+                option = next((o for o in INVESTMENT_OPTIONS if o["id"] == inv["investment_type"]), None)
+                if option:
+                    amount = inv["amount"]
+                    
+                    # Calcular retorno
+                    if option.get("risk", 0) > 0:
+                        # Investimento com risco
+                        roll = random.randint(1, 100)
+                        if roll <= option["risk"]:
+                            # Perda
+                            loss_percent = random.uniform(5, option.get("max_loss", 30))
+                            return_amount = amount * (1 - loss_percent / 100)
+                            profit = return_amount - amount
+                        else:
+                            # Ganho
+                            gain_percent = random.uniform(option["interest_rate"], option.get("max_gain", option["interest_rate"] * 2))
+                            return_amount = amount * (1 + gain_percent / 100)
+                            profit = return_amount - amount
+                    else:
+                        # Investimento seguro
+                        return_amount = amount * (1 + option["interest_rate"] / 100)
+                        profit = return_amount - amount
+                    
+                    # Creditar na conta
+                    player = await db.players.find_one({"id": player_id})
+                    new_balance = player.get("bank_balance", 0) + return_amount
+                    
+                    await db.players.update_one(
+                        {"id": player_id},
+                        {"$inc": {"bank_balance": return_amount, "total_investment_returns": return_amount}}
+                    )
+                    
+                    await db.player_investments.update_one(
+                        {"id": inv["id"]},
+                        {"$set": {"status": "completed", "return_amount": return_amount, "completed_at": now}}
+                    )
+                    
+                    await add_bank_transaction(player_id, "investment_return", return_amount, new_balance,
+                                               {"investment_id": inv["id"], "profit": profit, "type": option["name"]})
+                    
+                    results.append({
+                        "investment_id": inv["id"],
+                        "type": option["name"],
+                        "invested": amount,
+                        "returned": return_amount,
+                        "profit": profit
+                    })
+    
+    return results
+
+@api_router.get("/bank/status")
+async def get_bank_status(current_user: dict = Depends(get_current_user)):
+    """Retorna estado completo da conta bancária"""
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Processar juros pendentes
+    interest_earned = await calculate_daily_interest(current_user["id"])
+    
+    # Processar investimentos maduros
+    matured_investments = await process_investments(current_user["id"])
+    
+    # Recarregar player após processamento
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Buscar dados adicionais
+    transactions = await db.bank_transactions.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(10).to_list(10)
+    
+    active_investments = await db.player_investments.find(
+        {"player_id": current_user["id"], "status": "active"},
+        {"_id": 0}
+    ).to_list(20)
+    
+    active_loans = await db.player_loans.find(
+        {"player_id": current_user["id"], "status": "active"},
+        {"_id": 0}
+    ).to_list(10)
+    
+    vaults = await db.player_vaults.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(10)
+    
+    # Calcular totais
+    total_invested = sum(inv.get("amount", 0) for inv in active_investments)
+    total_vault = sum(v.get("amount", 0) for v in vaults)
+    total_debt = sum(loan.get("remaining_amount", 0) for loan in active_loans)
+    
+    # Limites diários restantes
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    today_withdrawals = await db.bank_transactions.aggregate([
+        {"$match": {
+            "player_id": current_user["id"],
+            "type": "withdrawal",
+            "timestamp": {"$gte": today_start}
+        }},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    today_transfers = await db.bank_transactions.aggregate([
+        {"$match": {
+            "player_id": current_user["id"],
+            "type": "transfer_out",
+            "timestamp": {"$gte": today_start}
+        }},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    withdrawn_today = today_withdrawals[0]["total"] if today_withdrawals else 0
+    transferred_today = today_transfers[0]["total"] if today_transfers else 0
+    
+    # Segurança
+    security_level = player.get("bank_security_level", 1)
+    security_info = next((s for s in BANK_CONFIG["security_levels"] if s["level"] == security_level), 
+                         BANK_CONFIG["security_levels"][0])
+    
+    return {
+        "account": {
+            "cash": player.get("cash", player.get("clean_money", 0) + player.get("dirty_money", 0)),
+            "bank_balance": player.get("bank_balance", 0),
+            "total_invested": total_invested,
+            "vault_balance": total_vault,
+            "total_debt": total_debt,
+            "net_worth": player.get("cash", 0) + player.get("bank_balance", 0) + total_invested + total_vault - total_debt
+        },
+        "security": {
+            "level": security_level,
+            "name": security_info["name"],
+            "protection": security_info["protection"],
+            "next_level": BANK_CONFIG["security_levels"][security_level] if security_level < 4 else None
+        },
+        "limits": {
+            "daily_withdrawal_limit": BANK_CONFIG["max_daily_withdrawal"],
+            "daily_withdrawal_used": withdrawn_today,
+            "daily_withdrawal_remaining": max(0, BANK_CONFIG["max_daily_withdrawal"] - withdrawn_today),
+            "daily_transfer_limit": BANK_CONFIG["max_daily_transfer"],
+            "daily_transfer_used": transferred_today,
+            "daily_transfer_remaining": max(0, BANK_CONFIG["max_daily_transfer"] - transferred_today)
+        },
+        "fees": {
+            "withdrawal": BANK_CONFIG["withdrawal_fee_percent"],
+            "transfer": BANK_CONFIG["transfer_fee_percent"],
+            "instant_transfer": BANK_CONFIG["instant_transfer_fee"]
+        },
+        "interest": {
+            "daily_rate": BANK_CONFIG["interest_rate_daily"] * 100,
+            "earned_today": interest_earned,
+            "total_earned": player.get("total_interest_earned", 0)
+        },
+        "recent_transactions": transactions,
+        "active_investments": active_investments,
+        "active_loans": active_loans,
+        "vaults": vaults,
+        "matured_investments": matured_investments,
+        "config": {
+            "min_deposit": BANK_CONFIG["min_deposit"],
+            "min_withdrawal": BANK_CONFIG["min_withdrawal"],
+            "min_transfer": BANK_CONFIG["min_transfer"]
+        }
+    }
+
+@api_router.post("/bank/deposit")
+async def bank_deposit(deposit: BankDeposit, current_user: dict = Depends(get_current_user)):
+    """Deposita dinheiro no banco"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    amount = deposit.amount
+    cash = player.get("cash", player.get("clean_money", 0) + player.get("dirty_money", 0))
+    
+    if amount < BANK_CONFIG["min_deposit"]:
+        raise HTTPException(status_code=400, detail=f"Depósito mínimo: €{BANK_CONFIG['min_deposit']}")
+    
+    if amount > cash:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente")
+    
+    new_cash = cash - amount
+    new_bank = player.get("bank_balance", 0) + amount
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {
+            "$set": {"cash": new_cash},
+            "$inc": {"bank_balance": amount}
+        }
+    )
+    
+    await add_bank_transaction(current_user["id"], "deposit", amount, new_bank)
+    await add_player_history(current_user["id"], "bank_deposit", {"amount": amount})
+    
+    return {
+        "success": True,
+        "message": f"€{amount:,.2f} depositados com sucesso!",
+        "cash": new_cash,
+        "bank_balance": new_bank
+    }
+
+@api_router.post("/bank/withdraw")
+async def bank_withdraw(withdrawal: BankWithdrawal, current_user: dict = Depends(get_current_user)):
+    """Levanta dinheiro do banco"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    amount = withdrawal.amount
+    bank_balance = player.get("bank_balance", 0)
+    
+    if amount < BANK_CONFIG["min_withdrawal"]:
+        raise HTTPException(status_code=400, detail=f"Levantamento mínimo: €{BANK_CONFIG['min_withdrawal']}")
+    
+    if amount > bank_balance:
+        raise HTTPException(status_code=400, detail="Saldo insuficiente")
+    
+    # Verificar limite diário
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_withdrawals = await db.bank_transactions.aggregate([
+        {"$match": {
+            "player_id": current_user["id"],
+            "type": "withdrawal",
+            "timestamp": {"$gte": today_start}
+        }},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    withdrawn_today = today_withdrawals[0]["total"] if today_withdrawals else 0
+    
+    if withdrawn_today + amount > BANK_CONFIG["max_daily_withdrawal"]:
+        remaining = BANK_CONFIG["max_daily_withdrawal"] - withdrawn_today
+        raise HTTPException(status_code=400, detail=f"Limite diário excedido. Restante: €{remaining:,.2f}")
+    
+    # Calcular taxa
+    fee = amount * (BANK_CONFIG["withdrawal_fee_percent"] / 100)
+    net_amount = amount - fee
+    
+    new_bank = bank_balance - amount
+    new_cash = player.get("cash", player.get("clean_money", 0)) + net_amount
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {
+            "$set": {"bank_balance": new_bank},
+            "$inc": {"cash": net_amount}
+        }
+    )
+    
+    await add_bank_transaction(current_user["id"], "withdrawal", -amount, new_bank, {"fee": fee, "net": net_amount})
+    if fee > 0:
+        await add_bank_transaction(current_user["id"], "fee", -fee, new_bank, {"type": "withdrawal_fee"})
+    
+    await add_player_history(current_user["id"], "bank_withdrawal", {"amount": amount, "fee": fee})
+    
+    return {
+        "success": True,
+        "message": f"€{net_amount:,.2f} levantados (taxa: €{fee:,.2f})",
+        "cash": new_cash,
+        "bank_balance": new_bank,
+        "fee": fee
+    }
+
+@api_router.post("/bank/transfer")
+async def bank_transfer(transfer: BankTransfer, current_user: dict = Depends(get_current_user)):
+    """Transfere dinheiro para outro jogador"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    recipient = await db.players.find_one({"id": transfer.recipient_id})
+    
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Destinatário não encontrado")
+    
+    if recipient["id"] == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Não podes transferir para ti próprio")
+    
+    amount = transfer.amount
+    bank_balance = player.get("bank_balance", 0)
+    
+    if amount < BANK_CONFIG["min_transfer"]:
+        raise HTTPException(status_code=400, detail=f"Transferência mínima: €{BANK_CONFIG['min_transfer']}")
+    
+    if amount > bank_balance:
+        raise HTTPException(status_code=400, detail="Saldo insuficiente")
+    
+    # Verificar limite diário
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_transfers = await db.bank_transactions.aggregate([
+        {"$match": {
+            "player_id": current_user["id"],
+            "type": "transfer_out",
+            "timestamp": {"$gte": today_start}
+        }},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    transferred_today = today_transfers[0]["total"] if today_transfers else 0
+    
+    if transferred_today + amount > BANK_CONFIG["max_daily_transfer"]:
+        remaining = BANK_CONFIG["max_daily_transfer"] - transferred_today
+        raise HTTPException(status_code=400, detail=f"Limite diário excedido. Restante: €{remaining:,.2f}")
+    
+    # Calcular taxa
+    fee_percent = BANK_CONFIG["instant_transfer_fee"] if transfer.instant else BANK_CONFIG["transfer_fee_percent"]
+    fee = amount * (fee_percent / 100)
+    net_amount = amount - fee
+    
+    # Atualizar remetente
+    new_sender_balance = bank_balance - amount
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"bank_balance": new_sender_balance}}
+    )
+    
+    # Atualizar destinatário
+    new_recipient_balance = recipient.get("bank_balance", 0) + net_amount
+    await db.players.update_one(
+        {"id": transfer.recipient_id},
+        {"$inc": {"bank_balance": net_amount}}
+    )
+    
+    # Registar transações
+    await add_bank_transaction(current_user["id"], "transfer_out", -amount, new_sender_balance,
+                               {"recipient": recipient["username"], "fee": fee, "message": transfer.message})
+    await add_bank_transaction(transfer.recipient_id, "transfer_in", net_amount, new_recipient_balance,
+                               {"sender": player["username"], "message": transfer.message})
+    
+    await add_player_history(current_user["id"], "bank_transfer_sent", 
+                             {"amount": amount, "recipient": recipient["username"], "fee": fee})
+    await add_player_history(transfer.recipient_id, "bank_transfer_received",
+                             {"amount": net_amount, "sender": player["username"]})
+    
+    return {
+        "success": True,
+        "message": f"€{net_amount:,.2f} transferidos para {recipient['username']}",
+        "bank_balance": new_sender_balance,
+        "fee": fee,
+        "recipient": recipient["username"]
+    }
+
+@api_router.get("/bank/transactions")
+async def get_bank_transactions(
+    current_user: dict = Depends(get_current_user),
+    transaction_type: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Retorna histórico de transações bancárias"""
+    query = {"player_id": current_user["id"]}
+    
+    if transaction_type and transaction_type in TRANSACTION_TYPES:
+        query["type"] = transaction_type
+    
+    transactions = await db.bank_transactions.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).skip(offset).limit(limit).to_list(limit)
+    
+    total = await db.bank_transactions.count_documents(query)
+    
+    # Estatísticas
+    stats = await db.bank_transactions.aggregate([
+        {"$match": {"player_id": current_user["id"]}},
+        {"$group": {
+            "_id": "$type",
+            "count": {"$sum": 1},
+            "total": {"$sum": "$amount"}
+        }}
+    ]).to_list(20)
+    
+    stats_by_type = {s["_id"]: {"count": s["count"], "total": s["total"]} for s in stats}
+    
+    return {
+        "transactions": transactions,
+        "pagination": {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "has_more": offset + limit < total
+        },
+        "stats": stats_by_type,
+        "types": TRANSACTION_TYPES
+    }
+
+@api_router.get("/bank/investments")
+async def get_investment_options(current_user: dict = Depends(get_current_user)):
+    """Retorna opções de investimento disponíveis"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Verificar se está em gangue
+    has_gang = player.get("gang_id") is not None
+    
+    # Filtrar opções disponíveis
+    available_options = []
+    for option in INVESTMENT_OPTIONS:
+        if option.get("requires_gang") and not has_gang:
+            continue
+        available_options.append({
+            **option,
+            "can_invest": player.get("bank_balance", 0) >= option["min_amount"]
+        })
+    
+    # Investimentos activos
+    active = await db.player_investments.find(
+        {"player_id": current_user["id"], "status": "active"},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Histórico de investimentos
+    completed = await db.player_investments.find(
+        {"player_id": current_user["id"], "status": "completed"},
+        {"_id": 0}
+    ).sort("completed_at", -1).limit(20).to_list(20)
+    
+    total_invested = sum(inv.get("amount", 0) for inv in active)
+    total_returns = sum(inv.get("return_amount", 0) for inv in completed)
+    total_principal = sum(inv.get("amount", 0) for inv in completed)
+    total_profit = total_returns - total_principal
+    
+    return {
+        "options": available_options,
+        "active_investments": active,
+        "completed_investments": completed,
+        "summary": {
+            "total_invested": total_invested,
+            "total_returns": total_returns,
+            "total_profit": total_profit,
+            "active_count": len(active)
+        }
+    }
+
+@api_router.post("/bank/invest")
+async def create_investment(investment: BankInvestment, current_user: dict = Depends(get_current_user)):
+    """Cria um novo investimento"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Encontrar opção
+    option = next((o for o in INVESTMENT_OPTIONS if o["id"] == investment.investment_id), None)
+    if not option:
+        raise HTTPException(status_code=404, detail="Opção de investimento não encontrada")
+    
+    # Verificar requisitos
+    if option.get("requires_gang") and not player.get("gang_id"):
+        raise HTTPException(status_code=400, detail="Este investimento requer pertencer a uma gangue")
+    
+    amount = investment.amount
+    
+    if amount < option["min_amount"]:
+        raise HTTPException(status_code=400, detail=f"Investimento mínimo: €{option['min_amount']}")
+    
+    if amount > player.get("bank_balance", 0):
+        raise HTTPException(status_code=400, detail="Saldo insuficiente")
+    
+    # Calcular data de maturidade
+    now = datetime.now(timezone.utc)
+    if option["duration_days"] > 0:
+        maturity_date = now + timedelta(days=option["duration_days"])
+    else:
+        maturity_date = now + timedelta(days=1)  # Para investimentos sem prazo, processa no dia seguinte
+    
+    # Criar investimento
+    new_investment = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "investment_type": option["id"],
+        "amount": amount,
+        "interest_rate": option["interest_rate"],
+        "risk": option.get("risk", 0),
+        "created_at": now,
+        "maturity_date": maturity_date,
+        "status": "active",
+        "locked": option.get("locked", False)
+    }
+    
+    await db.player_investments.insert_one(new_investment)
+    
+    # Debitar da conta
+    new_balance = player.get("bank_balance", 0) - amount
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"bank_balance": new_balance}}
+    )
+    
+    await add_bank_transaction(current_user["id"], "investment", -amount, new_balance,
+                               {"investment_id": new_investment["id"], "type": option["name"]})
+    
+    return {
+        "success": True,
+        "message": f"Investimento de €{amount:,.2f} em {option['name']} criado!",
+        "investment": {**new_investment, "_id": None},
+        "bank_balance": new_balance,
+        "maturity_date": maturity_date.isoformat()
+    }
+
+@api_router.delete("/bank/invest/{investment_id}")
+async def cancel_investment(investment_id: str, current_user: dict = Depends(get_current_user)):
+    """Cancela um investimento (com penalização se bloqueado)"""
+    investment = await db.player_investments.find_one({
+        "id": investment_id,
+        "player_id": current_user["id"],
+        "status": "active"
+    })
+    
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investimento não encontrado")
+    
+    option = next((o for o in INVESTMENT_OPTIONS if o["id"] == investment["investment_type"]), None)
+    
+    amount = investment["amount"]
+    penalty = 0
+    
+    if investment.get("locked"):
+        # Penalização de 20% para cancelar antecipadamente
+        penalty = amount * 0.20
+        refund = amount - penalty
+    else:
+        refund = amount
+    
+    # Reembolsar
+    player = await db.players.find_one({"id": current_user["id"]})
+    new_balance = player.get("bank_balance", 0) + refund
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"bank_balance": new_balance}}
+    )
+    
+    await db.player_investments.update_one(
+        {"id": investment_id},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc), "penalty": penalty}}
+    )
+    
+    await add_bank_transaction(current_user["id"], "investment_return", refund, new_balance,
+                               {"investment_id": investment_id, "cancelled": True, "penalty": penalty})
+    
+    return {
+        "success": True,
+        "message": f"Investimento cancelado. Reembolso: €{refund:,.2f}" + (f" (penalização: €{penalty:,.2f})" if penalty > 0 else ""),
+        "refund": refund,
+        "penalty": penalty,
+        "bank_balance": new_balance
+    }
+
+@api_router.get("/bank/loans")
+async def get_loan_info(current_user: dict = Depends(get_current_user)):
+    """Retorna informação sobre empréstimos"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Calcular limite de empréstimo
+    level = player.get("level", 1)
+    max_loan = level * 1000 * BANK_CONFIG["max_loan_multiplier"]
+    
+    # Empréstimos activos
+    active_loans = await db.player_loans.find(
+        {"player_id": current_user["id"], "status": "active"},
+        {"_id": 0}
+    ).to_list(10)
+    
+    total_debt = sum(loan.get("remaining_amount", 0) for loan in active_loans)
+    available_credit = max(0, max_loan - total_debt)
+    
+    # Histórico de empréstimos
+    loan_history = await db.player_loans.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return {
+        "credit": {
+            "max_loan": max_loan,
+            "total_debt": total_debt,
+            "available_credit": available_credit,
+            "interest_rate": BANK_CONFIG["loan_interest_rate"],
+            "duration_days": BANK_CONFIG["loan_duration_days"]
+        },
+        "active_loans": active_loans,
+        "loan_history": loan_history,
+        "can_borrow": available_credit > 0 and len(active_loans) < 3
+    }
+
+@api_router.post("/bank/loan")
+async def request_loan(loan: BankLoan, current_user: dict = Depends(get_current_user)):
+    """Solicita um empréstimo"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Verificar limite
+    level = player.get("level", 1)
+    max_loan = level * 1000 * BANK_CONFIG["max_loan_multiplier"]
+    
+    active_loans = await db.player_loans.find(
+        {"player_id": current_user["id"], "status": "active"},
+        {"_id": 0}
+    ).to_list(10)
+    
+    total_debt = sum(l.get("remaining_amount", 0) for l in active_loans)
+    available_credit = max(0, max_loan - total_debt)
+    
+    if len(active_loans) >= 3:
+        raise HTTPException(status_code=400, detail="Limite de 3 empréstimos activos atingido")
+    
+    amount = loan.amount
+    
+    if amount < 100:
+        raise HTTPException(status_code=400, detail="Empréstimo mínimo: €100")
+    
+    if amount > available_credit:
+        raise HTTPException(status_code=400, detail=f"Crédito disponível: €{available_credit:,.2f}")
+    
+    # Calcular juros e total a pagar
+    interest = amount * (BANK_CONFIG["loan_interest_rate"] / 100)
+    total_to_pay = amount + interest
+    due_date = datetime.now(timezone.utc) + timedelta(days=BANK_CONFIG["loan_duration_days"])
+    
+    # Criar empréstimo
+    new_loan = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "amount": amount,
+        "interest": interest,
+        "total_amount": total_to_pay,
+        "remaining_amount": total_to_pay,
+        "interest_rate": BANK_CONFIG["loan_interest_rate"],
+        "created_at": datetime.now(timezone.utc),
+        "due_date": due_date,
+        "status": "active",
+        "payments": []
+    }
+    
+    await db.player_loans.insert_one(new_loan)
+    
+    # Creditar na conta
+    new_balance = player.get("bank_balance", 0) + amount
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"bank_balance": amount}}
+    )
+    
+    await add_bank_transaction(current_user["id"], "loan", amount, new_balance,
+                               {"loan_id": new_loan["id"], "interest": interest, "due_date": due_date.isoformat()})
+    
+    return {
+        "success": True,
+        "message": f"Empréstimo de €{amount:,.2f} aprovado!",
+        "loan": {**new_loan, "_id": None},
+        "bank_balance": new_balance,
+        "total_to_pay": total_to_pay,
+        "due_date": due_date.isoformat()
+    }
+
+@api_router.post("/bank/loan/{loan_id}/pay")
+async def pay_loan(loan_id: str, payment: BankDeposit, current_user: dict = Depends(get_current_user)):
+    """Paga parte ou totalidade de um empréstimo"""
+    loan = await db.player_loans.find_one({
+        "id": loan_id,
+        "player_id": current_user["id"],
+        "status": "active"
+    })
+    
+    if not loan:
+        raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    amount = min(payment.amount, loan["remaining_amount"])
+    
+    if amount > player.get("bank_balance", 0):
+        raise HTTPException(status_code=400, detail="Saldo insuficiente")
+    
+    # Processar pagamento
+    new_remaining = loan["remaining_amount"] - amount
+    is_paid_off = new_remaining <= 0
+    
+    await db.player_loans.update_one(
+        {"id": loan_id},
+        {
+            "$set": {
+                "remaining_amount": max(0, new_remaining),
+                "status": "paid" if is_paid_off else "active",
+                "paid_at": datetime.now(timezone.utc) if is_paid_off else None
+            },
+            "$push": {"payments": {"amount": amount, "date": datetime.now(timezone.utc)}}
+        }
+    )
+    
+    new_balance = player.get("bank_balance", 0) - amount
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"bank_balance": new_balance}}
+    )
+    
+    await add_bank_transaction(current_user["id"], "loan_payment", -amount, new_balance,
+                               {"loan_id": loan_id, "remaining": new_remaining})
+    
+    return {
+        "success": True,
+        "message": f"Pagamento de €{amount:,.2f} efectuado!" + (" Empréstimo liquidado!" if is_paid_off else ""),
+        "paid": amount,
+        "remaining": new_remaining,
+        "is_paid_off": is_paid_off,
+        "bank_balance": new_balance
+    }
+
+@api_router.post("/bank/security/upgrade")
+async def upgrade_security(upgrade: SecurityUpgrade, current_user: dict = Depends(get_current_user)):
+    """Atualiza nível de segurança da conta"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    current_level = player.get("bank_security_level", 1)
+    target_level = upgrade.level
+    
+    if target_level <= current_level:
+        raise HTTPException(status_code=400, detail="Nível deve ser superior ao actual")
+    
+    if target_level > 4:
+        raise HTTPException(status_code=400, detail="Nível máximo é 4")
+    
+    # Calcular custo total
+    total_cost = 0
+    for level in range(current_level + 1, target_level + 1):
+        level_info = next((s for s in BANK_CONFIG["security_levels"] if s["level"] == level), None)
+        if level_info:
+            total_cost += level_info["cost"]
+    
+    if total_cost > player.get("bank_balance", 0):
+        raise HTTPException(status_code=400, detail=f"Custo: €{total_cost:,.2f}. Saldo insuficiente.")
+    
+    # Aplicar upgrade
+    new_balance = player.get("bank_balance", 0) - total_cost
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {
+            "$set": {
+                "bank_security_level": target_level,
+                "bank_balance": new_balance
+            }
+        }
+    )
+    
+    level_info = next((s for s in BANK_CONFIG["security_levels"] if s["level"] == target_level), None)
+    
+    await add_bank_transaction(current_user["id"], "security_upgrade", -total_cost, new_balance,
+                               {"from_level": current_level, "to_level": target_level})
+    
+    return {
+        "success": True,
+        "message": f"Segurança atualizada para {level_info['name']}!",
+        "new_level": target_level,
+        "protection": level_info["protection"],
+        "cost": total_cost,
+        "bank_balance": new_balance
+    }
+
+@api_router.post("/bank/rob/{target_id}")
+async def rob_player(target_id: str, current_user: dict = Depends(get_current_user)):
+    """Tenta roubar dinheiro (cash) de outro jogador"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    target = await db.players.find_one({"id": target_id})
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="Alvo não encontrado")
+    
+    if target["id"] == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Não podes roubar-te a ti próprio")
+    
+    # Verificar nível mínimo
+    if player.get("level", 1) < BANK_CONFIG["robbery_min_level"]:
+        raise HTTPException(status_code=400, detail=f"Nível mínimo: {BANK_CONFIG['robbery_min_level']}")
+    
+    # Verificar cooldown
+    last_robbery = player.get("last_robbery_attempt")
+    if last_robbery:
+        if isinstance(last_robbery, str):
+            last_robbery = datetime.fromisoformat(last_robbery.replace('Z', '+00:00'))
+        hours_since = (datetime.now(timezone.utc) - last_robbery).total_seconds() / 3600
+        if hours_since < BANK_CONFIG["robbery_cooldown_hours"]:
+            remaining = BANK_CONFIG["robbery_cooldown_hours"] - hours_since
+            raise HTTPException(status_code=400, detail=f"Cooldown: {remaining:.1f} horas restantes")
+    
+    # Verificar se alvo tem dinheiro na mão
+    target_cash = target.get("cash", target.get("clean_money", 0))
+    if target_cash < 100:
+        raise HTTPException(status_code=400, detail="Alvo não tem dinheiro suficiente na mão")
+    
+    # Calcular probabilidade de sucesso
+    robber_level = player.get("level", 1)
+    target_level = target.get("level", 1)
+    robber_skills = player.get("skills", {})
+    stealth = robber_skills.get("stealth", {}).get("level", 0)
+    combat = robber_skills.get("combat", {}).get("level", 0)
+    
+    base_chance = BANK_CONFIG["robbery_success_base"]
+    level_bonus = (robber_level - target_level) * 2
+    skill_bonus = (stealth + combat) * 2
+    
+    success_chance = min(80, max(10, base_chance + level_bonus + skill_bonus))
+    
+    # Rolar dados
+    roll = random.randint(1, 100)
+    success = roll <= success_chance
+    
+    # Atualizar cooldown
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"last_robbery_attempt": datetime.now(timezone.utc)}}
+    )
+    
+    if success:
+        # Calcular quanto roubar (baseado em skills)
+        steal_percent = min(BANK_CONFIG["robbery_max_steal_percent"], 10 + stealth + combat)
+        stolen_amount = target_cash * (steal_percent / 100)
+        
+        # Transferir dinheiro
+        await db.players.update_one(
+            {"id": target_id},
+            {"$inc": {"cash": -stolen_amount}}
+        )
+        
+        new_cash = player.get("cash", 0) + stolen_amount
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {
+                "$inc": {
+                    "cash": stolen_amount,
+                    "heat_individual": 20,
+                    "successful_robberies": 1
+                }
+            }
+        )
+        
+        await add_bank_transaction(current_user["id"], "robbery_gain", stolen_amount, new_cash,
+                                   {"target": target["username"]})
+        await add_bank_transaction(target_id, "robbery_loss", -stolen_amount, target_cash - stolen_amount,
+                                   {"robber": player["username"]})
+        
+        await add_player_history(current_user["id"], "robbery_success", 
+                                 {"target": target["username"], "amount": stolen_amount})
+        await add_player_history(target_id, "robbed", 
+                                 {"robber": player["username"], "amount": stolen_amount})
+        
+        return {
+            "success": True,
+            "result": "success",
+            "message": f"Roubaste €{stolen_amount:,.2f} de {target['username']}!",
+            "stolen": stolen_amount,
+            "cash": new_cash,
+            "heat_gained": 20
+        }
+    else:
+        # Falhou - aumenta heat
+        heat_penalty = 15
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"heat_individual": heat_penalty, "failed_robberies": 1}}
+        )
+        
+        await add_player_history(current_user["id"], "robbery_failed", 
+                                 {"target": target["username"]})
+        
+        return {
+            "success": True,
+            "result": "failed",
+            "message": f"Tentativa de roubo falhou! {target['username']} escapou.",
+            "stolen": 0,
+            "heat_gained": heat_penalty
+        }
+
+@api_router.get("/bank/robbery-targets")
+async def get_robbery_targets(current_user: dict = Depends(get_current_user)):
+    """Lista potenciais alvos para roubo"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Buscar jogadores com dinheiro na mão
+    targets = await db.players.find(
+        {
+            "id": {"$ne": current_user["id"]},
+            "$or": [
+                {"cash": {"$gte": 100}},
+                {"clean_money": {"$gte": 100}}
+            ]
+        },
+        {"_id": 0, "password": 0, "email": 0}
+    ).limit(20).to_list(20)
+    
+    robber_level = player.get("level", 1)
+    
+    result = []
+    for t in targets:
+        target_cash = t.get("cash", t.get("clean_money", 0))
+        target_level = t.get("level", 1)
+        
+        # Calcular dificuldade
+        level_diff = target_level - robber_level
+        if level_diff > 5:
+            difficulty = "Muito Difícil"
+        elif level_diff > 0:
+            difficulty = "Difícil"
+        elif level_diff > -5:
+            difficulty = "Médio"
+        else:
+            difficulty = "Fácil"
+        
+        result.append({
+            "id": t.get("id"),
+            "username": t.get("username"),
+            "level": target_level,
+            "cash_range": "€100-1K" if target_cash < 1000 else "€1K-10K" if target_cash < 10000 else "€10K+",
+            "difficulty": difficulty,
+            "in_gang": t.get("gang_id") is not None
+        })
+    
+    # Verificar cooldown
+    last_robbery = player.get("last_robbery_attempt")
+    can_rob = True
+    cooldown_remaining = 0
+    
+    if last_robbery:
+        if isinstance(last_robbery, str):
+            last_robbery = datetime.fromisoformat(last_robbery.replace('Z', '+00:00'))
+        hours_since = (datetime.now(timezone.utc) - last_robbery).total_seconds() / 3600
+        if hours_since < BANK_CONFIG["robbery_cooldown_hours"]:
+            can_rob = False
+            cooldown_remaining = BANK_CONFIG["robbery_cooldown_hours"] - hours_since
+    
+    return {
+        "targets": result,
+        "can_rob": can_rob,
+        "cooldown_remaining_hours": round(cooldown_remaining, 1),
+        "min_level_required": BANK_CONFIG["robbery_min_level"],
+        "player_level": robber_level
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
