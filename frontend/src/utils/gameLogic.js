@@ -889,5 +889,6 @@ export default {
   lerp,
   randomBetween,
   randomInt,
-  weightedRandom
+  weightedRandom,
+  getTipsAndStrategies
 };
