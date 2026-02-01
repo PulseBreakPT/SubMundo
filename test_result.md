@@ -219,3 +219,22 @@ agent_communication:
     message: "Implementei os 3 sistemas solicitados: Propriedades, Negócios/Crafting e Mercado Negro. Backend com todos os endpoints e Frontend com 3 novas páginas. Por favor testar os endpoints do backend primeiro."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETO - Todos os 3 novos sistemas funcionando perfeitamente! Propriedades: 6 tipos, compra/venda/manutenção OK. Negócios: 6 tipos, crafting com receitas e tempo real OK. Mercado: listagens, compra/venda, estatísticas OK. Total: 41/43 testes passaram (2 falhas menores não relacionadas aos novos sistemas). Sistemas prontos para uso!"
+  - agent: "main"
+    message: |
+      NOVA IMPLEMENTAÇÃO - Sistemas pendentes integrados:
+      
+      BACKEND (novos endpoints):
+      - Sistema de Relacionamentos com NPCs: GET /npcs/contacts, GET /npcs/{id}/relationship, POST /npcs/{id}/interact
+      - Economia Dinâmica: GET /economy/market-prices, GET /economy/price-history/{category}, POST /economy/simulate-fluctuation
+      - Territórios Avançados: GET /territories/analysis, GET /territories/{id}/power
+      - Eventos Dinâmicos: GET /events/dynamic, GET /events/impact, GET /events/predictions
+      
+      FRONTEND (novas páginas e componentes):
+      - ContactsPage.js: Nova página de contactos/NPCs com relacionamentos, interações e níveis
+      - MarketPage.js: Actualizado com preços dinâmicos e gráficos de tendências
+      - GangPage.js: Actualizado com análise avançada de territórios e previsões de guerras
+      - EventsPage.js: Actualizado com 4 tabs (Ativos, Previsões, Impacto, Condições)
+      - HomePage.js: Integrado com gameLogic (level info, heat status) e lore (quotes, tips)
+      - Navigation.js: Adicionado link para /contactos
+      
+      Por favor testar os novos endpoints do backend.
