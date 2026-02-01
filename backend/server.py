@@ -1336,6 +1336,10 @@ async def trigger_random_event(current_user: dict = Depends(get_current_user)):
     
     await db.city_events.insert_one(event)
     
+    # Convert datetime for JSON response
+    event["started_at"] = event["started_at"].isoformat()
+    event["ends_at"] = event["ends_at"].isoformat()
+    
     return {"success": True, "message": f"Evento '{template['name']}' iniciado!", "event": event}
 
 @api_router.get("/events/effects")
