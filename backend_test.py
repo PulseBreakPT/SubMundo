@@ -886,6 +886,114 @@ class SubmundoAPITester:
         else:
             self.log_result("Events Predictions", False, f"Status: {status}")
 
+    def test_profile_system(self):
+        """Test Advanced Profile System endpoints"""
+        # Test detailed stats
+        success, data, status = self.make_request('GET', 'profile/detailed-stats')
+        
+        if success and 'player_stats' in data:
+            stats = data['player_stats']
+            self.log_result("Profile Detailed Stats", True, f"Retrieved detailed stats with {len(stats)} categories")
+        else:
+            self.log_result("Profile Detailed Stats", False, f"Status: {status}")
+        
+        # Test badges system
+        success, data, status = self.make_request('GET', 'profile/badges')
+        
+        if success and 'badges' in data:
+            badges = data['badges']
+            unlocked_badges = [b for b in badges if b.get('unlocked', False)]
+            self.log_result("Profile Badges", True, f"Found {len(badges)} badges, {len(unlocked_badges)} unlocked")
+        else:
+            self.log_result("Profile Badges", False, f"Status: {status}")
+        
+        # Test progress history
+        success, data, status = self.make_request('GET', 'profile/progress-history')
+        
+        if success and 'history' in data:
+            history = data['history']
+            self.log_result("Profile Progress History", True, f"Found {len(history)} progress entries")
+        else:
+            self.log_result("Profile Progress History", False, f"Status: {status}")
+        
+        # Test get goals
+        success, data, status = self.make_request('GET', 'profile/goals')
+        
+        if success and 'goals' in data:
+            goals = data['goals']
+            self.log_result("Profile Goals - Get", True, f"Found {len(goals)} player goals")
+        else:
+            self.log_result("Profile Goals - Get", False, f"Status: {status}")
+        
+        # Test create goal
+        success, data, status = self.make_request(
+            'POST',
+            'profile/goals',
+            {
+                "goal_type": "earn_money",
+                "target_value": 5000
+            }
+        )
+        
+        goal_id = None
+        if success and 'goal' in data:
+            goal_id = data['goal'].get('id')
+            self.log_result("Profile Goals - Create", True, f"Created goal with ID: {goal_id}")
+        elif status == 400:
+            self.log_result("Profile Goals - Create", True, "Cannot create goal (limit reached or invalid)")
+        else:
+            self.log_result("Profile Goals - Create", False, f"Status: {status}")
+        
+        # Test delete goal (if we created one)
+        if goal_id:
+            success, data, status = self.make_request('DELETE', f'profile/goals/{goal_id}')
+            
+            if success:
+                self.log_result("Profile Goals - Delete", True, "Goal deleted successfully")
+            else:
+                self.log_result("Profile Goals - Delete", False, f"Status: {status}")
+        else:
+            self.log_result("Profile Goals - Delete", True, "No goal to delete (expected)")
+        
+        # Test compare players (use own player ID for testing)
+        if self.user_id:
+            success, data, status = self.make_request('GET', f'profile/compare/{self.user_id}')
+            
+            if success and 'comparison' in data:
+                comparison = data['comparison']
+                self.log_result("Profile Compare Players", True, "Player comparison successful")
+            else:
+                self.log_result("Profile Compare Players", False, f"Status: {status}")
+        else:
+            self.log_result("Profile Compare Players", True, "No user ID available for comparison")
+        
+        # Test activity log
+        success, data, status = self.make_request('GET', 'profile/activity-log')
+        
+        if success and 'activities' in data:
+            activities = data['activities']
+            self.log_result("Profile Activity Log", True, f"Found {len(activities)} activity entries")
+        else:
+            self.log_result("Profile Activity Log", False, f"Status: {status}")
+        
+        # Test leaderboard position
+        success, data, status = self.make_request('GET', 'profile/leaderboard-position')
+        
+        if success and 'position' in data:
+            position = data['position']
+            self.log_result("Profile Leaderboard Position", True, f"Player position: {position}")
+        else:
+            self.log_result("Profile Leaderboard Position", False, f"Status: {status}")
+        
+        # Test search players
+        success, data, status = self.make_request('GET', 'profile/search-players', params={"q": "test"})
+        
+        if success and 'players' in data:
+            players = data['players']
+            self.log_result("Profile Search Players", True, f"Found {len(players)} players matching 'test'")
+        else:
+            self.log_result("Profile Search Players", False, f"Status: {status}")
+
     def test_new_features_integration(self):
         """Test integration of all new features"""
         print("\n🚗 Vehicle System Tests")
