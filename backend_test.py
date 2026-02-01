@@ -750,6 +750,140 @@ class SubmundoAPITester:
         else:
             self.log_result("Buy from Market", True, "No listings available to buy from (expected)")
 
+    def test_npc_relationships_system(self):
+        """Test NPC Relationships System endpoints"""
+        # Test get NPC contacts
+        success, data, status = self.make_request('GET', 'npcs/contacts')
+        
+        if success and 'contacts' in data:
+            contacts = data['contacts']
+            self.log_result("NPC Contacts", True, f"Found {len(contacts)} NPC contacts")
+            
+            if contacts:
+                # Test get relationship details for first NPC
+                npc = contacts[0]
+                npc_id = npc.get('id')
+                
+                success, data, status = self.make_request('GET', f'npcs/{npc_id}/relationship')
+                
+                if success and 'relationship' in data:
+                    relationship = data['relationship']
+                    level = relationship.get('level', 0)
+                    self.log_result("NPC Relationship Details", True, f"Relationship level: {level}")
+                else:
+                    self.log_result("NPC Relationship Details", False, f"Status: {status}")
+                
+                # Test interact with NPC (gift action)
+                success, data, status = self.make_request(
+                    'POST', 
+                    f'npcs/{npc_id}/interact',
+                    params={"action": "gift"}
+                )
+                
+                if success:
+                    points_gained = data.get('points_gained', 0)
+                    self.log_result("NPC Interaction (Gift)", True, f"Gained {points_gained} relationship points")
+                elif status == 400:
+                    self.log_result("NPC Interaction (Gift)", True, "Cannot interact (insufficient funds or cooldown)")
+                else:
+                    self.log_result("NPC Interaction (Gift)", False, f"Status: {status}")
+            else:
+                self.log_result("NPC Relationship Details", True, "No NPCs available for testing")
+                self.log_result("NPC Interaction (Gift)", True, "No NPCs available for testing")
+        else:
+            self.log_result("NPC Contacts", False, f"Status: {status}")
+
+    def test_dynamic_economy_system(self):
+        """Test Dynamic Economy System endpoints"""
+        # Test get market prices
+        success, data, status = self.make_request('GET', 'economy/market-prices')
+        
+        if success and 'prices' in data:
+            prices = data['prices']
+            self.log_result("Market Prices", True, f"Found prices for {len(prices)} categories")
+            
+            # Check if we have expected categories
+            expected_categories = ['drugs', 'weapons', 'vehicles', 'properties']
+            found_categories = list(prices.keys())
+            matching_categories = [cat for cat in expected_categories if cat in found_categories]
+            
+            if matching_categories:
+                self.log_result("Market Price Categories", True, f"Found {len(matching_categories)} expected categories")
+            else:
+                self.log_result("Market Price Categories", False, f"Expected categories not found. Got: {found_categories}")
+        else:
+            self.log_result("Market Prices", False, f"Status: {status}")
+        
+        # Test get price history for drugs
+        success, data, status = self.make_request('GET', 'economy/price-history/drugs')
+        
+        if success and 'history' in data:
+            history = data['history']
+            self.log_result("Price History (Drugs)", True, f"Found {len(history)} price history entries")
+        else:
+            self.log_result("Price History (Drugs)", False, f"Status: {status}")
+        
+        # Test simulate market fluctuation
+        success, data, status = self.make_request('POST', 'economy/simulate-fluctuation')
+        
+        if success:
+            fluctuations = data.get('fluctuations', {})
+            self.log_result("Simulate Market Fluctuation", True, f"Simulated fluctuations for {len(fluctuations)} categories")
+        else:
+            self.log_result("Simulate Market Fluctuation", False, f"Status: {status}")
+
+    def test_advanced_territories_system(self):
+        """Test Advanced Territories System endpoints"""
+        # Test get territories analysis
+        success, data, status = self.make_request('GET', 'territories/analysis')
+        
+        if success and 'territories' in data:
+            territories = data['territories']
+            self.log_result("Territories Analysis", True, f"Found analysis for {len(territories)} territories")
+            
+            # Check if analysis includes war predictions
+            if territories:
+                first_territory = territories[0]
+                if 'war_prediction' in first_territory:
+                    war_chance = first_territory['war_prediction'].get('chance', 0)
+                    self.log_result("War Predictions", True, f"War chance for first territory: {war_chance}%")
+                else:
+                    self.log_result("War Predictions", False, "War predictions not found in territory analysis")
+            else:
+                self.log_result("War Predictions", True, "No territories available for analysis")
+        else:
+            self.log_result("Territories Analysis", False, f"Status: {status}")
+
+    def test_dynamic_events_system(self):
+        """Test Dynamic Events System endpoints"""
+        # Test get dynamic events
+        success, data, status = self.make_request('GET', 'events/dynamic')
+        
+        if success and 'events' in data:
+            events = data['events']
+            self.log_result("Dynamic Events", True, f"Found {len(events)} dynamic events")
+        else:
+            self.log_result("Dynamic Events", False, f"Status: {status}")
+        
+        # Test get events impact
+        success, data, status = self.make_request('GET', 'events/impact')
+        
+        if success and 'impact' in data:
+            impact = data['impact']
+            modifiers = impact.get('modifiers', {})
+            self.log_result("Events Impact", True, f"Found {len(modifiers)} impact modifiers")
+        else:
+            self.log_result("Events Impact", False, f"Status: {status}")
+        
+        # Test get events predictions
+        success, data, status = self.make_request('GET', 'events/predictions')
+        
+        if success and 'predictions' in data:
+            predictions = data['predictions']
+            self.log_result("Events Predictions", True, f"Found {len(predictions)} event predictions")
+        else:
+            self.log_result("Events Predictions", False, f"Status: {status}")
+
     def test_new_features_integration(self):
         """Test integration of all new features"""
         print("\n🚗 Vehicle System Tests")
@@ -769,6 +903,19 @@ class SubmundoAPITester:
         
         print("\n🛒 Market System Tests")
         self.test_market_system()
+        
+        # NEW ENDPOINTS TESTING
+        print("\n👥 NPC Relationships System Tests")
+        self.test_npc_relationships_system()
+        
+        print("\n📈 Dynamic Economy System Tests")
+        self.test_dynamic_economy_system()
+        
+        print("\n🗺️ Advanced Territories System Tests")
+        self.test_advanced_territories_system()
+        
+        print("\n🎲 Dynamic Events System Tests")
+        self.test_dynamic_events_system()
 
     def run_all_tests(self):
         """Run all tests in sequence"""
