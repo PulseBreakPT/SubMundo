@@ -665,9 +665,9 @@ async def claim_daily_reward(current_user: dict = Depends(get_current_user)):
     
     # Streak bonus
     streak = player.get("daily_streak", 0) + 1
-    streak_multiplier = min(2.0, 1 + (streak * 0.1))
+    streak_multiplier = min(1.5, 1 + (streak * 0.05))  # Reduzido: max 1.5x em vez de 2x
     
-    base_reward = round(random.uniform(100, 500), 2)
+    base_reward = round(random.uniform(30, 150), 2)  # Reduzido: €30-150 em vez de €100-500
     reward_amount = round(base_reward * streak_multiplier, 2)
     
     # Bonus items on certain streaks
