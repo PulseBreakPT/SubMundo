@@ -148,6 +148,36 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/propriedades"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <PropertiesPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/negocios"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <BusinessPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mercado"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <MarketPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
