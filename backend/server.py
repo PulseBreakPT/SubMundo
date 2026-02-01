@@ -1937,6 +1937,227 @@ async def get_npcs(current_user: dict = Depends(get_current_user)):
     
     return {"npcs": npcs_data}
 
+# ============= SISTEMA DE RELACIONAMENTOS COM NPCs =============
+
+@api_router.get("/npcs/contacts")
+async def get_npc_contacts(current_user: dict = Depends(get_current_user)):
+    """Lista todos os NPCs com níveis de relacionamento do jogador"""
+    player_id = current_user["id"]
+    
+    # Buscar relacionamentos existentes
+    relationships = await db.npc_relationships.find(
+        {"player_id": player_id},
+        {"_id": 0}
+    ).to_list(100)
+    
+    relationships_map = {r["npc_id"]: r for r in relationships}
+    
+    contacts = []
+    for npc in NPCS_CONFIG:
+        relation = relationships_map.get(npc["id"], {
+            "npc_id": npc["id"],
+            "player_id": player_id,
+            "points": 0,
+            "level": "neutral",
+            "interactions": 0,
+            "last_interaction": None
+        })
+        
+        # Calcular nível de relacionamento
+        points = relation.get("points", 0)
+        if points <= -75:
+            level = "enemy"
+            level_name = "Inimigo"
+            level_color = "error"
+        elif points <= -50:
+            level = "hostile"
+            level_name = "Hostil"
+            level_color = "error"
+        elif points <= -25:
+            level = "unfriendly"
+            level_name = "Desconfiado"
+            level_color = "warning"
+        elif points <= 25:
+            level = "neutral"
+            level_name = "Neutro"
+            level_color = "secondary"
+        elif points <= 50:
+            level = "friendly"
+            level_name = "Amigável"
+            level_color = "success"
+        elif points <= 75:
+            level = "allied"
+            level_name = "Aliado"
+            level_color = "primary"
+        else:
+            level = "trusted"
+            level_name = "De Confiança"
+            level_color = "gold"
+        
+        # Calcular efeitos do relacionamento
+        effects = RelationshipSystem.get_interaction_effects(
+            RelationshipSystem.calculate_relationship_level(points)
+        )
+        
+        # Determinar interações disponíveis
+        available_interactions = []
+        if effects["can_trade"]:
+            available_interactions.append({"id": "trade", "name": "Negociar", "cost": 0})
+        if level in ["friendly", "allied", "trusted"]:
+            available_interactions.append({"id": "gift", "name": "Dar Presente", "cost": 500})
+            available_interactions.append({"id": "request_favor", "name": "Pedir Favor", "cost": 0})
+        if level in ["allied", "trusted"]:
+            available_interactions.append({"id": "share_info", "name": "Partilhar Informação", "cost": 0})
+        
+        contacts.append({
+            **npc,
+            "relationship": {
+                "points": points,
+                "level": level,
+                "level_name": level_name,
+                "level_color": level_color,
+                "interactions_count": relation.get("interactions", 0),
+                "last_interaction": relation.get("last_interaction"),
+                "effects": {
+                    "price_modifier": effects["price_modifier"],
+                    "can_trade": effects["can_trade"],
+                    "will_betray": effects["will_betray"],
+                    "info_quality": effects["info_quality"],
+                    "help_chance": effects["help_chance"]
+                }
+            },
+            "available_interactions": available_interactions
+        })
+    
+    return {"contacts": contacts}
+
+@api_router.get("/npcs/{npc_id}/relationship")
+async def get_npc_relationship_detail(npc_id: str, current_user: dict = Depends(get_current_user)):
+    """Detalhes completos do relacionamento com um NPC"""
+    npc = next((n for n in NPCS_CONFIG if n["id"] == npc_id), None)
+    if not npc:
+        raise HTTPException(status_code=404, detail="NPC não encontrado")
+    
+    relation = await db.npc_relationships.find_one({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    })
+    
+    if not relation:
+        relation = {"points": 0, "interactions": 0, "history": []}
+    
+    # Buscar histórico de interações
+    history = await db.npc_interactions.find({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    }, {"_id": 0}).sort("timestamp", -1).limit(20).to_list(20)
+    
+    points = relation.get("points", 0)
+    level = RelationshipSystem.calculate_relationship_level(points)
+    effects = RelationshipSystem.get_interaction_effects(level)
+    
+    return {
+        "npc": npc,
+        "relationship": {
+            "points": points,
+            "level": level.name.lower(),
+            "effects": {
+                "price_modifier": effects["price_modifier"],
+                "can_trade": effects["can_trade"],
+                "info_quality": effects["info_quality"],
+                "help_chance": effects["help_chance"]
+            }
+        },
+        "history": history,
+        "total_interactions": relation.get("interactions", 0)
+    }
+
+@api_router.post("/npcs/{npc_id}/interact")
+async def interact_with_npc(
+    npc_id: str, 
+    action: str = Query(..., description="Tipo de interação: gift, trade, request_favor, share_info"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Interagir com um NPC"""
+    npc = next((n for n in NPCS_CONFIG if n["id"] == npc_id), None)
+    if not npc:
+        raise HTTPException(status_code=404, detail="NPC não encontrado")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Buscar ou criar relacionamento
+    relation = await db.npc_relationships.find_one({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    })
+    
+    current_points = relation.get("points", 0) if relation else 0
+    now = datetime.now(timezone.utc)
+    
+    # Processar interação baseada no tipo
+    action_results = {
+        "gift": {"points_change": 10, "cost": 500, "success_msg": "O presente foi bem recebido!"},
+        "trade": {"points_change": 2, "cost": 0, "success_msg": "Negócio concluído."},
+        "request_favor": {"points_change": -5, "cost": 0, "success_msg": "Favor concedido."},
+        "share_info": {"points_change": 8, "cost": 0, "success_msg": "Informação partilhada com sucesso."},
+        "insult": {"points_change": -15, "cost": 0, "success_msg": "Relação danificada."},
+        "betray": {"points_change": -50, "cost": 0, "success_msg": "Relação destruída."}
+    }
+    
+    if action not in action_results:
+        raise HTTPException(status_code=400, detail="Ação inválida")
+    
+    result = action_results[action]
+    
+    # Verificar custo
+    if result["cost"] > 0 and player["clean_money"] < result["cost"]:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente")
+    
+    # Aplicar custo
+    if result["cost"] > 0:
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"clean_money": -result["cost"]}}
+        )
+    
+    # Calcular novos pontos
+    new_points = RelationshipSystem.calculate_relationship_change(
+        current_points, action, True, 1.0
+    )
+    
+    # Actualizar relacionamento
+    await db.npc_relationships.update_one(
+        {"player_id": current_user["id"], "npc_id": npc_id},
+        {
+            "$set": {
+                "points": new_points,
+                "level": RelationshipSystem.calculate_relationship_level(new_points).name.lower(),
+                "last_interaction": now
+            },
+            "$inc": {"interactions": 1}
+        },
+        upsert=True
+    )
+    
+    # Registar interação
+    await db.npc_interactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "npc_id": npc_id,
+        "action": action,
+        "points_before": current_points,
+        "points_after": new_points,
+        "timestamp": now
+    })
+    
+    return {
+        "success": True,
+        "message": result["success_msg"],
+        "points_change": new_points - current_points,
+        "new_points": new_points,
+        "new_level": RelationshipSystem.calculate_relationship_level(new_points).name.lower()
+    }
+
 @api_router.get("/npcs/{npc_id}")
 async def get_npc(npc_id: str, current_user: dict = Depends(get_current_user)):
     npc = next((n for n in NPCS_CONFIG if n["id"] == npc_id), None)
