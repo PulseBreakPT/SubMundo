@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Card } from '../components/ProgressBar';
+import { Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge, Modal, Input } from '../components/UI';
+import { useMissionTimer } from '../hooks/useCountdown';
 import { 
   Users, Crown, Shield, DollarSign, Map, 
-  Plus, LogOut, Sword, ChevronRight
+  Plus, LogOut, Swords, ChevronRight, Clock,
+  Wallet, Target, AlertTriangle
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function GangPage() {
   const { user, api } = useAuth();
-  const { myGang, actionLoading, createGang, joinGang, leaveGang, showNotification } = useGame();
+  const { 
+    myGang, 
+    gangWars, 
+    neighborhoods,
+    actionLoading, 
+    createGang, 
+    joinGang, 
+    leaveGang, 
+    depositToTreasury,
+    startWar,
+    resolveWar,
+    showNotification 
+  } = useGame();
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWarModal, setShowWarModal] = useState(false);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
   const [gangsList, setGangsList] = useState([]);
   const [newGang, setNewGang] = useState({ name: '', tag: '' });
+  const [depositAmount, setDepositAmount] = useState('');
   const [loadingGangs, setLoadingGangs] = useState(false);
+  const [activeTab, setActiveTab] = useState('info');
 
   useEffect(() => {
     fetchGangs();
@@ -61,7 +80,32 @@ export default function GangPage() {
     fetchGangs();
   };
 
+  const handleDeposit = async () => {
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      showNotification('Montante inválido', 'error');
+      return;
+    }
+    await depositToTreasury(amount);
+    setShowDepositModal(false);
+    setDepositAmount('');
+  };
+
+  const handleStartWar = async () => {
+    if (selectedNeighborhood) {
+      await startWar(selectedNeighborhood.id);
+      setShowWarModal(false);
+      setSelectedNeighborhood(null);
+    }
+  };
+
   const isLeader = myGang && myGang.leader_id === user?.id;
+
+  // Get available territories for attack
+  const availableTerritories = neighborhoods.filter(n => 
+    n.controlling_gang !== myGang?.id && 
+    !gangWars.some(w => w.neighborhood_id === n.id && w.status === 'active')
+  );
 
   return (
     <div className="space-y-6 animate-fade-in" data-testid="gang-page">
@@ -91,98 +135,229 @@ export default function GangPage() {
 
       {/* My Gang Section */}
       {myGang && (
-        <Card className="border-gold">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-surface-highlight border border-gold flex items-center justify-center">
-                <Shield size={32} className="text-gold" />
+        <>
+          {/* Gang Header Card */}
+          <Card className="border-gold">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-surface-highlight border border-gold flex items-center justify-center">
+                  <Shield size={32} className="text-gold" />
+                </div>
+                <div>
+                  <h2 className="font-heading text-2xl text-text-primary flex items-center gap-2">
+                    {myGang.name}
+                    <Badge variant="gold">[{myGang.tag}]</Badge>
+                  </h2>
+                  <p className="text-text-secondary text-sm">
+                    Fundada por {myGang.leader_name}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-heading text-2xl text-text-primary flex items-center gap-2">
-                  {myGang.name}
-                  <Badge variant="gold">[{myGang.tag}]</Badge>
-                </h2>
-                <p className="text-text-secondary text-sm">
-                  Fundada por {myGang.leader_name}
-                </p>
+              {isLeader && (
+                <Badge variant="gold">
+                  <Crown size={12} className="mr-1" />
+                  Líder
+                </Badge>
+              )}
+            </div>
+
+            {/* Gang Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-surface-highlight border border-border p-4 text-center">
+                <p className="text-2xl font-body text-primary">{myGang.members_count || myGang.members?.length || 1}</p>
+                <p className="text-xs text-text-secondary uppercase tracking-wider">Membros</p>
+              </div>
+              <div className="bg-surface-highlight border border-border p-4 text-center">
+                <p className="text-2xl font-body text-gold">{myGang.reputation}</p>
+                <p className="text-xs text-text-secondary uppercase tracking-wider">Reputação</p>
+              </div>
+              <div className="bg-surface-highlight border border-border p-4 text-center">
+                <p className="text-2xl font-body text-success">€{myGang.treasury?.toFixed(0) || 0}</p>
+                <p className="text-xs text-text-secondary uppercase tracking-wider">Cofre</p>
+              </div>
+              <div className="bg-surface-highlight border border-border p-4 text-center">
+                <p className="text-2xl font-body text-secondary">{myGang.territories?.length || 0}</p>
+                <p className="text-xs text-text-secondary uppercase tracking-wider">Territórios</p>
               </div>
             </div>
-            {isLeader && (
-              <Badge variant="gold">
-                <Crown size={12} className="mr-1" />
-                Líder
-              </Badge>
-            )}
+          </Card>
+
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-border overflow-x-auto">
+            {[
+              { id: 'info', label: 'Informações' },
+              { id: 'wars', label: `Guerras (${gangWars.length})` },
+              { id: 'territories', label: 'Territórios' },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                className={clsx(
+                  'px-4 py-3 font-ui text-sm uppercase tracking-wider transition-all whitespace-nowrap',
+                  activeTab === id ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'
+                )}
+                onClick={() => setActiveTab(id)}
+                data-testid={`tab-${id}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* Gang Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-surface-highlight border border-border p-4 text-center">
-              <p className="text-2xl font-body text-primary">{myGang.members_count || myGang.members?.length || 1}</p>
-              <p className="text-xs text-text-secondary uppercase tracking-wider">Membros</p>
-            </div>
-            <div className="bg-surface-highlight border border-border p-4 text-center">
-              <p className="text-2xl font-body text-gold">{myGang.reputation}</p>
-              <p className="text-xs text-text-secondary uppercase tracking-wider">Reputação</p>
-            </div>
-            <div className="bg-surface-highlight border border-border p-4 text-center">
-              <p className="text-2xl font-body text-success">€{myGang.treasury?.toFixed(0) || 0}</p>
-              <p className="text-xs text-text-secondary uppercase tracking-wider">Cofre</p>
-            </div>
-            <div className="bg-surface-highlight border border-border p-4 text-center">
-              <p className="text-2xl font-body text-secondary">{myGang.territories?.length || 0}</p>
-              <p className="text-xs text-text-secondary uppercase tracking-wider">Territórios</p>
-            </div>
-          </div>
-
-          {/* Members List */}
-          {myGang.members && myGang.members.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-heading text-lg text-text-primary mb-3">Membros</h3>
-              <div className="space-y-2">
-                {myGang.members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 bg-surface-highlight border border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-surface border border-border flex items-center justify-center">
-                        {member.id === myGang.leader_id ? (
-                          <Crown size={18} className="text-gold" />
-                        ) : (
-                          <Users size={18} className="text-text-secondary" />
-                        )}
+          {/* Info Tab */}
+          {activeTab === 'info' && (
+            <div className="space-y-4">
+              {/* Members List */}
+              {myGang.members && myGang.members.length > 0 && (
+                <Card title="Membros" icon={Users}>
+                  <div className="space-y-2">
+                    {myGang.members.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 bg-surface-highlight border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-surface border border-border flex items-center justify-center">
+                            {member.id === myGang.leader_id ? (
+                              <Crown size={18} className="text-gold" />
+                            ) : (
+                              <Users size={18} className="text-text-secondary" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-text-primary font-body">{member.username}</p>
+                            <p className="text-xs text-text-secondary">Nível {member.level}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-success text-sm">€{member.total_earnings?.toFixed(0) || 0}</p>
+                          <p className="text-xs text-text-secondary">total ganho</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-text-primary font-body">{member.username}</p>
-                        <p className="text-xs text-text-secondary">Nível {member.level}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-success text-sm">€{member.total_earnings?.toFixed(0) || 0}</p>
-                      <p className="text-xs text-text-secondary">total ganho</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </Card>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="primary"
+                  onClick={() => setShowDepositModal(true)}
+                  icon={Wallet}
+                  data-testid="deposit-btn"
+                >
+                  Depositar no Cofre
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => setShowLeaveModal(true)}
+                  icon={LogOut}
+                  data-testid="leave-gang-btn"
+                >
+                  Sair da Gangue
+                </Button>
               </div>
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-3">
-            <Button
-              variant="danger"
-              onClick={() => setShowLeaveModal(true)}
-              icon={LogOut}
-              data-testid="leave-gang-btn"
-            >
-              Sair da Gangue
-            </Button>
-          </div>
-        </Card>
+          {/* Wars Tab */}
+          {activeTab === 'wars' && (
+            <div className="space-y-4">
+              {/* Start War Button (Leader Only) */}
+              {isLeader && (
+                <Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-heading text-lg text-text-primary">Iniciar Guerra</h3>
+                      <p className="text-text-secondary text-sm">Ataca um território para o conquistar.</p>
+                    </div>
+                    <Button
+                      variant="primary"
+                      icon={Swords}
+                      onClick={() => setShowWarModal(true)}
+                      disabled={availableTerritories.length === 0}
+                      data-testid="start-war-btn"
+                    >
+                      Atacar Território
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* Active Wars */}
+              {gangWars.length === 0 ? (
+                <Card>
+                  <div className="text-center py-8">
+                    <Swords size={48} className="mx-auto text-text-secondary mb-4" />
+                    <p className="text-text-secondary">Nenhuma guerra ativa.</p>
+                    {isLeader && (
+                      <p className="text-text-secondary text-sm mt-2">Como líder, podes iniciar guerras por territórios.</p>
+                    )}
+                  </div>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {gangWars.map((war) => (
+                    <WarCard 
+                      key={war.id} 
+                      war={war} 
+                      myGangId={myGang.id}
+                      onResolve={() => resolveWar(war.id)}
+                      loading={actionLoading}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Territories Tab */}
+          {activeTab === 'territories' && (
+            <div className="space-y-4">
+              {myGang.territories?.length === 0 ? (
+                <Card>
+                  <div className="text-center py-8">
+                    <Map size={48} className="mx-auto text-text-secondary mb-4" />
+                    <p className="text-text-secondary">A tua gangue ainda não controla territórios.</p>
+                    <p className="text-text-secondary text-sm mt-2">Inicia guerras para conquistar bairros!</p>
+                  </div>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {myGang.territories.map((territoryId) => {
+                    const territory = neighborhoods.find(n => n.id === territoryId);
+                    if (!territory) return null;
+                    
+                    return (
+                      <div
+                        key={territoryId}
+                        className="bg-surface border border-gold p-4"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 bg-gold/20 border border-gold flex items-center justify-center">
+                            <Map size={20} className="text-gold" />
+                          </div>
+                          <div>
+                            <h3 className="font-heading text-lg text-text-primary">{territory.name}</h3>
+                            <Badge variant="gold">CONTROLADO</Badge>
+                          </div>
+                        </div>
+                        <p className="text-text-secondary text-sm">{territory.description}</p>
+                        <div className="flex gap-4 mt-3 text-sm">
+                          <span className="text-success">Valor: {territory.economic_value}</span>
+                          <span className="text-error">Heat: {territory.heat_level}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Available Gangs */}
+      {/* Available Gangs (when not in a gang) */}
       {!myGang && (
         <>
           <h2 className="font-heading text-xl text-text-primary">Gangues Disponíveis</h2>
@@ -280,11 +455,7 @@ export default function GangPage() {
             data-testid="gang-tag-input"
           />
           <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => setShowCreateModal(false)}
-            >
+            <Button variant="secondary" fullWidth onClick={() => setShowCreateModal(false)}>
               Cancelar
             </Button>
             <Button
@@ -316,11 +487,7 @@ export default function GangPage() {
             </div>
           )}
           <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => setShowLeaveModal(false)}
-            >
+            <Button variant="secondary" fullWidth onClick={() => setShowLeaveModal(false)}>
               Cancelar
             </Button>
             <Button
@@ -335,6 +502,199 @@ export default function GangPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Deposit Modal */}
+      <Modal
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+        title="Depositar no Cofre"
+      >
+        <div className="space-y-4">
+          <div className="bg-surface-highlight border border-border p-4">
+            <div className="flex justify-between mb-2">
+              <span className="text-text-secondary">Cofre atual:</span>
+              <span className="text-success">€{myGang?.treasury?.toFixed(2) || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-secondary">Teu dinheiro limpo:</span>
+              <span className="text-success">€{user?.clean_money?.toFixed(2) || 0}</span>
+            </div>
+          </div>
+          
+          <Input
+            label="Montante a depositar"
+            type="number"
+            placeholder="1000"
+            value={depositAmount}
+            onChange={(e) => setDepositAmount(e.target.value)}
+            data-testid="deposit-amount-input"
+          />
+          
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={() => setShowDepositModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={handleDeposit}
+              loading={actionLoading}
+              data-testid="confirm-deposit"
+            >
+              Depositar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Start War Modal */}
+      <Modal
+        isOpen={showWarModal}
+        onClose={() => setShowWarModal(false)}
+        title="Atacar Território"
+      >
+        <div className="space-y-4">
+          <p className="text-text-secondary text-sm">
+            Seleciona um território para atacar. O custo da guerra é baseado no valor económico do bairro.
+          </p>
+          
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {availableTerritories.map((territory) => {
+              const warCost = territory.economic_value * 100;
+              const canAfford = (myGang?.treasury || 0) >= warCost;
+              
+              return (
+                <div
+                  key={territory.id}
+                  className={clsx(
+                    'p-3 border cursor-pointer transition-all',
+                    selectedNeighborhood?.id === territory.id 
+                      ? 'bg-primary/20 border-primary' 
+                      : 'bg-surface-highlight border-border hover:border-primary/50',
+                    !canAfford && 'opacity-50'
+                  )}
+                  onClick={() => canAfford && setSelectedNeighborhood(territory)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-heading text-text-primary">{territory.name}</h4>
+                      <p className="text-text-secondary text-xs">
+                        {territory.controlling_gang ? 'Controlado por gangue' : 'Território neutro'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={clsx('font-body', canAfford ? 'text-success' : 'text-error')}>
+                        €{warCost}
+                      </p>
+                      <p className="text-text-secondary text-xs">custo</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {selectedNeighborhood && (
+            <div className="bg-surface-highlight border border-border p-3">
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Cofre da gangue:</span>
+                <span className="text-success">€{myGang?.treasury?.toFixed(0) || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Custo da guerra:</span>
+                <span className="text-error">-€{selectedNeighborhood.economic_value * 100}</span>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={() => setShowWarModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={handleStartWar}
+              loading={actionLoading}
+              disabled={!selectedNeighborhood}
+              icon={Swords}
+              data-testid="confirm-war"
+            >
+              Iniciar Guerra
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// War Card Component
+function WarCard({ war, myGangId, onResolve, loading }) {
+  const isAttacker = war.attacker_gang_id === myGangId;
+  
+  const { progress, isComplete, formatRemaining } = useMissionTimer(
+    war.started_at,
+    300 // 5 minutes
+  );
+
+  return (
+    <div className={clsx(
+      'bg-surface border p-4',
+      isAttacker ? 'border-primary' : 'border-error'
+    )}>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Swords size={20} className={isAttacker ? 'text-primary' : 'text-error'} />
+            <h3 className="font-heading text-lg text-text-primary">
+              Guerra por {war.neighborhood_name}
+            </h3>
+          </div>
+          <Badge variant={isAttacker ? 'primary' : 'error'} className="mt-1">
+            {isAttacker ? 'ATACANTE' : 'DEFENSOR'}
+          </Badge>
+        </div>
+        <div className="text-right">
+          <div className="flex items-center gap-2 text-warning">
+            <Clock size={14} />
+            <span className="font-body">{isComplete ? 'Pronta!' : formatRemaining()}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-surface-highlight border border-border p-3 text-center">
+          <p className="text-xs text-text-secondary uppercase">Atacante</p>
+          <p className="text-primary font-body">{war.attacker_gang_name}</p>
+          <p className="text-xs text-text-secondary">Poder: {war.attacker_power?.toFixed(0)}</p>
+        </div>
+        <div className="bg-surface-highlight border border-border p-3 text-center">
+          <p className="text-xs text-text-secondary uppercase">Defensor</p>
+          <p className="text-error font-body">{war.defender_gang_name}</p>
+          <p className="text-xs text-text-secondary">Poder: {war.defender_power?.toFixed(0)}</p>
+        </div>
+      </div>
+      
+      <ProgressBar
+        value={progress}
+        max={100}
+        color={isComplete ? 'success' : 'warning'}
+        showLabel={false}
+      />
+      
+      {isComplete && (
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={onResolve}
+          loading={loading}
+          className="mt-4"
+          data-testid={`resolve-war-${war.id}`}
+        >
+          Resolver Guerra
+        </Button>
+      )}
     </div>
   );
 }
