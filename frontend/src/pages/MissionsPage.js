@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useGame } from '../contexts/GameContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,7 +8,8 @@ import { useMissionTimer } from '../hooks/useCountdown';
 import { ProgressBar } from '../components/ProgressBar';
 import { 
   Target, Clock, Flame, DollarSign, Zap, 
-  AlertTriangle, CheckCircle, XCircle, Star
+  AlertTriangle, CheckCircle, XCircle, Star,
+  Crosshair, Shield, Lock, Unlock, Users, Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -16,20 +17,49 @@ export default function MissionsPage() {
   const [searchParams] = useSearchParams();
   const selectedNeighborhood = searchParams.get('bairro') || 'centro';
   
-  const { user } = useAuth();
+  const { user, api } = useAuth();
   const { 
     missionTemplates, 
     neighborhoods, 
     activeMission, 
     actionLoading,
     startMission,
-    completeMission 
+    completeMission,
+    showNotification 
   } = useGame();
   
   const [selectedMission, setSelectedMission] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [heists, setHeists] = useState([]);
+  const [proceduralMissions, setProceduralMissions] = useState([]);
+  const [activeHeistSession, setActiveHeistSession] = useState(null);
+  const [heistLoading, setHeistLoading] = useState(false);
 
   const player = user;
+
+  // Buscar heists e missões procedurais
+  useEffect(() => {
+    const fetchHeists = async () => {
+      try {
+        const response = await api().get('/heists');
+        setHeists(response.data);
+      } catch (err) {
+        console.log('Heists fetch error:', err);
+      }
+    };
+    
+    const fetchProceduralMissions = async () => {
+      try {
+        const response = await api().get('/procedural-missions');
+        setProceduralMissions(response.data);
+      } catch (err) {
+        console.log('Procedural missions fetch error:', err);
+      }
+    };
+    
+    fetchHeists();
+    fetchProceduralMissions();
+  }, [api]);
 
   // Mission timer
   const { progress: missionProgress, isComplete: missionComplete, formatRemaining } = useMissionTimer(
@@ -47,6 +77,51 @@ export default function MissionsPage() {
   const handleCompleteMission = async () => {
     if (activeMission) {
       await completeMission(activeMission.id);
+    }
+  };
+
+  const handleStartHeist = async (heistId) => {
+    setHeistLoading(true);
+    try {
+      const response = await api().post(`/heists/${heistId}/start`);
+      setActiveHeistSession(response.data);
+      showNotification(`Heist iniciado: ${response.data.heist}`, 'success');
+    } catch (err) {
+      showNotification(err.response?.data?.detail || 'Erro ao iniciar heist', 'error');
+    } finally {
+      setHeistLoading(false);
+    }
+  };
+
+  const handleHeistPhase = async () => {
+    if (!activeHeistSession) return;
+    
+    setHeistLoading(true);
+    try {
+      const response = await api().post(`/heists/session/${activeHeistSession.session_id}/phase`);
+      
+      if (response.data.heist_complete) {
+        if (response.data.heist_success) {
+          showNotification(`${response.data.message} Recompensa: €${response.data.reward}`, 'success');
+        } else {
+          showNotification(response.data.message, 'error');
+        }
+        setActiveHeistSession(null);
+        // Refresh heists list
+        const heistsResponse = await api().get('/heists');
+        setHeists(heistsResponse.data);
+      } else {
+        showNotification(response.data.message, 'success');
+        setActiveHeistSession({
+          ...activeHeistSession,
+          current_phase: activeHeistSession.current_phase + 1,
+          next_phase: response.data.next_phase
+        });
+      }
+    } catch (err) {
+      showNotification(err.response?.data?.detail || 'Erro na fase do heist', 'error');
+    } finally {
+      setHeistLoading(false);
     }
   };
 
