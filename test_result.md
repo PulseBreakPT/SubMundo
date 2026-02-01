@@ -48,6 +48,22 @@
 ##   run_ui: false
 ##
 ## test_plan:
+##  - Test the new banking system endpoints
+##  
+## test_sequence: 1
+## run_ui: false
+##
+## Endpoints to test:
+## 1. GET /api/bank/status - Bank account status
+## 2. POST /api/bank/deposit - Deposit money
+## 3. POST /api/bank/withdraw - Withdraw money
+## 4. POST /api/bank/transfer - Transfer money
+## 5. GET /api/bank/transactions - Transaction history
+## 6. GET /api/bank/investments - Investment options
+## 7. POST /api/bank/invest - Create investment
+## 8. GET /api/bank/loans - Loan info
+## 9. POST /api/bank/loan - Request loan
+## 10. GET /api/bank/robbery-targets - Robbery targets
 ##   current_focus:
 ##     - "Task name 1"
 ##     - "Task name 2"
