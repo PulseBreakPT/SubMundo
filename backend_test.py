@@ -334,7 +334,7 @@ class SubmundoAPITester:
 
     def test_game_state(self):
         """Test game state endpoint"""
-        success, data, status = self.make_request('GET', 'game/state')
+        success, data, status = self.make_request('GET', 'game/full-state')
         
         if success and 'player' in data:
             self.log_result("Game State", True, "Full game state retrieved")
@@ -342,6 +342,149 @@ class SubmundoAPITester:
         else:
             self.log_result("Game State", False, f"Status: {status}")
             return False
+
+    def test_vehicles_system(self):
+        """Test vehicle system endpoints"""
+        # Get vehicle catalog
+        success, data, status = self.make_request('GET', 'vehicles/catalog')
+        
+        if success and 'vehicles' in data:
+            vehicles = data['vehicles']
+            self.log_result("Vehicle Catalog", True, f"Found {len(vehicles)} vehicles")
+            
+            # Check if we have 8 vehicles as required
+            if len(vehicles) == 8:
+                self.log_result("Vehicle Catalog Count", True, "Exactly 8 vehicles available")
+            else:
+                self.log_result("Vehicle Catalog Count", False, f"Expected 8 vehicles, found {len(vehicles)}")
+        else:
+            self.log_result("Vehicle Catalog", False, f"Status: {status}")
+            return False
+        
+        # Get my vehicles
+        success, data, status = self.make_request('GET', 'vehicles/my')
+        
+        if success and 'vehicles' in data:
+            my_vehicles = data['vehicles']
+            self.log_result("My Vehicles", True, f"Player has {len(my_vehicles)} vehicles")
+        else:
+            self.log_result("My Vehicles", False, f"Status: {status}")
+        
+        # Try to buy a vehicle (cheapest one - bicicleta)
+        if vehicles:
+            cheapest_vehicle = min(vehicles, key=lambda v: v['price'])
+            vehicle_id = cheapest_vehicle['id']
+            
+            success, data, status = self.make_request(
+                'POST',
+                f'vehicles/buy/{vehicle_id}'
+            )
+            
+            if success:
+                self.log_result("Buy Vehicle", True, f"Bought {cheapest_vehicle['name']}")
+                
+                # Try to activate the vehicle
+                if 'vehicle' in data and 'id' in data['vehicle']:
+                    vehicle_instance_id = data['vehicle']['id']
+                    
+                    success, activate_data, activate_status = self.make_request(
+                        'POST',
+                        f'vehicles/{vehicle_instance_id}/activate'
+                    )
+                    
+                    if success:
+                        self.log_result("Activate Vehicle", True, "Vehicle activated successfully")
+                    else:
+                        self.log_result("Activate Vehicle", False, f"Status: {activate_status}")
+                
+            elif status == 400:
+                self.log_result("Buy Vehicle", True, "Cannot buy vehicle (insufficient funds or already owned)")
+            else:
+                self.log_result("Buy Vehicle", False, f"Status: {status}")
+
+    def test_city_events_system(self):
+        """Test city events system"""
+        # Get active events
+        success, data, status = self.make_request('GET', 'events/active')
+        
+        if success and 'events' in data:
+            events = data['events']
+            self.log_result("Active Events", True, f"Found {len(events)} active events")
+        else:
+            self.log_result("Active Events", False, f"Status: {status}")
+            return False
+        
+        # Get current effects
+        success, data, status = self.make_request('GET', 'events/effects')
+        
+        if success:
+            effects = data
+            self.log_result("Event Effects", True, f"Heat multiplier: {effects.get('heat_multiplier', 1.0)}")
+        else:
+            self.log_result("Event Effects", False, f"Status: {status}")
+        
+        # Try to trigger an event (for testing)
+        success, data, status = self.make_request('POST', 'events/trigger')
+        
+        if success:
+            self.log_result("Trigger Event", True, f"Event triggered: {data.get('event', {}).get('name', 'Unknown')}")
+        elif status == 400:
+            self.log_result("Trigger Event", True, "Cannot trigger event (max events active or duplicate)")
+        else:
+            self.log_result("Trigger Event", False, f"Status: {status}")
+
+    def test_gang_wars_system(self):
+        """Test gang wars system"""
+        # Get active wars
+        success, data, status = self.make_request('GET', 'wars/active')
+        
+        if success and 'wars' in data:
+            wars = data['wars']
+            self.log_result("Active Wars", True, f"Found {len(wars)} active wars")
+        else:
+            self.log_result("Active Wars", False, f"Status: {status}")
+            return False
+        
+        # Get my gang wars
+        success, data, status = self.make_request('GET', 'wars/my')
+        
+        if success and 'wars' in data:
+            my_wars = data['wars']
+            self.log_result("My Gang Wars", True, f"Found {len(my_wars)} wars involving my gang")
+        else:
+            self.log_result("My Gang Wars", False, f"Status: {status}")
+        
+        # Test treasury deposit
+        success, data, status = self.make_request(
+            'POST',
+            'gangs/treasury/deposit',
+            None,  # Will be handled as query param
+            expected_status=200
+        )
+        
+        # The endpoint expects amount as query parameter, let's try with proper format
+        success, data, status = self.make_request(
+            'POST',
+            'gangs/treasury/deposit?amount=100'
+        )
+        
+        if success:
+            self.log_result("Treasury Deposit", True, "Deposited to gang treasury")
+        elif status == 400:
+            self.log_result("Treasury Deposit", True, "Cannot deposit (not in gang or insufficient funds)")
+        else:
+            self.log_result("Treasury Deposit", False, f"Status: {status}")
+
+    def test_new_features_integration(self):
+        """Test integration of all new features"""
+        print("\n🚗 Vehicle System Tests")
+        self.test_vehicles_system()
+        
+        print("\n🎪 City Events Tests")  
+        self.test_city_events_system()
+        
+        print("\n⚔️ Gang Wars Tests")
+        self.test_gang_wars_system()
 
     def run_all_tests(self):
         """Run all tests in sequence"""
