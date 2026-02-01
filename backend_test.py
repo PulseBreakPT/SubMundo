@@ -1063,8 +1063,8 @@ class SubmundoAPITester:
         # Test investments
         success, data, status = self.make_request('GET', 'bank/investments')
         
-        if success and 'investment_options' in data:
-            options = data['investment_options']
+        if success and 'options' in data:
+            options = data['options']
             self.log_result("Bank Investments", True, f"Found {len(options)} investment options")
             
             # Try to create an investment (if user has bank balance)
