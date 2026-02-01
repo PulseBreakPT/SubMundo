@@ -23,8 +23,8 @@ const EVENT_ICONS = {
 
 export default function EventsPage() {
   const { cityEvents, actionLoading, triggerEvent } = useGame();
+  const { api } = useAuth();
   const [effects, setEffects] = useState(null);
-  const { api } = require('../contexts/AuthContext').useAuth();
 
   useEffect(() => {
     fetchEffects();
