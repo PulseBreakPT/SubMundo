@@ -64,6 +64,7 @@ const sidebarItems = [
   { path: '/', icon: Home, label: 'Início' },
   { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/missoes', icon: Target, label: 'Missões' },
+  { path: '/banco', icon: Landmark, label: 'Banco' },
   { path: '/veiculos', icon: Car, label: 'Veículos' },
   { path: '/propriedades', icon: Building, label: 'Propriedades' },
   { path: '/negocios', icon: Factory, label: 'Negócios' },
