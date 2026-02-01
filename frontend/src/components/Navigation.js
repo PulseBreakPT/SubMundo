@@ -1,14 +1,63 @@
-import { NavLink, Link } from 'react-router-dom';
-import { Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store, Newspaper, HelpCircle, Shield, ScrollText } from 'lucide-react';
+import { useState } from 'react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import { 
+  Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store, 
+  Newspaper, HelpCircle, Shield, ScrollText, Menu, X, ChevronRight,
+  DollarSign, Wallet
+} from 'lucide-react';
 
+// Main navigation items for mobile bottom bar
 const navItems = [
   { path: '/', icon: Home, label: 'Início' },
-  { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/missoes', icon: Target, label: 'Missões' },
+  { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/gangue', icon: Users, label: 'Gangue' },
-  { path: '/perfil', icon: User, label: 'Perfil' },
 ];
 
+// All menu items organized by sections
+const menuSections = [
+  {
+    title: 'Principal',
+    items: [
+      { path: '/', icon: Home, label: 'Início' },
+      { path: '/mapa', icon: Map, label: 'Mapa' },
+      { path: '/missoes', icon: Target, label: 'Missões' },
+    ]
+  },
+  {
+    title: 'Negócios',
+    items: [
+      { path: '/propriedades', icon: Building, label: 'Propriedades' },
+      { path: '/negocios', icon: Factory, label: 'Negócios' },
+      { path: '/mercado', icon: Store, label: 'Mercado' },
+      { path: '/veiculos', icon: Car, label: 'Veículos' },
+    ]
+  },
+  {
+    title: 'Social',
+    items: [
+      { path: '/gangue', icon: Users, label: 'Gangue' },
+      { path: '/eventos', icon: Radio, label: 'Eventos' },
+    ]
+  },
+  {
+    title: 'Informações',
+    items: [
+      { path: '/novidades', icon: Newspaper, label: 'Novidades' },
+      { path: '/faq', icon: HelpCircle, label: 'FAQ' },
+      { path: '/perfil', icon: User, label: 'Perfil' },
+    ]
+  },
+  {
+    title: 'Legal',
+    items: [
+      { path: '/privacidade', icon: Shield, label: 'Privacidade' },
+      { path: '/termos', icon: ScrollText, label: 'Termos' },
+    ]
+  },
+];
+
+// Sidebar items for desktop
 const sidebarItems = [
   { path: '/', icon: Home, label: 'Início' },
   { path: '/mapa', icon: Map, label: 'Mapa' },
@@ -29,32 +78,116 @@ const footerLinks = [
   { path: '/termos', label: 'Termos' },
 ];
 
-export const BottomNav = () => {
+// Mobile Menu Drawer
+const MobileMenu = ({ isOpen, onClose }) => {
+  const location = useLocation();
+  
+  if (!isOpen) return null;
+  
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-50 md:hidden"
-      data-testid="bottom-nav"
-    >
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems.map(({ path, icon: Icon, label }) => (
-          <NavLink
-            key={path}
-            to={path}
-            data-testid={`nav-${label.toLowerCase()}`}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center px-3 py-2 transition-all ${
-                isActive
-                  ? 'text-primary'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`
-            }
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/80 z-[60] md:hidden"
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <div className="fixed inset-y-0 right-0 w-[280px] bg-surface border-l border-border z-[70] md:hidden overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-surface p-4 border-b border-border flex items-center justify-between">
+          <h2 className="font-heading text-xl text-primary">Menu</h2>
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-highlight text-text-secondary hover:text-primary transition-all"
           >
-            <Icon size={22} />
-            <span className="text-[10px] mt-1 font-ui uppercase tracking-wider">{label}</span>
-          </NavLink>
-        ))}
+            <X size={24} />
+          </button>
+        </div>
+        
+        {/* Menu Sections */}
+        <div className="p-4 space-y-6">
+          {menuSections.map((section) => (
+            <div key={section.title}>
+              <h3 className="text-[10px] font-ui uppercase tracking-widest text-text-secondary mb-2 px-2">
+                {section.title}
+              </h3>
+              <div className="space-y-1">
+                {section.items.map(({ path, icon: Icon, label }) => (
+                  <NavLink
+                    key={path}
+                    to={path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                        isActive
+                          ? 'bg-primary/20 text-primary border-l-2 border-primary'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-highlight'
+                      }`
+                    }
+                  >
+                    <Icon size={20} />
+                    <span className="font-ui text-sm">{label}</span>
+                    <ChevronRight size={16} className="ml-auto opacity-50" />
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t border-border mt-4">
+          <p className="text-text-secondary text-[10px] text-center uppercase tracking-widest">
+            SUBMUNDO v1.3.0
+          </p>
+        </div>
       </div>
-    </nav>
+    </>
+  );
+};
+
+export const BottomNav = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  
+  return (
+    <>
+      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      
+      <nav 
+        className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-50 md:hidden safe-area-bottom"
+        data-testid="bottom-nav"
+      >
+        <div className="flex justify-around items-center h-16 px-1">
+          {navItems.map(({ path, icon: Icon, label }) => (
+            <NavLink
+              key={path}
+              to={path}
+              data-testid={`nav-${label.toLowerCase()}`}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center px-2 py-2 min-w-[60px] transition-all ${
+                  isActive
+                    ? 'text-primary'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`
+              }
+            >
+              <Icon size={22} />
+              <span className="text-[9px] mt-1 font-ui uppercase tracking-wider">{label}</span>
+            </NavLink>
+          ))}
+          
+          {/* Menu Button */}
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="flex flex-col items-center justify-center px-2 py-2 min-w-[60px] text-text-secondary hover:text-primary transition-all"
+          >
+            <Menu size={22} />
+            <span className="text-[9px] mt-1 font-ui uppercase tracking-wider">Mais</span>
+          </button>
+        </div>
+      </nav>
+    </>
   );
 };
 
