@@ -810,6 +810,32 @@ export const weightedRandom = (options) => {
   return options[options.length - 1].value;
 };
 
+// Helper function to get tips and strategies
+export const getTipsAndStrategies = () => {
+  return {
+    general: [
+      "Mantém o heat abaixo de 50% para evitar encontros policiais.",
+      "Investe em propriedades para rendimento passivo.",
+      "Usa veículos rápidos para missões de alto risco.",
+      "Junta-te a uma gangue para aceder a territórios e guerras.",
+      "Diversifica entre dinheiro limpo e sujo para sobreviver.",
+      "Negócios ilegais dão mais lucro mas aumentam notoriedade.",
+      "Relacionamentos com NPCs desbloqueiam melhores preços.",
+      "Eventos da cidade são oportunidades - ou armadilhas."
+    ],
+    beginner: [
+      "Começa com missões legais para ganhar experiência.",
+      "Gasta energia em ações rápidas quando não tens missões.",
+      "Compra o primeiro veículo assim que possível."
+    ],
+    advanced: [
+      "Coordena ataques territoriais com a tua gangue.",
+      "Monitoriza preços do mercado para comprar barato.",
+      "Cultiva relacionamentos com informantes para intel."
+    ]
+  };
+};
+
 // ============================================================================
 // VALIDAÇÕES
 // ============================================================================
