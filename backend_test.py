@@ -494,11 +494,11 @@ class SubmundoAPITester:
         # Test available properties in centro neighborhood
         success, data, status = self.make_request('GET', 'properties/available/centro')
         
-        if success and 'available_properties' in data:
-            available = data['available_properties']
+        if success and 'properties' in data:
+            available = data['properties']
             self.log_result("Available Properties Centro", True, f"Found {len(available)} available in centro")
         else:
-            self.log_result("Available Properties Centro", False, f"Status: {status}")
+            self.log_result("Available Properties Centro", False, f"Status: {status}, Data: {data}")
         
         # Try to buy a property (cheapest one - apartamento in centro)
         success, data, status = self.make_request(
