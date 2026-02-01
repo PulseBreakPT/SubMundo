@@ -3,10 +3,11 @@ import { useGame } from '../contexts/GameContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ProgressBar';
 import { Button, Badge } from '../components/UI';
+import { EVENTS_LORE, getRandomWisdomQuote } from '../data/lore';
 import { 
   Radio, ShieldAlert, PartyPopper, ZapOff, Handshake,
   TrendingUp, Thermometer, Star, ShoppingBag, Clock, 
-  AlertTriangle, Percent
+  AlertTriangle, Percent, Eye, Lightbulb, Activity, Target
 } from 'lucide-react';
 import clsx from 'clsx';
 
