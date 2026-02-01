@@ -188,12 +188,12 @@ NPCS_CONFIG = [
 # ============= PROPERTY & BUSINESS SYSTEM =============
 
 PROPERTY_TYPES = [
-    {"id": "apartamento", "name": "Apartamento", "description": "Espaço compacto no centro urbano.", "base_price": 5000, "income_per_hour": 50, "maintenance_cost": 20, "capacity": 1, "allowed_neighborhoods": ["centro", "comercial", "universidade"]},
-    {"id": "casa", "name": "Casa", "description": "Residência confortável com espaço extra.", "base_price": 15000, "income_per_hour": 120, "maintenance_cost": 50, "capacity": 2, "allowed_neighborhoods": ["suburbio", "praia", "elite"]},
-    {"id": "armazem", "name": "Armazém", "description": "Espaço amplo para guardar mercadoria.", "base_price": 25000, "income_per_hour": 200, "maintenance_cost": 80, "capacity": 10, "allowed_neighborhoods": ["porto", "industrial", "comercial"]},
-    {"id": "fabrica", "name": "Fábrica Clandestina", "description": "Instalação secreta para operações ilegais.", "base_price": 50000, "income_per_hour": 400, "maintenance_cost": 150, "capacity": 5, "allowed_neighborhoods": ["industrial", "porto", "favela"]},
-    {"id": "mansao", "name": "Mansão", "description": "Propriedade de luxo com todas as comodidades.", "base_price": 100000, "income_per_hour": 800, "maintenance_cost": 300, "capacity": 8, "allowed_neighborhoods": ["elite", "praia"]},
-    {"id": "bunker", "name": "Bunker Subterrâneo", "description": "Refúgio secreto e fortificado.", "base_price": 75000, "income_per_hour": 500, "maintenance_cost": 200, "capacity": 15, "allowed_neighborhoods": ["industrial", "suburbio"]},
+    {"id": "apartamento", "name": "Apartamento", "description": "Espaço compacto no centro urbano.", "base_price": 15000, "income_per_hour": 25, "maintenance_cost": 50, "capacity": 1, "allowed_neighborhoods": ["centro", "comercial", "universidade"]},
+    {"id": "casa", "name": "Casa", "description": "Residência confortável com espaço extra.", "base_price": 40000, "income_per_hour": 60, "maintenance_cost": 120, "capacity": 2, "allowed_neighborhoods": ["suburbio", "praia", "elite"]},
+    {"id": "armazem", "name": "Armazém", "description": "Espaço amplo para guardar mercadoria.", "base_price": 65000, "income_per_hour": 100, "maintenance_cost": 180, "capacity": 10, "allowed_neighborhoods": ["porto", "industrial", "comercial"]},
+    {"id": "fabrica", "name": "Fábrica Clandestina", "description": "Instalação secreta para operações ilegais.", "base_price": 120000, "income_per_hour": 200, "maintenance_cost": 350, "capacity": 5, "allowed_neighborhoods": ["industrial", "porto", "favela"]},
+    {"id": "mansao", "name": "Mansão", "description": "Propriedade de luxo com todas as comodidades.", "base_price": 250000, "income_per_hour": 400, "maintenance_cost": 700, "capacity": 8, "allowed_neighborhoods": ["elite", "praia"]},
+    {"id": "bunker", "name": "Bunker Subterrâneo", "description": "Refúgio secreto e fortificado.", "base_price": 180000, "income_per_hour": 250, "maintenance_cost": 450, "capacity": 15, "allowed_neighborhoods": ["industrial", "suburbio"]},
 ]
 
 BUSINESS_TYPES = [
