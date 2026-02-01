@@ -878,6 +878,9 @@ async def buy_vehicle(vehicle_id: str, current_user: dict = Depends(get_current_
         "price": vehicle_template["price"]
     })
     
+    # Convert datetime for JSON response
+    new_vehicle["purchased_at"] = new_vehicle["purchased_at"].isoformat()
+    
     return {"success": True, "message": f"Compraste {vehicle_template['name']}!", "vehicle": new_vehicle}
 
 @api_router.post("/vehicles/{vehicle_instance_id}/activate")
