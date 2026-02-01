@@ -424,23 +424,14 @@ export default function HomePage() {
                 <Badge variant="gold">{levelInfo.title}</Badge>
               </div>
               <div className="text-sm text-text-secondary">
-                <p className="text-xs uppercase tracking-wider mb-2">Desbloqueios deste nível:</p>
-                <div className="flex flex-wrap gap-1">
-                  {levelInfo.unlocks.slice(0, 4).map((unlock, idx) => (
-                    <Badge key={idx} variant="secondary" size="sm">{unlock}</Badge>
-                  ))}
+                <p className="text-xs uppercase tracking-wider mb-2">Bónus do nível:</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span>Sucesso missões: +{levelInfo.bonuses.missionSuccessBonus.toFixed(1)}%</span>
+                  <span>Recompensas: x{levelInfo.bonuses.rewardBonus.toFixed(2)}</span>
+                  <span>Energia extra: +{levelInfo.bonuses.maxEnergyBonus}</span>
+                  <span>Reputação: x{levelInfo.bonuses.reputationMultiplier.toFixed(2)}</span>
                 </div>
               </div>
-              {levelInfo.perks && Object.keys(levelInfo.perks).length > 0 && (
-                <div className="text-xs text-text-secondary border-t border-border pt-2 mt-2">
-                  <span className="uppercase tracking-wider">Bónus: </span>
-                  {Object.entries(levelInfo.perks).map(([key, val], idx) => (
-                    <span key={key} className="text-primary ml-1">
-                      {key}: +{val}%{idx < Object.keys(levelInfo.perks).length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </Card>
         )}
@@ -453,15 +444,12 @@ export default function HomePage() {
                 <span className="text-text-secondary text-sm">{player.heat_individual}% heat</span>
               </div>
               <div className="text-sm text-text-secondary">
-                {heatStatus.effects.map((effect, idx) => (
+                {heatStatus.effects.slice(0, 2).map((effect, idx) => (
                   <div key={idx} className="flex items-start gap-2 mb-1">
                     <AlertTriangle size={14} className={`text-${heatStatus.color} flex-shrink-0 mt-0.5`} />
                     <span>{effect}</span>
                   </div>
                 ))}
-              </div>
-              <div className="text-xs text-text-secondary border-t border-border pt-2">
-                Decaimento: {heatStatus.decayRate} pontos/hora
               </div>
             </div>
           </Card>
