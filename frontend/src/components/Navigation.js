@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Map, Target, Users, User, Car, Radio } from 'lucide-react';
+import { Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Início' },
@@ -14,6 +14,9 @@ const sidebarItems = [
   { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/missoes', icon: Target, label: 'Missões' },
   { path: '/veiculos', icon: Car, label: 'Veículos' },
+  { path: '/propriedades', icon: Building, label: 'Propriedades' },
+  { path: '/negocios', icon: Factory, label: 'Negócios' },
+  { path: '/mercado', icon: Store, label: 'Mercado' },
   { path: '/eventos', icon: Radio, label: 'Eventos' },
   { path: '/gangue', icon: Users, label: 'Gangue' },
   { path: '/perfil', icon: User, label: 'Perfil' },
