@@ -1791,19 +1791,23 @@ async def launder_money(request: LaunderRequest, current_user: dict = Depends(ge
         raise HTTPException(status_code=400, detail="Dinheiro sujo insuficiente")
     
     negotiation_skill = player.get("skills", {}).get("negotiation", {}).get("level", 0)
-    fee_reduction = negotiation_skill * 0.02
+    fee_reduction = negotiation_skill * 0.015  # Reduzido de 0.02
     
-    fee_percentage = max(0.1, random.uniform(0.2, 0.4) - fee_reduction)
+    # Taxa aumentada: 30-50% em vez de 20-40%
+    fee_percentage = max(0.15, random.uniform(0.30, 0.50) - fee_reduction)
     clean_amount = amount * (1 - fee_percentage)
     
-    catch_chance = player["heat_individual"] - (negotiation_skill * 2)
+    # Chance de ser apanhado aumentada
+    catch_chance = min(80, player["heat_individual"] + 15 - (negotiation_skill * 2))
     if random.randint(1, 100) <= catch_chance:
+        # Perda parcial em vez de total, mas com mais heat
+        loss_amount = amount * random.uniform(0.5, 0.8)
         await db.players.update_one(
             {"id": current_user["id"]},
-            {"$inc": {"dirty_money": -amount, "heat_individual": 20}}
+            {"$inc": {"dirty_money": -loss_amount, "heat_individual": 30}}
         )
-        await add_player_history(current_user["id"], "launder_failed", {"amount": amount})
-        return {"success": False, "message": "Foste apanhado! Perdeste o dinheiro."}
+        await add_player_history(current_user["id"], "launder_failed", {"amount": loss_amount})
+        return {"success": False, "message": f"Foste apanhado! Perdeste €{loss_amount:.2f} e ganhaste heat."}
     
     await db.players.update_one(
         {"id": current_user["id"]},
@@ -1819,9 +1823,10 @@ async def launder_money(request: LaunderRequest, current_user: dict = Depends(ge
     
     return {
         "success": True,
-        "message": f"Lavaste €{amount:.2f} e recebeste €{clean_amount:.2f} limpos.",
+        "message": f"Lavaste €{amount:.2f} e recebeste €{clean_amount:.2f} limpos (taxa {fee_percentage*100:.0f}%).",
         "clean_amount": clean_amount,
-        "fee": amount - clean_amount
+        "fee": amount - clean_amount,
+        "fee_percentage": fee_percentage
     }
 
 @api_router.post("/economy/bank/deposit")
