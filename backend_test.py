@@ -802,15 +802,18 @@ class SubmundoAPITester:
             prices = data['prices']
             self.log_result("Market Prices", True, f"Found prices for {len(prices)} categories")
             
-            # Check if we have expected categories
-            expected_categories = ['drugs', 'weapons', 'vehicles', 'properties']
-            found_categories = list(prices.keys())
-            matching_categories = [cat for cat in expected_categories if cat in found_categories]
-            
-            if matching_categories:
-                self.log_result("Market Price Categories", True, f"Found {len(matching_categories)} expected categories")
+            # Check if we have expected categories - prices is a list of objects
+            if isinstance(prices, list) and len(prices) > 0:
+                categories = [price.get('category', '') for price in prices]
+                expected_categories = ['drugs', 'weapons', 'vehicles', 'properties']
+                matching_categories = [cat for cat in expected_categories if cat in categories]
+                
+                if matching_categories:
+                    self.log_result("Market Price Categories", True, f"Found {len(matching_categories)} expected categories")
+                else:
+                    self.log_result("Market Price Categories", False, f"Expected categories not found. Got: {categories}")
             else:
-                self.log_result("Market Price Categories", False, f"Expected categories not found. Got: {found_categories}")
+                self.log_result("Market Price Categories", False, f"Unexpected prices format: {type(prices)}")
         else:
             self.log_result("Market Prices", False, f"Status: {status}")
         
