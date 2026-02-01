@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T19:14:12.740971",
-  "total_tests": 72,
-  "passed_tests": 68,
-  "success_rate": 94.44444444444444,
+  "timestamp": "2026-02-01T19:16:23.841238",
+  "total_tests": 63,
+  "passed_tests": 58,
+  "success_rate": 92.06349206349206,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac25371.22",
+      "details": "Money: \u20ac24771.22",
       "response_data": null
     },
     {
@@ -49,7 +49,7 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac77.73",
+      "details": "Success, Reward: \u20ac44.05",
       "response_data": null
     },
     {
@@ -61,7 +61,7 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac395.64",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
@@ -91,7 +91,7 @@
     {
       "test": "Global Rankings",
       "success": true,
-      "details": "Found 3 players",
+      "details": "Found 4 players",
       "response_data": null
     },
     {
@@ -133,19 +133,19 @@
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 1 active events",
+      "details": "Found 2 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 1.0",
+      "details": "Heat multiplier: 0.8",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Tr\u00e9gua entre Gangues",
+      "details": "Cannot trigger event (max events active or duplicate)",
       "response_data": null
     },
     {
@@ -276,14 +276,14 @@
     },
     {
       "test": "Price History (Drugs)",
-      "success": true,
-      "details": "Found 24 price history entries",
+      "success": false,
+      "details": "Status: 0",
       "response_data": null
     },
     {
       "test": "Simulate Market Fluctuation",
-      "success": true,
-      "details": "Simulated fluctuations for 0 categories",
+      "success": false,
+      "details": "Status: 0",
       "response_data": null
     },
     {
@@ -318,8 +318,8 @@
     },
     {
       "test": "Profile Detailed Stats",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Retrieved detailed stats with 6 categories",
       "response_data": null
     },
     {
@@ -343,7 +343,7 @@
     {
       "test": "Profile Goals - Create",
       "success": true,
-      "details": "Created goal with ID: 38700b9b-6b97-42d6-97cd-9ba7f5751098",
+      "details": "Created goal with ID: 19e05c5c-1721-4442-b4ec-b6be56721839",
       "response_data": null
     },
     {
@@ -361,7 +361,7 @@
     {
       "test": "Profile Activity Log",
       "success": true,
-      "details": "Found 36 activity entries",
+      "details": "Found 43 activity entries",
       "response_data": null
     },
     {
@@ -373,67 +373,13 @@
     {
       "test": "Profile Search Players",
       "success": true,
-      "details": "Found 1 players matching 'test'",
+      "details": "Found 2 players matching 'test'",
       "response_data": null
     },
     {
       "test": "Bank Status",
-      "success": true,
-      "details": "Bank balance: \u20ac0.0",
-      "response_data": null
-    },
-    {
-      "test": "Bank Deposit",
-      "success": true,
-      "details": "Deposited \u20ac100, new balance: \u20ac100.0",
-      "response_data": null
-    },
-    {
-      "test": "Bank Status After Deposit",
-      "success": true,
-      "details": "Bank balance: \u20ac100.1",
-      "response_data": null
-    },
-    {
-      "test": "Bank Withdraw",
-      "success": true,
-      "details": "Withdrew \u20ac50, fee: \u20ac0.25, new balance: \u20ac50.099999999999994",
-      "response_data": null
-    },
-    {
-      "test": "Bank Investments",
       "success": false,
-      "details": "Status: 200",
-      "response_data": null
-    },
-    {
-      "test": "Bank Loans Info",
-      "success": true,
-      "details": "Max loan: \u20ac2000.0, Available: \u20ac2000.0",
-      "response_data": null
-    },
-    {
-      "test": "Request Loan",
-      "success": true,
-      "details": "Loan approved: \u20ac500, ID: 7dc17951-2b94-4dac-a983-b79e6df126b9",
-      "response_data": null
-    },
-    {
-      "test": "Bank Transactions",
-      "success": true,
-      "details": "Found 5 transactions",
-      "response_data": null
-    },
-    {
-      "test": "Bank Robbery Targets",
-      "success": true,
-      "details": "Found 2 targets, Can rob: True",
-      "response_data": null
-    },
-    {
-      "test": "Bank Transfer",
-      "success": true,
-      "details": "Transfer failed as expected (invalid recipient or insufficient funds)",
+      "details": "Status: 520",
       "response_data": null
     }
   ]
