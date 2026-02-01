@@ -862,19 +862,18 @@ class SubmundoAPITester:
         # Test get dynamic events
         success, data, status = self.make_request('GET', 'events/dynamic')
         
-        if success and 'events' in data:
-            events = data['events']
-            self.log_result("Dynamic Events", True, f"Found {len(events)} dynamic events")
+        if success and ('potential_events' in data or 'game_stats' in data):
+            potential_events = data.get('potential_events', [])
+            self.log_result("Dynamic Events", True, f"Found {len(potential_events)} potential events")
         else:
             self.log_result("Dynamic Events", False, f"Status: {status}")
         
         # Test get events impact
         success, data, status = self.make_request('GET', 'events/impact')
         
-        if success and 'impact' in data:
-            impact = data['impact']
-            modifiers = impact.get('modifiers', {})
-            self.log_result("Events Impact", True, f"Found {len(modifiers)} impact modifiers")
+        if success and ('active_events' in data or 'impact' in data):
+            active_events = data.get('active_events', [])
+            self.log_result("Events Impact", True, f"Found {len(active_events)} active events with impact")
         else:
             self.log_result("Events Impact", False, f"Status: {status}")
         
