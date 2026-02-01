@@ -107,39 +107,48 @@ user_problem_statement: "Implementar sistema de propriedades, sistema de negóci
 backend:
   - task: "Sistema de Propriedades - CRUD"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /properties/types, GET /properties/my, POST /properties/buy, POST /properties/{id}/collect, POST /properties/{id}/maintain, POST /properties/{id}/sell"
+      - working: true
+        agent: "testing"
+        comment: "✅ Todos os endpoints funcionando corretamente. Testado: tipos de propriedades (6 tipos), propriedades disponíveis por bairro, compra de apartamento (€9000), coleta de rendimento (requer 1h), manutenção (só quando necessário), venda de propriedade. Sistema completo e funcional."
 
   - task: "Sistema de Negócios/Crafting"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /businesses/types, GET /businesses/my, GET /businesses/recipes/{id}, POST /businesses/buy, POST /businesses/{id}/craft, POST /businesses/{id}/collect, POST /businesses/{id}/sell, GET /businesses/crafted-items"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema completo funcionando. Testado: 6 tipos de negócios, compra de laboratório (€30k), 3 receitas disponíveis, início de crafting (30min para droga sintética), coleta de produtos (aguarda fim da produção), venda de negócio (não permitido durante produção). Mecânicas de tempo implementadas corretamente."
 
   - task: "Sistema de Mercado Negro"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /market/listings, GET /market/my-listings, POST /market/list, POST /market/buy, POST /market/{id}/cancel, GET /market/stats"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de mercado funcionando perfeitamente. Testado: estatísticas do mercado (taxa 5%), listagens ativas, criação de listagens, compra de itens, cancelamento de listagens. Todos os endpoints respondem corretamente com validações apropriadas."
 
 frontend:
   - task: "Página de Propriedades"
