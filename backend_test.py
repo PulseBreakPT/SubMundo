@@ -525,6 +525,9 @@ class SubmundoAPITester:
         print("\n🎮 System Tests")
         self.test_game_state()
         
+        # New features tests
+        self.test_new_features_integration()
+        
         # Results
         print("\n" + "=" * 50)
         print(f"📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
