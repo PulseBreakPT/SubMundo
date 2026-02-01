@@ -68,7 +68,7 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Efeitos: multiplicador heat, multiplicador recompensa
 - [x] Máximo de 2 eventos simultâneos
 
-### NEW: Sistema de Propriedades ✅
+### Sistema de Propriedades ✅
 - [x] 6 tipos de propriedades (Apartamento, Casa, Armazém, Fábrica, Mansão, Bunker)
 - [x] Propriedades em bairros específicos
 - [x] Rendimento passivo por hora
@@ -77,7 +77,7 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Coleta de rendimentos
 - [x] Venda de propriedades
 
-### NEW: Sistema de Negócios/Crafting ✅
+### Sistema de Negócios/Crafting ✅
 - [x] 6 tipos de estabelecimentos em bairros específicos:
   - Laboratório (Favela) → Drogas sintéticas
   - Oficina Clandestina (Porto) → Armas modificadas
@@ -90,7 +90,7 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Coleta de itens fabricados
 - [x] Heat risk na produção
 
-### NEW: Mercado Negro ✅
+### Mercado Negro ✅
 - [x] Mercado central para todos os jogadores
 - [x] Venda de itens fabricados e de inventário
 - [x] Taxa de 5% nas transações
@@ -98,11 +98,20 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Cancelamento de listagens
 - [x] Estatísticas de mercado
 
+### NEW: Páginas Informativas ✅
+- [x] **Novidades** - Notícias e atualizações do jogo (7 notícias)
+- [x] **FAQ** - 17 perguntas frequentes organizadas por categoria
+- [x] **Política de Privacidade** - RGPD compliant
+- [x] **Termos e Condições** - Regras de conduta, penalizações, etc.
+- [x] Endpoint público `/api/news` para novidades
+- [x] Endpoint público `/api/faq` para FAQs
+- [x] Endpoint público `/api/info/stats` para estatísticas do jogo
+
 ### UI/UX ✅
 - [x] Design Cyberpunk Noir (preto/vermelho)
 - [x] Fontes: Chakra Petch, JetBrains Mono, Rajdhani
 - [x] Interface responsiva mobile/desktop
-- [x] Sidebar para desktop (10 itens)
+- [x] Sidebar para desktop (11 itens + links legais)
 - [x] Bottom navigation para mobile
 - [x] Efeitos scanline e noise overlay
 
