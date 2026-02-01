@@ -80,6 +80,29 @@ class ContractCreate(BaseModel):
     target_player_id: str
     reward: float
 
+class PropertyPurchase(BaseModel):
+    property_type: str
+    neighborhood_id: str
+    custom_name: Optional[str] = None
+
+class BusinessPurchase(BaseModel):
+    business_type: str
+    custom_name: Optional[str] = None
+
+class CraftingRequest(BaseModel):
+    recipe_id: str
+    quantity: int = 1
+
+class MarketListing(BaseModel):
+    item_type: str  # "crafted" or "inventory"
+    item_id: str
+    price: float
+    quantity: int = 1
+
+class MarketPurchase(BaseModel):
+    listing_id: str
+    quantity: int = 1
+
 # ============= GAME CONSTANTS =============
 
 SKILLS_CONFIG = {
