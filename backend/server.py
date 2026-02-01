@@ -5757,6 +5757,8 @@ async def calculate_daily_interest(player_id: str):
     if last_interest:
         if isinstance(last_interest, str):
             last_interest = datetime.fromisoformat(last_interest.replace('Z', '+00:00'))
+        elif last_interest.tzinfo is None:
+            last_interest = last_interest.replace(tzinfo=timezone.utc)
         hours_since = (now - last_interest).total_seconds() / 3600
         if hours_since < 24:
             return 0
