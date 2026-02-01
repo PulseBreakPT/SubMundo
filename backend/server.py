@@ -4942,9 +4942,19 @@ async def get_player_badges(current_user: dict = Depends(get_current_user)):
         if isinstance(req_value, bool):
             is_met = current_value == req_value
             progress = 100 if is_met else 0
-        else:
+        elif isinstance(current_value, (int, float)) and isinstance(req_value, (int, float)):
             progress = min(100, round((current_value / req_value) * 100, 1))
             is_met = current_value >= req_value
+        else:
+            # Handle type mismatches gracefully
+            try:
+                current_num = float(current_value) if current_value is not None else 0
+                req_num = float(req_value) if req_value is not None else 0
+                progress = min(100, round((current_num / req_num) * 100, 1)) if req_num > 0 else 0
+                is_met = current_num >= req_num
+            except (ValueError, TypeError):
+                is_met = False
+                progress = 0
         
         # Se requisito cumprido mas não desbloqueado, desbloquear
         if is_met and not is_unlocked:
