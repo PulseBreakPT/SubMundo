@@ -1026,6 +1026,9 @@ class SubmundoAPITester:
         
         print("\n🎲 Dynamic Events System Tests")
         self.test_dynamic_events_system()
+        
+        print("\n👤 Advanced Profile System Tests")
+        self.test_profile_system()
 
     def run_all_tests(self):
         """Run all tests in sequence"""
