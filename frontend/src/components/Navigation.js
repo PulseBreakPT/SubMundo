@@ -29,7 +29,7 @@ export const BottomNav = () => {
               }`
             }
           >
-            <Icon size={22} strokeWidth={isActive => isActive ? 2.5 : 1.5} />
+            <Icon size={22} />
             <span className="text-[10px] mt-1 font-ui uppercase tracking-wider">{label}</span>
           </NavLink>
         ))}
