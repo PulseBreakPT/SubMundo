@@ -209,9 +209,9 @@ class ProfileTester:
         """Test GET /api/profile/leaderboard-position"""
         success, data, status = self.make_request('GET', 'profile/leaderboard-position')
         
-        if success and 'position' in data:
-            position = data['position']
-            self.log_result("Profile Leaderboard Position", True, f"Player position: {position}")
+        if success and 'rankings' in data:
+            rankings = data['rankings']
+            self.log_result("Profile Leaderboard Position", True, f"Player rankings retrieved: {len(rankings)} categories")
             return True
         else:
             self.log_result("Profile Leaderboard Position", False, f"Status: {status}, Data: {data}")
@@ -221,8 +221,8 @@ class ProfileTester:
         """Test GET /api/profile/search-players"""
         success, data, status = self.make_request('GET', 'profile/search-players', params={"q": "test"})
         
-        if success and 'players' in data:
-            players = data['players']
+        if success and 'results' in data:
+            players = data['results']
             self.log_result("Profile Search Players", True, f"Found {len(players)} players matching 'test'")
             return True
         else:
