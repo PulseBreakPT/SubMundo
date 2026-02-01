@@ -246,6 +246,69 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Adicionados links para Propriedades, Negócios e Mercado na sidebar"
+      - working: "NA"
+        agent: "main"
+        comment: "Adicionado link para /contactos na secção Social"
+
+  - task: "Página de Contactos/NPCs"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/ContactsPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Criada nova página de contactos com lista de NPCs, níveis de relacionamento visuais, interações disponíveis (gift, trade, etc), integração com lore.js"
+
+  - task: "Página de Mercado - Economia Dinâmica"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/MarketPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Actualizado MarketPage com secção de preços dinâmicos, tendências (up/down/stable), mini-gráficos de supply/demand"
+
+  - task: "Página de Gangue - Territórios Avançados"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/GangPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Actualizado GangPage com análise de territórios, previsão de guerras (% chance de vitória), poder militar, recomendações (Atacar/Evitar), integração com GANGS_LORE"
+
+  - task: "Página de Eventos - Eventos Dinâmicos"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/EventsPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Actualizado EventsPage com 4 tabs: Ativos (com tips da lore), Previsões (eventos futuros), Impacto (modificadores no jogador), Condições (estado da cidade)"
+
+  - task: "HomePage - Integração gameLogic e lore"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Integrado LevelSystem (título, unlocks, perks), HeatSystem (status, efeitos), QUOTES (citação de sabedoria), getTipsAndStrategies (dicas)"
 
 metadata:
   created_by: "main_agent"
