@@ -1,16 +1,44 @@
+import { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ProgressBar';
-import { Badge } from '../components/UI';
+import { Badge, Button, Modal } from '../components/UI';
 import { 
   Map, Building2, Flame, DollarSign, 
-  AlertTriangle, Users, ChevronRight 
+  AlertTriangle, Users, ChevronRight, Info,
+  MapPin, Skull, Sparkles, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 
 export default function MapPage() {
   const { neighborhoods } = useGame();
+  const { api } = useAuth();
   const navigate = useNavigate();
+  const [selectedLore, setSelectedLore] = useState(null);
+  const [loreData, setLoreData] = useState(null);
+  const [loadingLore, setLoadingLore] = useState(false);
+
+  // Buscar lore quando selecionar bairro
+  useEffect(() => {
+    if (selectedLore) {
+      const fetchLore = async () => {
+        setLoadingLore(true);
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lore/neighborhoods/${selectedLore}`);
+          if (response.ok) {
+            const data = await response.json();
+            setLoreData(data);
+          }
+        } catch (err) {
+          console.log('Lore fetch error:', err);
+        } finally {
+          setLoadingLore(false);
+        }
+      };
+      fetchLore();
+    }
+  }, [selectedLore]);
 
   const getHeatColor = (heat) => {
     if (heat >= 60) return 'error';
@@ -73,10 +101,9 @@ export default function MapPage() {
           <div
             key={neighborhood.id}
             className={clsx(
-              'bg-surface border border-border relative overflow-hidden cursor-pointer',
-              'hover:border-primary/50 transition-all hover:translate-x-1'
+              'bg-surface border border-border relative overflow-hidden',
+              'hover:border-primary/50 transition-all'
             )}
-            onClick={() => navigate(`/missoes?bairro=${neighborhood.id}`)}
             data-testid={`neighborhood-${neighborhood.id}`}
           >
             {/* Left accent */}
@@ -105,7 +132,19 @@ export default function MapPage() {
                     </p>
                   </div>
                 </div>
-                <span className="text-xl">{getEconomicIcon(neighborhood.economic_value)}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">{getEconomicIcon(neighborhood.economic_value)}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedLore(neighborhood.id);
+                    }}
+                    className="p-1 hover:bg-surface-highlight rounded transition-colors"
+                    title="Ver lore do bairro"
+                  >
+                    <Info size={16} className="text-text-secondary hover:text-primary" />
+                  </button>
+                </div>
               </div>
               
               {/* Description */}
@@ -144,7 +183,13 @@ export default function MapPage() {
                 <span className="text-xs text-text-secondary">
                   {neighborhood.available_missions} missões disponíveis
                 </span>
-                <ChevronRight size={18} className="text-primary" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/missoes?bairro=${neighborhood.id}`)}
+                >
+                  Ver Missões <ChevronRight size={14} />
+                </Button>
               </div>
             </div>
           </div>
@@ -160,6 +205,105 @@ export default function MapPage() {
           </div>
         </Card>
       )}
+
+      {/* Lore Modal */}
+      <Modal
+        isOpen={!!selectedLore}
+        onClose={() => {
+          setSelectedLore(null);
+          setLoreData(null);
+        }}
+        title={loreData?.fullName || loreData?.name || 'Carregando...'}
+      >
+        {loadingLore ? (
+          <div className="text-center py-8">
+            <p className="text-text-secondary">A carregar lore...</p>
+          </div>
+        ) : loreData ? (
+          <div className="space-y-4">
+            {/* Nickname */}
+            {loreData.nickname && (
+              <div className="text-center">
+                <Badge variant="gold" size="lg">"{loreData.nickname}"</Badge>
+              </div>
+            )}
+            
+            {/* Description */}
+            <div>
+              <p className="text-text-primary leading-relaxed">{loreData.description}</p>
+            </div>
+            
+            {/* History */}
+            {loreData.history && (
+              <div className="bg-surface-highlight p-4 border border-border">
+                <h4 className="font-heading text-sm text-primary mb-2 flex items-center gap-2">
+                  <Map size={14} /> História
+                </h4>
+                <p className="text-sm text-text-secondary">{loreData.history}</p>
+              </div>
+            )}
+            
+            {/* Dangers */}
+            {loreData.dangers?.length > 0 && (
+              <div>
+                <h4 className="font-heading text-sm text-error mb-2 flex items-center gap-2">
+                  <Skull size={14} /> Perigos
+                </h4>
+                <ul className="space-y-1">
+                  {loreData.dangers.map((danger, i) => (
+                    <li key={i} className="text-sm text-text-secondary flex items-start gap-2">
+                      <AlertTriangle size={12} className="text-error mt-1 flex-shrink-0" />
+                      {danger}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Opportunities */}
+            {loreData.opportunities?.length > 0 && (
+              <div>
+                <h4 className="font-heading text-sm text-success mb-2 flex items-center gap-2">
+                  <Sparkles size={14} /> Oportunidades
+                </h4>
+                <ul className="space-y-1">
+                  {loreData.opportunities.map((opp, i) => (
+                    <li key={i} className="text-sm text-text-secondary flex items-start gap-2">
+                      <DollarSign size={12} className="text-success mt-1 flex-shrink-0" />
+                      {opp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Landmarks */}
+            {loreData.landmarks?.length > 0 && (
+              <div>
+                <h4 className="font-heading text-sm text-primary mb-2 flex items-center gap-2">
+                  <MapPin size={14} /> Pontos de Interesse
+                </h4>
+                <div className="grid gap-2">
+                  {loreData.landmarks.map((landmark, i) => (
+                    <div key={i} className="bg-surface p-2 border border-border">
+                      <p className="font-body text-sm text-text-primary">{landmark.name}</p>
+                      <p className="text-xs text-text-secondary">{landmark.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Controlling Faction */}
+            {loreData.controllingFactions && (
+              <div className="text-center pt-2 border-t border-border">
+                <p className="text-xs text-text-secondary">Controlado por</p>
+                <p className="font-heading text-gold">{loreData.controllingFactions}</p>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }
