@@ -1,14 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
 import { useCountdown, useMissionTimer } from '../hooks/useCountdown';
 import { StatCard, Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge } from '../components/UI';
+import { LevelSystem, HeatSystem, getTipsAndStrategies } from '../utils/gameLogic';
+import { QUOTES, getRandomWisdomQuote, NEIGHBORHOODS_LORE } from '../data/lore';
 import { 
   DollarSign, Flame, Star, Zap, Gift, Target, 
   Skull, Wallet, Clock, ChevronRight, Shield,
-  TrendingUp, Users, Car, Radio, Swords
+  TrendingUp, Users, Car, Radio, Swords, Lightbulb, AlertTriangle
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -28,6 +30,25 @@ export default function HomePage() {
   } = useGame();
 
   const player = gameState?.player || user;
+  const [wisdomQuote] = useState(getRandomWisdomQuote());
+  
+  // Calculate level info using LevelSystem
+  const levelInfo = useMemo(() => {
+    if (!player?.level) return null;
+    return LevelSystem.getLevelInfo(player.level);
+  }, [player?.level]);
+
+  // Calculate heat status using HeatSystem  
+  const heatStatus = useMemo(() => {
+    if (!player?.heat) return null;
+    return HeatSystem.getHeatStatus(player.heat);
+  }, [player?.heat]);
+
+  // Get random tips
+  const tips = useMemo(() => {
+    const allTips = getTipsAndStrategies();
+    return allTips.general?.slice(0, 3) || [];
+  }, []);
   
   // Memoize target time to prevent infinite loop
   const dailyRewardTarget = useMemo(() => {
