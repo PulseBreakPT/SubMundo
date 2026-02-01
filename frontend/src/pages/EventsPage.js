@@ -26,10 +26,21 @@ export default function EventsPage() {
   const { cityEvents, actionLoading, triggerEvent } = useGame();
   const { api } = useAuth();
   const [effects, setEffects] = useState(null);
+  const [dynamicEvents, setDynamicEvents] = useState(null);
+  const [predictions, setPredictions] = useState(null);
+  const [impact, setImpact] = useState(null);
+  const [activeTab, setActiveTab] = useState('active');
+  const [wisdomQuote] = useState(getRandomWisdomQuote());
 
   useEffect(() => {
     fetchEffects();
-    const interval = setInterval(fetchEffects, 10000);
+    fetchDynamicEvents();
+    fetchPredictions();
+    fetchImpact();
+    const interval = setInterval(() => {
+      fetchEffects();
+      fetchDynamicEvents();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -39,6 +50,33 @@ export default function EventsPage() {
       setEffects(response.data);
     } catch (err) {
       console.error('Erro ao buscar efeitos:', err);
+    }
+  };
+
+  const fetchDynamicEvents = async () => {
+    try {
+      const response = await api().get('/events/dynamic');
+      setDynamicEvents(response.data);
+    } catch (err) {
+      console.error('Erro ao buscar eventos dinâmicos:', err);
+    }
+  };
+
+  const fetchPredictions = async () => {
+    try {
+      const response = await api().get('/events/predictions');
+      setPredictions(response.data);
+    } catch (err) {
+      console.error('Erro ao buscar previsões:', err);
+    }
+  };
+
+  const fetchImpact = async () => {
+    try {
+      const response = await api().get('/events/impact');
+      setImpact(response.data);
+    } catch (err) {
+      console.error('Erro ao buscar impacto:', err);
     }
   };
 
