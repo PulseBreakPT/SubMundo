@@ -323,11 +323,9 @@ export default function ProfilePage() {
   const [comparisonData, setComparisonData] = useState(null);
   
   // Modals
-  const [showLaunderModal, setShowLaunderModal] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState(null);
-  const [launderAmount, setLaunderAmount] = useState('');
   const [newGoal, setNewGoal] = useState({ type: '', target: 0 });
   
   // Activity filter
