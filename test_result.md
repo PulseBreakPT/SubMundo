@@ -101,3 +101,110 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Implementar sistema de propriedades, sistema de negócios/crafting e mercado negro para o jogo SUBMUNDO"
+
+backend:
+  - task: "Sistema de Propriedades - CRUD"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /properties/types, GET /properties/my, POST /properties/buy, POST /properties/{id}/collect, POST /properties/{id}/maintain, POST /properties/{id}/sell"
+
+  - task: "Sistema de Negócios/Crafting"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /businesses/types, GET /businesses/my, GET /businesses/recipes/{id}, POST /businesses/buy, POST /businesses/{id}/craft, POST /businesses/{id}/collect, POST /businesses/{id}/sell, GET /businesses/crafted-items"
+
+  - task: "Sistema de Mercado Negro"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /market/listings, GET /market/my-listings, POST /market/list, POST /market/buy, POST /market/{id}/cancel, GET /market/stats"
+
+frontend:
+  - task: "Página de Propriedades"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/PropertiesPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Criada página com lista de propriedades, modal de compra, coleta de rendimento, manutenção e venda"
+
+  - task: "Página de Negócios"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/BusinessPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Criada página com lista de negócios, modal de compra, sistema de crafting com receitas, coleta e venda"
+
+  - task: "Página de Mercado"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/MarketPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Criada página com listagens do mercado, criação de listagens, compra e estatísticas"
+
+  - task: "Navegação Atualizada"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/Navigation.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Adicionados links para Propriedades, Negócios e Mercado na sidebar"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Sistema de Propriedades - CRUD"
+    - "Sistema de Negócios/Crafting"
+    - "Sistema de Mercado Negro"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implementei os 3 sistemas solicitados: Propriedades, Negócios/Crafting e Mercado Negro. Backend com todos os endpoints e Frontend com 3 novas páginas. Por favor testar os endpoints do backend primeiro."
