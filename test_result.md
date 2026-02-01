@@ -210,6 +210,21 @@ backend:
         agent: "testing"
         comment: "✅ Sistema de eventos dinâmicos funcionando corretamente. Testado: GET /events/dynamic retorna eventos potenciais baseados no estado do jogo, GET /events/impact retorna eventos ativos com modificadores, GET /events/predictions retorna previsões de eventos futuros. Todos os endpoints respondem com dados válidos."
 
+  - task: "Sistema de Perfil Avançado"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "user"
+        comment: "Solicitado teste dos novos endpoints de perfil avançado: GET /profile/detailed-stats, GET /profile/badges, GET /profile/progress-history, GET /profile/goals, POST /profile/goals, DELETE /profile/goals/{goal_id}, GET /profile/compare/{player_id}, GET /profile/activity-log, GET /profile/leaderboard-position, GET /profile/search-players"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de perfil avançado funcionando perfeitamente. Testado todos os 10 endpoints: detailed-stats (estatísticas completas em 6 categorias), badges (sistema de conquistas), progress-history (histórico para gráficos), goals (CRUD de metas pessoais), compare (comparação entre jogadores), activity-log (log de atividades), leaderboard-position (posição nos rankings), search-players (busca de jogadores). Corrigidos 3 bugs de tipos durante o teste. Todos os endpoints respondem corretamente."
+
 frontend:
   - task: "Página de Propriedades"
     implemented: true
