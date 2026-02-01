@@ -6,7 +6,7 @@ import { Button, Badge, Modal, Input } from '../components/UI';
 import { 
   User, LogOut, Star, Target, DollarSign, 
   Flame, Shield, Clock, TrendingUp, Award,
-  History, Settings, Wallet, ArrowRightLeft
+  History, Settings, Wallet, ArrowRightLeft, Crown
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -16,12 +16,38 @@ export default function ProfilePage() {
   
   const [history, setHistory] = useState([]);
   const [rankings, setRankings] = useState([]);
+  const [notoriety, setNotoriety] = useState(null);
+  const [policeStatus, setPoliceStatus] = useState(null);
   const [showLaunderModal, setShowLaunderModal] = useState(false);
   const [launderAmount, setLaunderAmount] = useState('');
   const [activeTab, setActiveTab] = useState('stats');
   const [loadingData, setLoadingData] = useState(false);
 
   const player = gameState?.player || user;
+
+  // Buscar notoriedade e status policial
+  useEffect(() => {
+    const fetchNotoriety = async () => {
+      try {
+        const response = await api().get('/notoriety');
+        setNotoriety(response.data);
+      } catch (err) {
+        console.log('Notoriety fetch error:', err);
+      }
+    };
+    
+    const fetchPoliceStatus = async () => {
+      try {
+        const response = await api().get('/police-status');
+        setPoliceStatus(response.data);
+      } catch (err) {
+        console.log('Police status fetch error:', err);
+      }
+    };
+    
+    fetchNotoriety();
+    fetchPoliceStatus();
+  }, [api]);
 
   useEffect(() => {
     if (activeTab === 'history') {
