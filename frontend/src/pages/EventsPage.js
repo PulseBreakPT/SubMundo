@@ -119,7 +119,7 @@ export default function EventsPage() {
             Eventos da Cidade
           </h1>
           <p className="text-text-secondary text-sm mt-1">
-            {cityEvents.length} evento(s) ativo(s)
+            {cityEvents.length} evento(s) ativo(s) • Previsões e análise em tempo real
           </p>
         </div>
         
@@ -132,6 +132,33 @@ export default function EventsPage() {
         >
           {cityEvents.length >= 2 ? 'Máximo de eventos' : 'Acionar Evento'}
         </Button>
+      </div>
+
+      {/* Wisdom Quote */}
+      <div className="bg-surface/50 border border-surface-highlight p-3 rounded-lg">
+        <p className="text-text-secondary italic text-sm">"{wisdomQuote}"</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-border overflow-x-auto">
+        {[
+          { id: 'active', label: `Ativos (${cityEvents.length})`, icon: Radio },
+          { id: 'predictions', label: 'Previsões', icon: Eye },
+          { id: 'impact', label: 'Impacto', icon: Target },
+          { id: 'conditions', label: 'Condições', icon: Activity },
+        ].map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={clsx(
+              'px-4 py-3 font-ui text-sm uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2',
+              activeTab === id ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'
+            )}
+            onClick={() => setActiveTab(id)}
+          >
+            <Icon size={16} />
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Current Effects Summary */}
