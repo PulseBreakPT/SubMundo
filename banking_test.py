@@ -191,8 +191,8 @@ class BankingTester:
         # 6. GET /api/bank/investments
         success, data, status = self.make_request('GET', 'bank/investments')
         
-        if success and 'investment_options' in data:
-            options = data['investment_options']
+        if success and 'options' in data:
+            options = data['options']
             self.log_result("GET /bank/investments", True, f"Found {len(options)} investment options")
             
             # 7. POST /api/bank/invest
