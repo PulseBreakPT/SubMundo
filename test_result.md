@@ -152,51 +152,63 @@ backend:
 
   - task: "Sistema de Relacionamentos NPCs"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /npcs/contacts (lista contactos com relacionamentos), GET /npcs/{id}/relationship (detalhes), POST /npcs/{id}/interact (interagir - gift, trade, request_favor, share_info)"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de relacionamentos NPCs funcionando perfeitamente. Testado: GET /npcs/contacts retorna 10 NPCs com relacionamentos neutros, GET /npcs/{id}/relationship retorna detalhes completos, POST /npcs/{id}/interact?action=gift funciona corretamente (custo €500, +10 pontos relacionamento). Todos os endpoints respondem corretamente."
 
   - task: "Sistema de Economia Dinâmica"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /economy/market-prices (preços flutuantes por categoria), GET /economy/price-history/{category} (histórico 24h), POST /economy/simulate-fluctuation (simular flutuação)"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de economia dinâmica funcionando corretamente. Testado: GET /economy/market-prices retorna preços para 4 categorias (drugs, weapons, vehicles, properties), GET /economy/price-history/drugs retorna histórico de preços, POST /economy/simulate-fluctuation simula flutuações de mercado. Todos os endpoints respondem com dados válidos."
 
   - task: "Sistema de Territórios Avançado"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /territories/analysis (análise completa com previsões de guerra), GET /territories/{id}/power (poder específico de um território)"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de territórios avançado funcionando corretamente. Testado: GET /territories/analysis retorna análise completa de territórios com previsões de guerra, incluindo percentagens de chance de vitória e recomendações estratégicas. Endpoint responde com dados válidos."
 
   - task: "Sistema de Eventos Dinâmicos"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implementado endpoints: GET /events/dynamic (eventos reactivos ao estado do jogo), GET /events/impact (impacto no jogador), GET /events/predictions (previsões de eventos futuros)"
+      - working: true
+        agent: "testing"
+        comment: "✅ Sistema de eventos dinâmicos funcionando corretamente. Testado: GET /events/dynamic retorna eventos potenciais baseados no estado do jogo, GET /events/impact retorna eventos ativos com modificadores, GET /events/predictions retorna previsões de eventos futuros. Todos os endpoints respondem com dados válidos."
 
 frontend:
   - task: "Página de Propriedades"
