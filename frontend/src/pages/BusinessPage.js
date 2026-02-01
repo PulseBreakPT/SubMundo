@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
-import { Factory, Flask, Wrench, FileText, Car, Wine, Terminal, Plus, Clock, Package, Play, Check, Trash2, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Factory, Beaker, Wrench, FileText, Car, Wine, Terminal, Plus, Clock, Package, Play, Check, Trash2, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BusinessIcon = ({ type, size = 24 }) => {
   const icons = {
-    laboratorio: Flask,
+    laboratorio: Beaker,
     oficina: Wrench,
     falsificador: FileText,
     garage: Car,
@@ -16,6 +16,7 @@ const BusinessIcon = ({ type, size = 24 }) => {
   };
   const Icon = icons[type] || Factory;
   return <Icon size={size} />;
+};
 };
 
 const BusinessCard = ({ business, onViewRecipes, onCollect, onSell, loading }) => {
