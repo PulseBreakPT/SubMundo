@@ -21,14 +21,17 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - `/api/economy/*` - Lavagem de dinheiro
 - `/api/actions/*` - Ações rápidas
 - `/api/rankings/*` - Rankings globais
-- `/api/vehicles/*` - Sistema de veículos (NEW)
-- `/api/wars/*` - Guerras de gangues (NEW)
-- `/api/events/*` - Eventos da cidade (NEW)
+- `/api/vehicles/*` - Sistema de veículos
+- `/api/wars/*` - Guerras de gangues
+- `/api/events/*` - Eventos da cidade
+- `/api/properties/*` - Sistema de propriedades (NEW)
+- `/api/businesses/*` - Sistema de negócios/crafting (NEW)
+- `/api/market/*` - Mercado Negro (NEW)
 
 ### Frontend (React + Tailwind)
 - `AuthContext` - Gestão de autenticação
 - `GameContext` - Estado do jogo e polling
-- Páginas: Login, Home, Map, Missions, Gang, Profile, Vehicles (NEW), Events (NEW)
+- Páginas: Login, Home, Map, Missions, Gang, Profile, Vehicles, Events, Properties (NEW), Business (NEW), Market (NEW)
 - Responsivo: Sidebar (desktop) / Bottom Nav (mobile)
 
 ## What's Been Implemented (02/02/2026)
@@ -37,7 +40,7 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Sistema de autenticação JWT
 - [x] Dashboard principal com stats do jogador
 - [x] Sistema de missões (8 tipos diferentes)
-- [x] Sistema de bairros (6 bairros com stats únicos)
+- [x] Sistema de bairros (10 bairros com stats únicos)
 - [x] Sistema de gangues (criar, juntar, sair)
 - [x] Sistema de heat policial
 - [x] Sistema económico (dinheiro limpo/sujo)
@@ -47,36 +50,59 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Rankings globais
 - [x] Perfil com estatísticas e histórico
 
-### NEW: Sistema de Veículos ✅
-- [x] Catálogo com 8 veículos (bicicleta a desportivo exótico)
+### Sistema de Veículos ✅
+- [x] Catálogo com 12 veículos
 - [x] Atributos: velocidade, furtividade, capacidade
 - [x] Garagem pessoal
 - [x] Comprar, ativar, reparar e vender veículos
 - [x] Condição do veículo afeta performance
-- [x] Custos de manutenção
 
-### NEW: Guerras de Gangues ✅
+### Guerras de Gangues ✅
 - [x] Líderes podem iniciar guerras por territórios
-- [x] Custo baseado no valor económico do bairro
 - [x] Sistema de poder (membros × reputação)
 - [x] Duração de 5 minutos com timer
-- [x] Resolução com cálculo de sucesso
 - [x] Conquista/defesa de territórios
-- [x] Depósito no cofre da gangue
 
-### NEW: Eventos da Cidade ✅
-- [x] 8 tipos de eventos (Operação Policial, Festival, Apagão, etc.)
-- [x] Efeitos: multiplicador heat, multiplicador recompensa, modificador risco
+### Eventos da Cidade ✅
+- [x] 12 tipos de eventos
+- [x] Efeitos: multiplicador heat, multiplicador recompensa
 - [x] Máximo de 2 eventos simultâneos
-- [x] Countdown com expiração automática
-- [x] Efeitos combinados visíveis
-- [x] Banner na Home quando eventos ativos
+
+### NEW: Sistema de Propriedades ✅
+- [x] 6 tipos de propriedades (Apartamento, Casa, Armazém, Fábrica, Mansão, Bunker)
+- [x] Propriedades em bairros específicos
+- [x] Rendimento passivo por hora
+- [x] Sistema de condição e manutenção
+- [x] Compra com preço baseado no valor económico do bairro
+- [x] Coleta de rendimentos
+- [x] Venda de propriedades
+
+### NEW: Sistema de Negócios/Crafting ✅
+- [x] 6 tipos de estabelecimentos em bairros específicos:
+  - Laboratório (Favela) → Drogas sintéticas
+  - Oficina Clandestina (Porto) → Armas modificadas
+  - Falsificador (Centro) → Documentos falsos
+  - Garage Tunning (Subúrbio) → Upgrades de veículos
+  - Destilaria (Noite) → Bebidas ilegais
+  - Centro de Hacking (Comercial) → Malware e dados
+- [x] 18 receitas de crafting
+- [x] Sistema de tempo de produção com skill bonus
+- [x] Coleta de itens fabricados
+- [x] Heat risk na produção
+
+### NEW: Mercado Negro ✅
+- [x] Mercado central para todos os jogadores
+- [x] Venda de itens fabricados e de inventário
+- [x] Taxa de 5% nas transações
+- [x] Compra de itens de outros jogadores
+- [x] Cancelamento de listagens
+- [x] Estatísticas de mercado
 
 ### UI/UX ✅
 - [x] Design Cyberpunk Noir (preto/vermelho)
 - [x] Fontes: Chakra Petch, JetBrains Mono, Rajdhani
 - [x] Interface responsiva mobile/desktop
-- [x] Sidebar para desktop (7 itens)
+- [x] Sidebar para desktop (10 itens)
 - [x] Bottom navigation para mobile
 - [x] Efeitos scanline e noise overlay
 
@@ -91,17 +117,17 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - ✅ Veículos
 - ✅ Guerras de Gangues
 - ✅ Eventos da Cidade
+- ✅ Sistema de Propriedades
+- ✅ Sistema de Negócios/Crafting
+- ✅ Mercado Negro
 
 ### P1 (Next Phase)
 - [ ] Sistema PVP assíncrono (ataques jogador vs jogador)
 - [ ] NPCs com memória e relações
-- [ ] Sistema de propriedades (casas, armazéns)
-- [ ] Sistema de crafting de itens ilegais
-- [ ] Mercado entre jogadores
-
-### P2 (Future)
 - [ ] Sistema de temporadas com rankings
 - [ ] Sistema de conquistas detalhado
+
+### P2 (Future)
 - [ ] Sistema de skills evolutivo
 - [ ] Ciclo dia/noite
 - [ ] Clima dinâmico
@@ -110,6 +136,4 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 ## Next Action Items
 1. Implementar sistema PVP (ataques assíncronos)
 2. Adicionar NPCs com memória
-3. Sistema de propriedades compráveis
-4. Mercado negro entre jogadores
-5. Sistema de crafting
+3. Sistema de temporadas
