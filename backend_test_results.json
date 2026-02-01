@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T19:16:23.841238",
-  "total_tests": 63,
-  "passed_tests": 58,
-  "success_rate": 92.06349206349206,
+  "timestamp": "2026-02-01T19:17:39.314325",
+  "total_tests": 73,
+  "passed_tests": 69,
+  "success_rate": 94.52054794520548,
   "results": [
     {
       "test": "User Registration",
@@ -25,7 +25,7 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac24771.22",
+      "details": "Money: \u20ac24171.22",
       "response_data": null
     },
     {
@@ -49,19 +49,19 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac44.05",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
       "test": "Quick Action: hustle_rua",
-      "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "success": false,
+      "details": "Status: 400",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
-      "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "success": false,
+      "details": "Status: 400",
       "response_data": null
     },
     {
@@ -276,14 +276,14 @@
     },
     {
       "test": "Price History (Drugs)",
-      "success": false,
-      "details": "Status: 0",
+      "success": true,
+      "details": "Found 24 price history entries",
       "response_data": null
     },
     {
       "test": "Simulate Market Fluctuation",
-      "success": false,
-      "details": "Status: 0",
+      "success": true,
+      "details": "Simulated fluctuations for 0 categories",
       "response_data": null
     },
     {
@@ -343,7 +343,7 @@
     {
       "test": "Profile Goals - Create",
       "success": true,
-      "details": "Created goal with ID: 19e05c5c-1721-4442-b4ec-b6be56721839",
+      "details": "Created goal with ID: ee578a27-460b-435b-acf3-8bb0443105c6",
       "response_data": null
     },
     {
@@ -361,7 +361,7 @@
     {
       "test": "Profile Activity Log",
       "success": true,
-      "details": "Found 43 activity entries",
+      "details": "Found 46 activity entries",
       "response_data": null
     },
     {
@@ -378,8 +378,68 @@
     },
     {
       "test": "Bank Status",
-      "success": false,
-      "details": "Status: 520",
+      "success": true,
+      "details": "Bank balance: \u20ac550.1",
+      "response_data": null
+    },
+    {
+      "test": "Bank Deposit",
+      "success": true,
+      "details": "Deposited \u20ac100, new balance: \u20ac650.1",
+      "response_data": null
+    },
+    {
+      "test": "Bank Status After Deposit",
+      "success": true,
+      "details": "Bank balance: \u20ac650.1",
+      "response_data": null
+    },
+    {
+      "test": "Bank Withdraw",
+      "success": true,
+      "details": "Withdrew \u20ac50, fee: \u20ac0.25, new balance: \u20ac600.1",
+      "response_data": null
+    },
+    {
+      "test": "Bank Investments",
+      "success": true,
+      "details": "Found 8 investment options",
+      "response_data": null
+    },
+    {
+      "test": "Create Investment",
+      "success": true,
+      "details": "Created investment: savings",
+      "response_data": null
+    },
+    {
+      "test": "Bank Loans Info",
+      "success": true,
+      "details": "Max loan: \u20ac2000.0, Available: \u20ac1475.0",
+      "response_data": null
+    },
+    {
+      "test": "Request Loan",
+      "success": true,
+      "details": "Loan approved: \u20ac500, ID: e48e120a-3cd6-4106-9188-6a5552048b62",
+      "response_data": null
+    },
+    {
+      "test": "Bank Transactions",
+      "success": true,
+      "details": "Found 10 transactions",
+      "response_data": null
+    },
+    {
+      "test": "Bank Robbery Targets",
+      "success": true,
+      "details": "Found 3 targets, Can rob: True",
+      "response_data": null
+    },
+    {
+      "test": "Bank Transfer",
+      "success": true,
+      "details": "Transfer failed as expected (invalid recipient or insufficient funds)",
       "response_data": null
     }
   ]
