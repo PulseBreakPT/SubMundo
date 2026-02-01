@@ -548,9 +548,9 @@ async def register(user: UserCreate):
         "username": user.username,
         "password": hash_password(user.password),
         "avatar": "default",
-        "clean_money": 250.0,  # Reduzido de 1000 para 250
-        "dirty_money": 0.0,
-        "bank_balance": 0.0,
+        "cash": 500.0,  # Dinheiro na mão
+        "bank_balance": 0.0,  # Dinheiro no banco (seguro)
+        "bank_security_level": 1,
         "reputation": 0,
         "reputation_max": 100,
         "heat_individual": 0,
