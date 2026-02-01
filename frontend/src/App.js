@@ -182,6 +182,38 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/novidades"
+        element={
+          <Layout>
+            <NewsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/faq"
+        element={
+          <Layout>
+            <FAQPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/privacidade"
+        element={
+          <Layout>
+            <PrivacyPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/termos"
+        element={
+          <Layout>
+            <TermsPage />
+          </Layout>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
