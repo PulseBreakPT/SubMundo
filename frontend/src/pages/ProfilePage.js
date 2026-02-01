@@ -469,23 +469,6 @@ export default function ProfilePage() {
     }
   }, [api, showNotification]);
 
-  // Handle launder
-  const handleLaunder = async () => {
-    const amount = parseFloat(launderAmount);
-    if (isNaN(amount) || amount <= 0) {
-      showNotification?.('Montante inválido', 'error');
-      return;
-    }
-    if (amount > player?.dirty_money) {
-      showNotification?.('Dinheiro sujo insuficiente', 'error');
-      return;
-    }
-    await launderMoney?.(amount);
-    setShowLaunderModal(false);
-    setLaunderAmount('');
-    fetchProfileData();
-  };
-
   // Fetch activity with category
   const fetchActivityByCategory = useCallback(async (category) => {
     if (!api) return;
