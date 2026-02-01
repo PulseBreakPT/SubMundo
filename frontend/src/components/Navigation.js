@@ -3,7 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { 
   Home, Map, Target, Users, User, Car, Radio, Building, Factory, Store, 
   Newspaper, HelpCircle, Shield, ScrollText, Menu, X, ChevronRight,
-  DollarSign, Wallet
+  DollarSign, Wallet, UserCheck
 } from 'lucide-react';
 
 // Main navigation items for mobile bottom bar
@@ -37,6 +37,7 @@ const menuSections = [
     title: 'Social',
     items: [
       { path: '/gangue', icon: Users, label: 'Gangue' },
+      { path: '/contactos', icon: UserCheck, label: 'Contactos' },
       { path: '/eventos', icon: Radio, label: 'Eventos' },
     ]
   },
