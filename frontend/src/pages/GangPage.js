@@ -40,6 +40,8 @@ export default function GangPage() {
   const [depositAmount, setDepositAmount] = useState('');
   const [loadingGangs, setLoadingGangs] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
+  const [territoryAnalysis, setTerritoryAnalysis] = useState(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   useEffect(() => {
     fetchGangs();
