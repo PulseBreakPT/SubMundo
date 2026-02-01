@@ -5083,8 +5083,10 @@ async def get_progress_history(current_user: dict = Depends(get_current_user), d
                     cumulative["experience"] += experience
             
             if "reputation" in details:
-                daily_data[date_key]["reputation_gained"] += details["reputation"]
-                cumulative["reputation"] += details["reputation"]
+                reputation = details["reputation"]
+                if isinstance(reputation, (int, float)):
+                    daily_data[date_key]["reputation_gained"] += reputation
+                    cumulative["reputation"] += reputation
             
             if action == "launder_success":
                 daily_data[date_key]["money_laundered"] += details.get("amount", 0)
