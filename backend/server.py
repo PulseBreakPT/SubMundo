@@ -4839,7 +4839,7 @@ async def get_detailed_stats(current_user: dict = Depends(get_current_user)):
         },
         "social": {
             "reputation": reputation,
-            "reputation_rank": NotorietySystem.get_rank(NotorietySystem.calculate_notoriety_points(player))["name"],
+            "reputation_rank": NotorietySystem.get_rank(NotorietySystem.calculate_notoriety_points(player)).name,
             "npcs_met": npcs_met,
             "good_relationships": good_relationships,
             "excellent_relationships": excellent_relationships,
