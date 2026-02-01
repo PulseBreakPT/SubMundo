@@ -1,13 +1,19 @@
 {
-  "timestamp": "2026-02-01T18:52:23.052172",
-  "total_tests": 66,
+  "timestamp": "2026-02-01T18:56:34.664879",
+  "total_tests": 65,
   "passed_tests": 60,
-  "success_rate": 90.9090909090909,
+  "success_rate": 92.3076923076923,
   "results": [
     {
       "test": "User Registration",
       "success": true,
-      "details": "New user registered successfully",
+      "details": "User already exists (expected)",
+      "response_data": null
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "",
       "response_data": null
     },
     {
@@ -19,13 +25,13 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac250.0",
+      "details": "Money: \u20ac39471.22",
       "response_data": null
     },
     {
       "test": "Daily Reward Claim",
       "success": true,
-      "details": "Reward: \u20ac121.22",
+      "details": "Already claimed today (expected)",
       "response_data": null
     },
     {
@@ -43,7 +49,7 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac12.32",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
@@ -55,31 +61,25 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac115.24",
+      "details": "Success, Reward: \u20ac37.94",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
-      "success": true,
-      "details": "Mission ID: 31b8d3aa-265e-43e4-ae8c-3271afd84c14, Duration: 45s",
-      "response_data": null
-    },
-    {
-      "test": "Mission Flow - Complete",
-      "success": true,
-      "details": "Mission still in progress (expected)",
+      "success": false,
+      "details": "Status: 400, Data: {'detail': 'J\u00e1 tens uma miss\u00e3o em andamento'}",
       "response_data": null
     },
     {
       "test": "Get Gangs",
       "success": true,
-      "details": "Found 0 gangs",
+      "details": "Found 1 gangs",
       "response_data": null
     },
     {
       "test": "Create Gang",
       "success": true,
-      "details": "Gang: TestGang_1769971940",
+      "details": "User already in gang or gang exists (expected)",
       "response_data": null
     },
     {
@@ -121,37 +121,31 @@
     {
       "test": "My Vehicles",
       "success": true,
-      "details": "Player has 0 vehicles",
+      "details": "Player has 1 vehicles",
       "response_data": null
     },
     {
       "test": "Buy Vehicle",
       "success": true,
-      "details": "Bought Bicicleta",
-      "response_data": null
-    },
-    {
-      "test": "Activate Vehicle",
-      "success": true,
-      "details": "Vehicle activated successfully",
+      "details": "Cannot buy vehicle (insufficient funds or already owned)",
       "response_data": null
     },
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 0 active events",
+      "details": "Found 1 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 1.0",
+      "details": "Heat multiplier: 0.5",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Apag\u00e3o Geral",
+      "details": "Event triggered: Boom Econ\u00f3mico",
       "response_data": null
     },
     {
@@ -193,7 +187,7 @@
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: e718edea-96f8-430f-a95d-6f8154eefc94",
+      "details": "Bought apartamento in centro, ID: f114174b-aa5c-4ec9-be91-4c4dde585890",
       "response_data": null
     },
     {
@@ -331,7 +325,7 @@
     {
       "test": "Events Impact",
       "success": true,
-      "details": "Found 1 active events with impact",
+      "details": "Found 2 active events with impact",
       "response_data": null
     },
     {
@@ -343,19 +337,19 @@
     {
       "test": "Profile Detailed Stats",
       "success": false,
-      "details": "Status: 520",
+      "details": "Status: 200",
       "response_data": null
     },
     {
       "test": "Profile Badges",
-      "success": false,
-      "details": "Status: 520",
+      "success": true,
+      "details": "Found 40 badges, 2 unlocked",
       "response_data": null
     },
     {
       "test": "Profile Progress History",
-      "success": false,
-      "details": "Status: 520",
+      "success": true,
+      "details": "Found 1 progress entries",
       "response_data": null
     },
     {
@@ -367,7 +361,7 @@
     {
       "test": "Profile Goals - Create",
       "success": true,
-      "details": "Created goal with ID: 29c52873-dffe-4bf8-84f2-0467182f014e",
+      "details": "Created goal with ID: 66e56874-d7f9-4aa3-85cf-5070faff90a9",
       "response_data": null
     },
     {
@@ -385,7 +379,7 @@
     {
       "test": "Profile Activity Log",
       "success": true,
-      "details": "Found 24 activity entries",
+      "details": "Found 31 activity entries",
       "response_data": null
     },
     {
