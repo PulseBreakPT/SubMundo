@@ -19,6 +19,10 @@ export const GameProvider = ({ children }) => {
   const [missionTemplates, setMissionTemplates] = useState([]);
   const [activeMission, setActiveMission] = useState(null);
   const [myGang, setMyGang] = useState(null);
+  const [gangWars, setGangWars] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [activeVehicle, setActiveVehicle] = useState(null);
+  const [cityEvents, setCityEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -30,12 +34,16 @@ export const GameProvider = ({ children }) => {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchGameState = async () => {
+  const fetchFullGameState = async () => {
     try {
-      const response = await api().get('/game/state');
+      const response = await api().get('/game/full-state');
       setGameState(response.data);
       setActiveMission(response.data.active_mission);
       setMyGang(response.data.gang);
+      setGangWars(response.data.gang_wars || []);
+      setVehicles(response.data.vehicles || []);
+      setActiveVehicle(response.data.active_vehicle);
+      setCityEvents(response.data.active_events || []);
     } catch (err) {
       console.error('Erro ao buscar estado do jogo:', err);
     }
@@ -74,10 +82,9 @@ export const GameProvider = ({ children }) => {
     
     initializedRef.current = true;
     
-    fetchGameState();
+    fetchFullGameState();
     fetchNeighborhoods();
     fetchMissionTemplates();
-    fetchMyGang();
   }, [isAuthenticated]);
 
   // Polling for game state
@@ -85,8 +92,8 @@ export const GameProvider = ({ children }) => {
     if (!isAuthenticated) return;
 
     const interval = setInterval(() => {
-      fetchGameState();
-    }, 15000); // Poll every 15 seconds
+      fetchFullGameState();
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
@@ -100,7 +107,7 @@ export const GameProvider = ({ children }) => {
         neighborhood_id: neighborhoodId,
       });
       await refreshUser();
-      await fetchGameState();
+      await fetchFullGameState();
       showNotification(response.data.message, response.data.success ? 'success' : 'error');
       return response.data;
     } catch (err) {
@@ -121,7 +128,7 @@ export const GameProvider = ({ children }) => {
         neighborhood_id: neighborhoodId,
       });
       await refreshUser();
-      await fetchGameState();
+      await fetchFullGameState();
       setActiveMission(response.data);
       showNotification(`Missão iniciada: ${response.data.name}`, 'success');
       return response.data;
@@ -139,7 +146,7 @@ export const GameProvider = ({ children }) => {
     try {
       const response = await api().post(`/missions/${missionId}/complete`);
       await refreshUser();
-      await fetchGameState();
+      await fetchFullGameState();
       const msg = response.data.result === 'success' 
         ? `Missão concluída com sucesso!` 
         : `Missão falhou!`;
@@ -160,7 +167,7 @@ export const GameProvider = ({ children }) => {
     try {
       const response = await api().post('/player/daily-reward');
       await refreshUser();
-      await fetchGameState();
+      await fetchFullGameState();
       showNotification(response.data.message, response.data.success ? 'success' : 'warning');
       return response.data;
     } catch (err) {
@@ -224,13 +231,151 @@ export const GameProvider = ({ children }) => {
     }
   };
 
+  const depositToTreasury = async (amount) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/gangs/treasury/deposit?amount=${amount}`);
+      await fetchMyGang();
+      await refreshUser();
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao depositar';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Gang Wars
+  const startWar = async (neighborhoodId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/wars/attack/${neighborhoodId}`);
+      await fetchFullGameState();
+      await fetchNeighborhoods();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao iniciar guerra';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const resolveWar = async (warId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/wars/${warId}/resolve`);
+      await fetchFullGameState();
+      await fetchNeighborhoods();
+      showNotification(response.data.message, response.data.result.includes('attacker') ? 'success' : 'warning');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao resolver guerra';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Vehicles
+  const buyVehicle = async (vehicleId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/vehicles/buy/${vehicleId}`);
+      await refreshUser();
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao comprar veículo';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const activateVehicle = async (vehicleInstanceId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/vehicles/${vehicleInstanceId}/activate`);
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao ativar veículo';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const repairVehicle = async (vehicleInstanceId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/vehicles/${vehicleInstanceId}/repair`);
+      await refreshUser();
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao reparar veículo';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const sellVehicle = async (vehicleInstanceId) => {
+    setActionLoading(true);
+    try {
+      const response = await api().post(`/vehicles/${vehicleInstanceId}/sell`);
+      await refreshUser();
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao vender veículo';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Events
+  const triggerEvent = async () => {
+    setActionLoading(true);
+    try {
+      const response = await api().post('/events/trigger');
+      await fetchFullGameState();
+      showNotification(response.data.message, 'success');
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Erro ao acionar evento';
+      showNotification(message, 'error');
+      return { success: false, message };
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Economy
   const launderMoney = async (amount) => {
     setActionLoading(true);
     try {
       const response = await api().post('/economy/launder', { amount });
       await refreshUser();
-      await fetchGameState();
+      await fetchFullGameState();
       showNotification(response.data.message, response.data.success ? 'success' : 'error');
       return response.data;
     } catch (err) {
@@ -249,11 +394,15 @@ export const GameProvider = ({ children }) => {
       missionTemplates,
       activeMission,
       myGang,
+      gangWars,
+      vehicles,
+      activeVehicle,
+      cityEvents,
       loading,
       actionLoading,
       notification,
       showNotification,
-      fetchGameState,
+      fetchFullGameState,
       fetchNeighborhoods,
       fetchMissionTemplates,
       fetchMyGang,
@@ -264,6 +413,14 @@ export const GameProvider = ({ children }) => {
       createGang,
       joinGang,
       leaveGang,
+      depositToTreasury,
+      startWar,
+      resolveWar,
+      buyVehicle,
+      activateVehicle,
+      repairVehicle,
+      sellVehicle,
+      triggerEvent,
       launderMoney,
     }}>
       {children}
