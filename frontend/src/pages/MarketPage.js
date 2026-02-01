@@ -319,6 +319,10 @@ export default function MarketPage() {
         const data = await statsRes.json();
         setMarketStats(data);
       }
+      if (pricesRes.ok) {
+        const data = await pricesRes.json();
+        setMarketPrices(data.prices || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
