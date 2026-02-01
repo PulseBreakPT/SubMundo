@@ -402,6 +402,85 @@ export default function HomePage() {
           <p className="text-xs text-text-secondary uppercase tracking-wider">Prisões</p>
         </div>
       </div>
+
+      {/* Level & Heat Analysis */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {levelInfo && (
+          <Card title="Análise de Nível" icon={TrendingUp}>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-text-secondary">Título:</span>
+                <Badge variant="gold">{levelInfo.title}</Badge>
+              </div>
+              <div className="text-sm text-text-secondary">
+                <p className="text-xs uppercase tracking-wider mb-2">Desbloqueios deste nível:</p>
+                <div className="flex flex-wrap gap-1">
+                  {levelInfo.unlocks.slice(0, 4).map((unlock, idx) => (
+                    <Badge key={idx} variant="secondary" size="sm">{unlock}</Badge>
+                  ))}
+                </div>
+              </div>
+              {levelInfo.perks && Object.keys(levelInfo.perks).length > 0 && (
+                <div className="text-xs text-text-secondary border-t border-border pt-2 mt-2">
+                  <span className="uppercase tracking-wider">Bónus: </span>
+                  {Object.entries(levelInfo.perks).map(([key, val], idx) => (
+                    <span key={key} className="text-primary ml-1">
+                      {key}: +{val}%{idx < Object.keys(levelInfo.perks).length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {heatStatus && (
+          <Card title="Status Policial" icon={Flame} className={player.heat_individual > 70 ? 'border-error' : ''}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge variant={heatStatus.color}>{heatStatus.label}</Badge>
+                <span className="text-text-secondary text-sm">{player.heat_individual}% heat</span>
+              </div>
+              <div className="text-sm text-text-secondary">
+                {heatStatus.effects.map((effect, idx) => (
+                  <div key={idx} className="flex items-start gap-2 mb-1">
+                    <AlertTriangle size={14} className={`text-${heatStatus.color} flex-shrink-0 mt-0.5`} />
+                    <span>{effect}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs text-text-secondary border-t border-border pt-2">
+                Decaimento: {heatStatus.decayRate} pontos/hora
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Wisdom Quote */}
+      <div className="bg-primary/10 border border-primary/30 p-4">
+        <div className="flex items-start gap-3">
+          <Lightbulb size={24} className="text-primary flex-shrink-0" />
+          <div>
+            <p className="text-xs text-primary uppercase tracking-wider mb-1">Sabedoria do Submundo</p>
+            <p className="text-text-primary italic">"{wisdomQuote}"</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tips */}
+      {tips.length > 0 && (
+        <Card title="Dicas" icon={Lightbulb}>
+          <div className="space-y-2">
+            {tips.map((tip, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-sm text-text-secondary">
+                <span className="text-primary">•</span>
+                <span>{tip}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
