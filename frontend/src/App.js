@@ -14,6 +14,10 @@ import EventsPage from './pages/EventsPage';
 import PropertiesPage from './pages/PropertiesPage';
 import BusinessPage from './pages/BusinessPage';
 import MarketPage from './pages/MarketPage';
+import NewsPage from './pages/NewsPage';
+import FAQPage from './pages/FAQPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import './App.css';
 
 // Remove Emergent badge
