@@ -1,37 +1,31 @@
 {
-  "timestamp": "2026-02-01T18:01:04.326982",
-  "total_tests": 55,
-  "passed_tests": 53,
-  "success_rate": 96.36363636363636,
+  "timestamp": "2026-02-01T18:52:23.052172",
+  "total_tests": 66,
+  "passed_tests": 60,
+  "success_rate": 90.9090909090909,
   "results": [
     {
       "test": "User Registration",
       "success": true,
-      "details": "User already exists (expected)",
-      "response_data": null
-    },
-    {
-      "test": "User Login",
-      "success": true,
-      "details": "",
+      "details": "New user registered successfully",
       "response_data": null
     },
     {
       "test": "Get Current User",
       "success": true,
-      "details": "User ID: 5e123495-cca6-4ca4-a992-04cecaedb251",
+      "details": "User ID: e8dfbbdf-e705-4d30-a9d8-8e775e4dc5f4",
       "response_data": null
     },
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac14261.209212040481",
+      "details": "Money: \u20ac250.0",
       "response_data": null
     },
     {
       "test": "Daily Reward Claim",
       "success": true,
-      "details": "Already claimed today (expected)",
+      "details": "Reward: \u20ac121.22",
       "response_data": null
     },
     {
@@ -49,37 +43,43 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac232.87",
+      "details": "Success, Reward: \u20ac12.32",
       "response_data": null
     },
     {
       "test": "Quick Action: hustle_rua",
       "success": true,
-      "details": "Success, Reward: \u20ac467.54",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Failed, Reward: \u20acNone",
+      "details": "Success, Reward: \u20ac115.24",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
-      "success": false,
-      "details": "Status: 400, Data: {'detail': 'J\u00e1 tens uma miss\u00e3o em andamento'}",
+      "success": true,
+      "details": "Mission ID: 31b8d3aa-265e-43e4-ae8c-3271afd84c14, Duration: 45s",
+      "response_data": null
+    },
+    {
+      "test": "Mission Flow - Complete",
+      "success": true,
+      "details": "Mission still in progress (expected)",
       "response_data": null
     },
     {
       "test": "Get Gangs",
       "success": true,
-      "details": "Found 1 gangs",
+      "details": "Found 0 gangs",
       "response_data": null
     },
     {
       "test": "Create Gang",
       "success": true,
-      "details": "User already in gang or gang exists (expected)",
+      "details": "Gang: TestGang_1769971940",
       "response_data": null
     },
     {
@@ -121,31 +121,37 @@
     {
       "test": "My Vehicles",
       "success": true,
-      "details": "Player has 1 vehicles",
+      "details": "Player has 0 vehicles",
       "response_data": null
     },
     {
       "test": "Buy Vehicle",
       "success": true,
-      "details": "Cannot buy vehicle (insufficient funds or already owned)",
+      "details": "Bought Bicicleta",
+      "response_data": null
+    },
+    {
+      "test": "Activate Vehicle",
+      "success": true,
+      "details": "Vehicle activated successfully",
       "response_data": null
     },
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 2 active events",
+      "details": "Found 0 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 0.5",
+      "details": "Heat multiplier: 1.0",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Cannot trigger event (max events active or duplicate)",
+      "details": "Event triggered: Apag\u00e3o Geral",
       "response_data": null
     },
     {
@@ -187,7 +193,7 @@
     {
       "test": "Buy Property",
       "success": true,
-      "details": "Bought apartamento in centro, ID: cb2bcaa6-ff7f-46b5-8872-b807c93a9ae9",
+      "details": "Bought apartamento in centro, ID: e718edea-96f8-430f-a95d-6f8154eefc94",
       "response_data": null
     },
     {
@@ -217,7 +223,7 @@
     {
       "test": "My Businesses",
       "success": true,
-      "details": "Player has 1 businesses",
+      "details": "Player has 0 businesses",
       "response_data": null
     },
     {
@@ -325,13 +331,73 @@
     {
       "test": "Events Impact",
       "success": true,
-      "details": "Found 2 active events with impact",
+      "details": "Found 1 active events with impact",
       "response_data": null
     },
     {
       "test": "Events Predictions",
       "success": true,
       "details": "Found 2 event predictions",
+      "response_data": null
+    },
+    {
+      "test": "Profile Detailed Stats",
+      "success": false,
+      "details": "Status: 520",
+      "response_data": null
+    },
+    {
+      "test": "Profile Badges",
+      "success": false,
+      "details": "Status: 520",
+      "response_data": null
+    },
+    {
+      "test": "Profile Progress History",
+      "success": false,
+      "details": "Status: 520",
+      "response_data": null
+    },
+    {
+      "test": "Profile Goals - Get",
+      "success": true,
+      "details": "Found 0 player goals",
+      "response_data": null
+    },
+    {
+      "test": "Profile Goals - Create",
+      "success": true,
+      "details": "Created goal with ID: 29c52873-dffe-4bf8-84f2-0467182f014e",
+      "response_data": null
+    },
+    {
+      "test": "Profile Goals - Delete",
+      "success": true,
+      "details": "Goal deleted successfully",
+      "response_data": null
+    },
+    {
+      "test": "Profile Compare Players",
+      "success": true,
+      "details": "Player comparison successful",
+      "response_data": null
+    },
+    {
+      "test": "Profile Activity Log",
+      "success": true,
+      "details": "Found 24 activity entries",
+      "response_data": null
+    },
+    {
+      "test": "Profile Leaderboard Position",
+      "success": false,
+      "details": "Status: 200",
+      "response_data": null
+    },
+    {
+      "test": "Profile Search Players",
+      "success": false,
+      "details": "Status: 200",
       "response_data": null
     }
   ]
