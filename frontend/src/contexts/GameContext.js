@@ -70,7 +70,7 @@ export const GameProvider = ({ children }) => {
     }
   }, [api, isAuthenticated]);
 
-  // Polling for game state
+  // Initial data fetch
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -78,13 +78,20 @@ export const GameProvider = ({ children }) => {
     fetchNeighborhoods();
     fetchMissionTemplates();
     fetchMyGang();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  // Polling for game state
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
     const interval = setInterval(() => {
       fetchGameState();
     }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchGameState, fetchNeighborhoods, fetchMissionTemplates, fetchMyGang]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Quick actions
   const performQuickAction = async (actionType, neighborhoodId = null) => {
@@ -223,7 +230,7 @@ export const GameProvider = ({ children }) => {
   const launderMoney = async (amount) => {
     setActionLoading(true);
     try {
-      const response = await api().post(`/economy/launder?amount=${amount}`);
+      const response = await api().post('/economy/launder', { amount });
       await refreshUser();
       await fetchGameState();
       showNotification(response.data.message, response.data.success ? 'success' : 'error');

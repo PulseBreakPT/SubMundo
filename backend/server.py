@@ -709,8 +709,12 @@ async def get_my_gang(current_user: dict = Depends(get_current_user)):
 
 # ============= ECONOMY =============
 
+class LaunderRequest(BaseModel):
+    amount: float
+
 @api_router.post("/economy/launder")
-async def launder_money(amount: float, current_user: dict = Depends(get_current_user)):
+async def launder_money(request: LaunderRequest, current_user: dict = Depends(get_current_user)):
+    amount = request.amount
     player = await db.players.find_one({"id": current_user["id"]})
     
     if amount <= 0:
