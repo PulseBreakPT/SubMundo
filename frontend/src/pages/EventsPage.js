@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ProgressBar';
 import { Button, Badge } from '../components/UI';
 import { 
