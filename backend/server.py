@@ -2020,6 +2020,946 @@ async def get_richest_players(limit: int = 20):
     
     return {"rankings": rankings}
 
+# ============= PROPERTIES SYSTEM =============
+
+@api_router.get("/properties/types")
+async def get_property_types(current_user: dict = Depends(get_current_user)):
+    """Get all available property types"""
+    return {"property_types": PROPERTY_TYPES}
+
+@api_router.get("/properties/my")
+async def get_my_properties(current_user: dict = Depends(get_current_user)):
+    """Get all properties owned by the player"""
+    properties = await db.player_properties.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Calculate pending income for each property
+    now = datetime.now(timezone.utc)
+    for prop in properties:
+        last_collect = prop.get("last_income_collected")
+        if last_collect:
+            if isinstance(last_collect, str):
+                last_collect = datetime.fromisoformat(last_collect.replace('Z', '+00:00'))
+            elif last_collect.tzinfo is None:
+                last_collect = last_collect.replace(tzinfo=timezone.utc)
+            
+            hours_passed = (now - last_collect).total_seconds() / 3600
+            prop_type = next((p for p in PROPERTY_TYPES if p["id"] == prop["property_type"]), None)
+            if prop_type:
+                prop["pending_income"] = round(hours_passed * prop_type["income_per_hour"], 2)
+        else:
+            prop["pending_income"] = 0
+    
+    return {"properties": properties}
+
+@api_router.get("/properties/available/{neighborhood_id}")
+async def get_available_properties(neighborhood_id: str, current_user: dict = Depends(get_current_user)):
+    """Get properties available for purchase in a neighborhood"""
+    neighborhood = await db.neighborhoods.find_one({"id": neighborhood_id})
+    if not neighborhood:
+        raise HTTPException(status_code=404, detail="Bairro não encontrado")
+    
+    available = []
+    for prop_type in PROPERTY_TYPES:
+        if neighborhood_id in prop_type["allowed_neighborhoods"]:
+            # Calculate price based on neighborhood economic value
+            price_multiplier = 1 + (neighborhood["economic_value"] / 100)
+            adjusted_price = int(prop_type["base_price"] * price_multiplier)
+            
+            available.append({
+                **prop_type,
+                "adjusted_price": adjusted_price,
+                "neighborhood_name": neighborhood["name"]
+            })
+    
+    return {"properties": available, "neighborhood": neighborhood["name"]}
+
+@api_router.post("/properties/buy")
+async def buy_property(purchase: PropertyPurchase, current_user: dict = Depends(get_current_user)):
+    """Purchase a property"""
+    property_type = next((p for p in PROPERTY_TYPES if p["id"] == purchase.property_type), None)
+    if not property_type:
+        raise HTTPException(status_code=404, detail="Tipo de propriedade não encontrado")
+    
+    if purchase.neighborhood_id not in property_type["allowed_neighborhoods"]:
+        raise HTTPException(status_code=400, detail="Este tipo de propriedade não está disponível neste bairro")
+    
+    neighborhood = await db.neighborhoods.find_one({"id": purchase.neighborhood_id})
+    if not neighborhood:
+        raise HTTPException(status_code=404, detail="Bairro não encontrado")
+    
+    # Calculate price
+    price_multiplier = 1 + (neighborhood["economic_value"] / 100)
+    final_price = int(property_type["base_price"] * price_multiplier)
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < final_price:
+        raise HTTPException(status_code=400, detail="Dinheiro limpo insuficiente")
+    
+    # Deduct money
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -final_price, "total_spent": final_price}}
+    )
+    
+    # Create property
+    now = datetime.now(timezone.utc)
+    new_property = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "property_type": purchase.property_type,
+        "neighborhood_id": purchase.neighborhood_id,
+        "neighborhood_name": neighborhood["name"],
+        "custom_name": purchase.custom_name or f"{property_type['name']} em {neighborhood['name']}",
+        "purchase_price": final_price,
+        "income_per_hour": property_type["income_per_hour"],
+        "maintenance_cost": property_type["maintenance_cost"],
+        "capacity": property_type["capacity"],
+        "condition": 100,
+        "purchased_at": now,
+        "last_income_collected": now,
+        "last_maintenance_paid": now
+    }
+    
+    await db.player_properties.insert_one(new_property)
+    
+    await add_player_history(current_user["id"], "property_purchased", {
+        "property": property_type["name"],
+        "neighborhood": neighborhood["name"],
+        "price": final_price
+    })
+    
+    new_property.pop("_id", None)
+    new_property["purchased_at"] = new_property["purchased_at"].isoformat()
+    new_property["last_income_collected"] = new_property["last_income_collected"].isoformat()
+    new_property["last_maintenance_paid"] = new_property["last_maintenance_paid"].isoformat()
+    
+    return {"success": True, "message": f"Compraste {property_type['name']} em {neighborhood['name']}!", "property": new_property}
+
+@api_router.post("/properties/{property_id}/collect")
+async def collect_property_income(property_id: str, current_user: dict = Depends(get_current_user)):
+    """Collect accumulated income from a property"""
+    prop = await db.player_properties.find_one({
+        "id": property_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not prop:
+        raise HTTPException(status_code=404, detail="Propriedade não encontrada")
+    
+    now = datetime.now(timezone.utc)
+    last_collect = prop.get("last_income_collected", prop["purchased_at"])
+    
+    if isinstance(last_collect, str):
+        last_collect = datetime.fromisoformat(last_collect.replace('Z', '+00:00'))
+    elif last_collect.tzinfo is None:
+        last_collect = last_collect.replace(tzinfo=timezone.utc)
+    
+    hours_passed = (now - last_collect).total_seconds() / 3600
+    
+    if hours_passed < 1:
+        raise HTTPException(status_code=400, detail="Precisas esperar pelo menos 1 hora para coletar rendimento")
+    
+    # Calculate income based on condition
+    condition_multiplier = prop.get("condition", 100) / 100
+    income = round(hours_passed * prop["income_per_hour"] * condition_multiplier, 2)
+    
+    # Degrade condition slightly
+    condition_loss = min(5, int(hours_passed * 0.5))
+    new_condition = max(0, prop.get("condition", 100) - condition_loss)
+    
+    await db.player_properties.update_one(
+        {"id": property_id},
+        {"$set": {"last_income_collected": now, "condition": new_condition}}
+    )
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": income, "total_earnings": income}}
+    )
+    
+    await add_player_history(current_user["id"], "property_income", {
+        "property": prop["custom_name"],
+        "income": income,
+        "hours": round(hours_passed, 1)
+    })
+    
+    return {
+        "success": True,
+        "message": f"Coletaste €{income:.2f} de {prop['custom_name']}!",
+        "income": income,
+        "hours_collected": round(hours_passed, 1),
+        "new_condition": new_condition
+    }
+
+@api_router.post("/properties/{property_id}/maintain")
+async def maintain_property(property_id: str, current_user: dict = Depends(get_current_user)):
+    """Pay maintenance to restore property condition"""
+    prop = await db.player_properties.find_one({
+        "id": property_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not prop:
+        raise HTTPException(status_code=404, detail="Propriedade não encontrada")
+    
+    if prop.get("condition", 100) >= 100:
+        raise HTTPException(status_code=400, detail="Propriedade já está em perfeitas condições")
+    
+    repair_percentage = 100 - prop.get("condition", 100)
+    maintenance_cost = int((repair_percentage / 100) * prop["maintenance_cost"] * 10)
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < maintenance_cost:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente para manutenção")
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -maintenance_cost, "total_spent": maintenance_cost}}
+    )
+    
+    await db.player_properties.update_one(
+        {"id": property_id},
+        {"$set": {"condition": 100, "last_maintenance_paid": datetime.now(timezone.utc)}}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Manutenção paga! €{maintenance_cost} gastos.",
+        "cost": maintenance_cost
+    }
+
+@api_router.post("/properties/{property_id}/sell")
+async def sell_property(property_id: str, current_user: dict = Depends(get_current_user)):
+    """Sell a property"""
+    prop = await db.player_properties.find_one({
+        "id": property_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not prop:
+        raise HTTPException(status_code=404, detail="Propriedade não encontrada")
+    
+    # Sell for 50% of purchase price × condition
+    sell_price = int(prop["purchase_price"] * 0.5 * (prop.get("condition", 100) / 100))
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": sell_price}}
+    )
+    
+    await db.player_properties.delete_one({"id": property_id})
+    
+    await add_player_history(current_user["id"], "property_sold", {
+        "property": prop["custom_name"],
+        "price": sell_price
+    })
+    
+    return {"success": True, "message": f"Vendeste a propriedade por €{sell_price}!", "amount": sell_price}
+
+# ============= BUSINESS/CRAFTING SYSTEM =============
+
+@api_router.get("/businesses/types")
+async def get_business_types(current_user: dict = Depends(get_current_user)):
+    """Get all available business types with their neighborhoods"""
+    businesses_with_neighborhoods = []
+    for business in BUSINESS_TYPES:
+        neighborhood = await db.neighborhoods.find_one({"id": business["neighborhood"]})
+        businesses_with_neighborhoods.append({
+            **business,
+            "neighborhood_name": neighborhood["name"] if neighborhood else business["neighborhood"]
+        })
+    return {"business_types": businesses_with_neighborhoods}
+
+@api_router.get("/businesses/my")
+async def get_my_businesses(current_user: dict = Depends(get_current_user)):
+    """Get all businesses owned by the player"""
+    businesses = await db.player_businesses.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Check for active productions
+    now = datetime.now(timezone.utc)
+    for business in businesses:
+        active_prod = await db.crafting_queue.find_one({
+            "business_id": business["id"],
+            "status": "in_progress"
+        }, {"_id": 0})
+        
+        if active_prod:
+            ends_at = active_prod.get("ends_at")
+            if isinstance(ends_at, str):
+                ends_at = datetime.fromisoformat(ends_at.replace('Z', '+00:00'))
+            elif ends_at.tzinfo is None:
+                ends_at = ends_at.replace(tzinfo=timezone.utc)
+            
+            if now >= ends_at:
+                active_prod["status"] = "ready"
+            else:
+                remaining = (ends_at - now).total_seconds()
+                active_prod["remaining_seconds"] = int(remaining)
+            
+            business["active_production"] = active_prod
+        else:
+            business["active_production"] = None
+    
+    return {"businesses": businesses}
+
+@api_router.get("/businesses/recipes/{business_id}")
+async def get_business_recipes(business_id: str, current_user: dict = Depends(get_current_user)):
+    """Get available recipes for a specific business"""
+    business = await db.player_businesses.find_one({
+        "id": business_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not business:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado")
+    
+    recipes = [r for r in CRAFTING_RECIPES if r["business_type"] == business["business_type"]]
+    
+    # Add player skill bonus info
+    player = await db.players.find_one({"id": current_user["id"]})
+    for recipe in recipes:
+        skill = recipe.get("skill_bonus")
+        if skill:
+            skill_level = player.get("skills", {}).get(skill, {}).get("level", 0)
+            recipe["time_reduction"] = skill_level * 5  # 5% per skill level
+            recipe["adjusted_time"] = int(recipe["time_minutes"] * (1 - skill_level * 0.05))
+        else:
+            recipe["time_reduction"] = 0
+            recipe["adjusted_time"] = recipe["time_minutes"]
+    
+    return {"recipes": recipes, "business_name": business["custom_name"]}
+
+@api_router.post("/businesses/buy")
+async def buy_business(purchase: BusinessPurchase, current_user: dict = Depends(get_current_user)):
+    """Purchase a business"""
+    business_type = next((b for b in BUSINESS_TYPES if b["id"] == purchase.business_type), None)
+    if not business_type:
+        raise HTTPException(status_code=404, detail="Tipo de negócio não encontrado")
+    
+    # Check if player already has this type of business
+    existing = await db.player_businesses.find_one({
+        "player_id": current_user["id"],
+        "business_type": purchase.business_type
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Já tens este tipo de negócio")
+    
+    neighborhood = await db.neighborhoods.find_one({"id": business_type["neighborhood"]})
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < business_type["price"]:
+        raise HTTPException(status_code=400, detail="Dinheiro limpo insuficiente")
+    
+    # Deduct money
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -business_type["price"], "total_spent": business_type["price"]}}
+    )
+    
+    now = datetime.now(timezone.utc)
+    new_business = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "business_type": purchase.business_type,
+        "neighborhood_id": business_type["neighborhood"],
+        "neighborhood_name": neighborhood["name"] if neighborhood else business_type["neighborhood"],
+        "custom_name": purchase.custom_name or business_type["name"],
+        "purchase_price": business_type["price"],
+        "maintenance_cost": business_type["maintenance_cost"],
+        "icon": business_type["icon"],
+        "products": business_type["products"],
+        "level": 1,
+        "total_produced": 0,
+        "purchased_at": now,
+        "last_maintenance_paid": now
+    }
+    
+    await db.player_businesses.insert_one(new_business)
+    
+    await add_player_history(current_user["id"], "business_purchased", {
+        "business": business_type["name"],
+        "neighborhood": neighborhood["name"] if neighborhood else business_type["neighborhood"],
+        "price": business_type["price"]
+    })
+    
+    new_business.pop("_id", None)
+    new_business["purchased_at"] = new_business["purchased_at"].isoformat()
+    new_business["last_maintenance_paid"] = new_business["last_maintenance_paid"].isoformat()
+    
+    return {"success": True, "message": f"Compraste {business_type['name']}!", "business": new_business}
+
+@api_router.post("/businesses/{business_id}/craft")
+async def start_crafting(business_id: str, request: CraftingRequest, current_user: dict = Depends(get_current_user)):
+    """Start crafting a product"""
+    business = await db.player_businesses.find_one({
+        "id": business_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not business:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado")
+    
+    # Check for active production
+    active = await db.crafting_queue.find_one({
+        "business_id": business_id,
+        "status": "in_progress"
+    })
+    if active:
+        raise HTTPException(status_code=400, detail="Já existe uma produção em andamento neste negócio")
+    
+    recipe = next((r for r in CRAFTING_RECIPES if r["id"] == request.recipe_id), None)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Receita não encontrada")
+    
+    if recipe["business_type"] != business["business_type"]:
+        raise HTTPException(status_code=400, detail="Esta receita não pode ser feita neste negócio")
+    
+    total_cost = recipe["cost"] * request.quantity
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < total_cost:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente para materiais")
+    
+    # Calculate time with skill bonus
+    skill = recipe.get("skill_bonus")
+    time_multiplier = 1.0
+    if skill:
+        skill_level = player.get("skills", {}).get(skill, {}).get("level", 0)
+        time_multiplier = 1 - (skill_level * 0.05)  # 5% reduction per level
+    
+    total_time_minutes = int(recipe["time_minutes"] * request.quantity * time_multiplier)
+    
+    # Deduct cost
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -total_cost, "total_spent": total_cost}}
+    )
+    
+    now = datetime.now(timezone.utc)
+    crafting_job = {
+        "id": str(uuid.uuid4()),
+        "business_id": business_id,
+        "player_id": current_user["id"],
+        "recipe_id": request.recipe_id,
+        "recipe_name": recipe["name"],
+        "quantity": request.quantity,
+        "total_output": recipe["quantity"] * request.quantity,
+        "cost": total_cost,
+        "sell_value": recipe["sell_value"] * request.quantity,
+        "heat_risk": recipe["heat_risk"],
+        "status": "in_progress",
+        "started_at": now,
+        "ends_at": now + timedelta(minutes=total_time_minutes)
+    }
+    
+    await db.crafting_queue.insert_one(crafting_job)
+    
+    crafting_job.pop("_id", None)
+    crafting_job["started_at"] = crafting_job["started_at"].isoformat()
+    crafting_job["ends_at"] = crafting_job["ends_at"].isoformat()
+    
+    return {
+        "success": True,
+        "message": f"Produção de {recipe['name']} iniciada!",
+        "job": crafting_job,
+        "duration_minutes": total_time_minutes
+    }
+
+@api_router.post("/businesses/{business_id}/collect")
+async def collect_crafting(business_id: str, current_user: dict = Depends(get_current_user)):
+    """Collect finished crafted products"""
+    business = await db.player_businesses.find_one({
+        "id": business_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not business:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado")
+    
+    job = await db.crafting_queue.find_one({
+        "business_id": business_id,
+        "status": "in_progress"
+    })
+    
+    if not job:
+        raise HTTPException(status_code=400, detail="Não há produção para coletar")
+    
+    ends_at = job["ends_at"]
+    if isinstance(ends_at, str):
+        ends_at = datetime.fromisoformat(ends_at.replace('Z', '+00:00'))
+    elif ends_at.tzinfo is None:
+        ends_at = ends_at.replace(tzinfo=timezone.utc)
+    
+    now = datetime.now(timezone.utc)
+    if now < ends_at:
+        remaining = (ends_at - now).total_seconds()
+        raise HTTPException(status_code=400, detail=f"Produção ainda em andamento. Faltam {int(remaining // 60)} minutos.")
+    
+    # Add to player's crafted items storage
+    crafted_item = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "recipe_id": job["recipe_id"],
+        "name": job["recipe_name"],
+        "quantity": job["total_output"],
+        "sell_value_each": job["sell_value"] / job["quantity"],
+        "crafted_at": now,
+        "business_id": business_id
+    }
+    
+    await db.player_crafted_items.insert_one(crafted_item)
+    
+    # Update job status
+    await db.crafting_queue.update_one(
+        {"id": job["id"]},
+        {"$set": {"status": "completed", "collected_at": now}}
+    )
+    
+    # Update business stats
+    await db.player_businesses.update_one(
+        {"id": business_id},
+        {"$inc": {"total_produced": job["total_output"]}}
+    )
+    
+    # Apply heat risk
+    if random.randint(1, 100) <= job["heat_risk"]:
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"heat_individual": job["heat_risk"]}}
+        )
+    
+    await add_player_history(current_user["id"], "crafting_collected", {
+        "product": job["recipe_name"],
+        "quantity": job["total_output"]
+    })
+    
+    crafted_item.pop("_id", None)
+    crafted_item["crafted_at"] = crafted_item["crafted_at"].isoformat()
+    
+    return {
+        "success": True,
+        "message": f"Coletaste {job['total_output']}x {job['recipe_name']}!",
+        "crafted_item": crafted_item
+    }
+
+@api_router.get("/businesses/crafted-items")
+async def get_crafted_items(current_user: dict = Depends(get_current_user)):
+    """Get all crafted items in storage"""
+    items = await db.player_crafted_items.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    return {"items": items}
+
+@api_router.post("/businesses/{business_id}/sell")
+async def sell_business(business_id: str, current_user: dict = Depends(get_current_user)):
+    """Sell a business"""
+    business = await db.player_businesses.find_one({
+        "id": business_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not business:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado")
+    
+    # Check for active production
+    active = await db.crafting_queue.find_one({
+        "business_id": business_id,
+        "status": "in_progress"
+    })
+    if active:
+        raise HTTPException(status_code=400, detail="Não podes vender um negócio com produção em andamento")
+    
+    sell_price = int(business["purchase_price"] * 0.6)  # 60% return
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": sell_price}}
+    )
+    
+    await db.player_businesses.delete_one({"id": business_id})
+    
+    await add_player_history(current_user["id"], "business_sold", {
+        "business": business["custom_name"],
+        "price": sell_price
+    })
+    
+    return {"success": True, "message": f"Vendeste o negócio por €{sell_price}!", "amount": sell_price}
+
+# ============= MARKET SYSTEM =============
+
+@api_router.get("/market/listings")
+async def get_market_listings(
+    current_user: dict = Depends(get_current_user),
+    category: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None
+):
+    """Get all active market listings"""
+    query = {"status": "active"}
+    
+    if category:
+        query["category"] = category
+    if min_price is not None:
+        query["price_per_unit"] = {"$gte": min_price}
+    if max_price is not None:
+        if "price_per_unit" in query:
+            query["price_per_unit"]["$lte"] = max_price
+        else:
+            query["price_per_unit"] = {"$lte": max_price}
+    
+    listings = await db.market_listings.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Get seller usernames
+    for listing in listings:
+        if listing["seller_id"] == current_user["id"]:
+            listing["is_own"] = True
+            listing["seller_name"] = "Tu"
+        else:
+            seller = await db.players.find_one({"id": listing["seller_id"]}, {"username": 1})
+            listing["is_own"] = False
+            listing["seller_name"] = seller["username"] if seller else "Desconhecido"
+    
+    return {"listings": listings}
+
+@api_router.get("/market/my-listings")
+async def get_my_listings(current_user: dict = Depends(get_current_user)):
+    """Get player's own market listings"""
+    listings = await db.market_listings.find(
+        {"seller_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {"listings": listings}
+
+@api_router.post("/market/list")
+async def create_listing(listing: MarketListing, current_user: dict = Depends(get_current_user)):
+    """Create a new market listing"""
+    if listing.price <= 0:
+        raise HTTPException(status_code=400, detail="Preço inválido")
+    
+    if listing.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantidade inválida")
+    
+    item_name = ""
+    category = ""
+    
+    if listing.item_type == "crafted":
+        # Check crafted items
+        crafted = await db.player_crafted_items.find_one({
+            "id": listing.item_id,
+            "player_id": current_user["id"]
+        })
+        
+        if not crafted:
+            raise HTTPException(status_code=404, detail="Item fabricado não encontrado")
+        
+        if crafted["quantity"] < listing.quantity:
+            raise HTTPException(status_code=400, detail="Quantidade insuficiente")
+        
+        item_name = crafted["name"]
+        category = "crafted"
+        
+        # Reduce quantity or remove
+        if crafted["quantity"] == listing.quantity:
+            await db.player_crafted_items.delete_one({"id": listing.item_id})
+        else:
+            await db.player_crafted_items.update_one(
+                {"id": listing.item_id},
+                {"$inc": {"quantity": -listing.quantity}}
+            )
+    
+    elif listing.item_type == "inventory":
+        # Check inventory items
+        inv_item = await db.player_inventory.find_one({
+            "id": listing.item_id,
+            "player_id": current_user["id"]
+        })
+        
+        if not inv_item:
+            raise HTTPException(status_code=404, detail="Item não encontrado no inventário")
+        
+        if inv_item.get("quantity", 1) < listing.quantity:
+            raise HTTPException(status_code=400, detail="Quantidade insuficiente")
+        
+        item_name = inv_item["item_data"]["name"]
+        category = inv_item["item_data"].get("type", "misc")
+        
+        # Reduce quantity or remove
+        if inv_item.get("quantity", 1) == listing.quantity:
+            await db.player_inventory.delete_one({"id": listing.item_id})
+        else:
+            await db.player_inventory.update_one(
+                {"id": listing.item_id},
+                {"$inc": {"quantity": -listing.quantity}}
+            )
+    else:
+        raise HTTPException(status_code=400, detail="Tipo de item inválido")
+    
+    now = datetime.now(timezone.utc)
+    new_listing = {
+        "id": str(uuid.uuid4()),
+        "seller_id": current_user["id"],
+        "item_type": listing.item_type,
+        "original_item_id": listing.item_id,
+        "item_name": item_name,
+        "category": category,
+        "quantity": listing.quantity,
+        "price_per_unit": listing.price,
+        "total_price": listing.price * listing.quantity,
+        "status": "active",
+        "created_at": now,
+        "expires_at": now + timedelta(days=7)
+    }
+    
+    await db.market_listings.insert_one(new_listing)
+    
+    await add_player_history(current_user["id"], "market_listed", {
+        "item": item_name,
+        "quantity": listing.quantity,
+        "price": listing.price * listing.quantity
+    })
+    
+    new_listing.pop("_id", None)
+    new_listing["created_at"] = new_listing["created_at"].isoformat()
+    new_listing["expires_at"] = new_listing["expires_at"].isoformat()
+    
+    return {"success": True, "message": f"Listado {listing.quantity}x {item_name} por €{listing.price * listing.quantity:.2f}", "listing": new_listing}
+
+@api_router.post("/market/buy")
+async def buy_from_market(purchase: MarketPurchase, current_user: dict = Depends(get_current_user)):
+    """Purchase an item from the market"""
+    listing = await db.market_listings.find_one({
+        "id": purchase.listing_id,
+        "status": "active"
+    })
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listagem não encontrada ou expirada")
+    
+    if listing["seller_id"] == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Não podes comprar os teus próprios itens")
+    
+    if purchase.quantity > listing["quantity"]:
+        raise HTTPException(status_code=400, detail="Quantidade solicitada maior que disponível")
+    
+    total_cost = listing["price_per_unit"] * purchase.quantity
+    fee = total_cost * MARKET_FEE
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < total_cost:
+        raise HTTPException(status_code=400, detail="Dinheiro limpo insuficiente")
+    
+    # Deduct money from buyer
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -total_cost, "total_spent": total_cost}}
+    )
+    
+    # Give money to seller (minus fee)
+    seller_amount = total_cost - fee
+    await db.players.update_one(
+        {"id": listing["seller_id"]},
+        {"$inc": {"clean_money": seller_amount, "total_earnings": seller_amount}}
+    )
+    
+    # Add item to buyer's inventory
+    if listing["item_type"] == "crafted":
+        existing = await db.player_crafted_items.find_one({
+            "player_id": current_user["id"],
+            "name": listing["item_name"]
+        })
+        
+        if existing:
+            await db.player_crafted_items.update_one(
+                {"id": existing["id"]},
+                {"$inc": {"quantity": purchase.quantity}}
+            )
+        else:
+            await db.player_crafted_items.insert_one({
+                "id": str(uuid.uuid4()),
+                "player_id": current_user["id"],
+                "recipe_id": listing.get("original_item_id", "unknown"),
+                "name": listing["item_name"],
+                "quantity": purchase.quantity,
+                "sell_value_each": listing["price_per_unit"],
+                "crafted_at": datetime.now(timezone.utc),
+                "purchased_from_market": True
+            })
+    else:
+        # For inventory items, we need to find the original item data
+        existing = await db.player_inventory.find_one({
+            "player_id": current_user["id"],
+            "item_data.name": listing["item_name"]
+        })
+        
+        if existing:
+            await db.player_inventory.update_one(
+                {"id": existing["id"]},
+                {"$inc": {"quantity": purchase.quantity}}
+            )
+        else:
+            # Find item in catalog
+            item_data = next((i for i in ITEMS_CATALOG if i["name"] == listing["item_name"]), None)
+            if item_data:
+                await db.player_inventory.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "player_id": current_user["id"],
+                    "item_id": item_data["id"],
+                    "item_data": item_data,
+                    "quantity": purchase.quantity,
+                    "acquired_at": datetime.now(timezone.utc)
+                })
+    
+    # Update or remove listing
+    if purchase.quantity == listing["quantity"]:
+        await db.market_listings.update_one(
+            {"id": purchase.listing_id},
+            {"$set": {"status": "sold", "sold_at": datetime.now(timezone.utc)}}
+        )
+    else:
+        await db.market_listings.update_one(
+            {"id": purchase.listing_id},
+            {
+                "$inc": {"quantity": -purchase.quantity},
+                "$set": {"total_price": (listing["quantity"] - purchase.quantity) * listing["price_per_unit"]}
+            }
+        )
+    
+    # Record transaction
+    await db.transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "type": "market_purchase",
+        "buyer_id": current_user["id"],
+        "seller_id": listing["seller_id"],
+        "item_name": listing["item_name"],
+        "quantity": purchase.quantity,
+        "total_price": total_cost,
+        "fee": fee,
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    await add_player_history(current_user["id"], "market_purchased", {
+        "item": listing["item_name"],
+        "quantity": purchase.quantity,
+        "price": total_cost
+    })
+    
+    return {
+        "success": True,
+        "message": f"Compraste {purchase.quantity}x {listing['item_name']} por €{total_cost:.2f}!",
+        "fee": fee,
+        "total_paid": total_cost
+    }
+
+@api_router.post("/market/{listing_id}/cancel")
+async def cancel_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Cancel a market listing and return items"""
+    listing = await db.market_listings.find_one({
+        "id": listing_id,
+        "seller_id": current_user["id"],
+        "status": "active"
+    })
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listagem não encontrada ou não é tua")
+    
+    # Return items to player
+    if listing["item_type"] == "crafted":
+        existing = await db.player_crafted_items.find_one({
+            "player_id": current_user["id"],
+            "name": listing["item_name"]
+        })
+        
+        if existing:
+            await db.player_crafted_items.update_one(
+                {"id": existing["id"]},
+                {"$inc": {"quantity": listing["quantity"]}}
+            )
+        else:
+            await db.player_crafted_items.insert_one({
+                "id": str(uuid.uuid4()),
+                "player_id": current_user["id"],
+                "recipe_id": listing.get("original_item_id", "unknown"),
+                "name": listing["item_name"],
+                "quantity": listing["quantity"],
+                "sell_value_each": listing["price_per_unit"],
+                "crafted_at": datetime.now(timezone.utc)
+            })
+    else:
+        existing = await db.player_inventory.find_one({
+            "player_id": current_user["id"],
+            "item_data.name": listing["item_name"]
+        })
+        
+        if existing:
+            await db.player_inventory.update_one(
+                {"id": existing["id"]},
+                {"$inc": {"quantity": listing["quantity"]}}
+            )
+        else:
+            item_data = next((i for i in ITEMS_CATALOG if i["name"] == listing["item_name"]), None)
+            if item_data:
+                await db.player_inventory.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "player_id": current_user["id"],
+                    "item_id": item_data["id"],
+                    "item_data": item_data,
+                    "quantity": listing["quantity"],
+                    "acquired_at": datetime.now(timezone.utc)
+                })
+    
+    await db.market_listings.update_one(
+        {"id": listing_id},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "message": f"Listagem cancelada. {listing['quantity']}x {listing['item_name']} devolvidos."}
+
+@api_router.get("/market/stats")
+async def get_market_stats(current_user: dict = Depends(get_current_user)):
+    """Get market statistics"""
+    total_listings = await db.market_listings.count_documents({"status": "active"})
+    
+    # Get sales in last 24 hours
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+    recent_sales = await db.market_listings.count_documents({
+        "status": "sold",
+        "sold_at": {"$gte": yesterday}
+    })
+    
+    # Get total volume
+    pipeline = [
+        {"$match": {"status": "sold"}},
+        {"$group": {"_id": None, "total": {"$sum": "$total_price"}}}
+    ]
+    volume_result = await db.market_listings.aggregate(pipeline).to_list(1)
+    total_volume = volume_result[0]["total"] if volume_result else 0
+    
+    # Get popular categories
+    category_pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]
+    categories = await db.market_listings.aggregate(category_pipeline).to_list(5)
+    
+    return {
+        "total_active_listings": total_listings,
+        "sales_last_24h": recent_sales,
+        "total_volume": total_volume,
+        "popular_categories": categories,
+        "market_fee": f"{MARKET_FEE * 100}%"
+    }
+
 # ============= GAME STATE =============
 
 @api_router.get("/game/state")
