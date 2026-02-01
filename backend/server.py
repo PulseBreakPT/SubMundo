@@ -837,6 +837,8 @@ async def start_mission(mission: MissionCreate, current_user: dict = Depends(get
     
     await db.missions.insert_one(new_mission)
     
+    # Remove MongoDB _id before returning
+    new_mission.pop("_id", None)
     new_mission["started_at"] = new_mission["started_at"].isoformat()
     return new_mission
 
