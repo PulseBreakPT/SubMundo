@@ -1637,59 +1637,6 @@ export default function ProfilePage() {
 
       {/* ===== MODALS ===== */}
       
-      {/* Launder Money Modal */}
-      <Modal
-        isOpen={showLaunderModal}
-        onClose={() => setShowLaunderModal(false)}
-        title="Lavar Dinheiro"
-      >
-        <div className="space-y-4">
-          <p className="text-text-secondary text-sm">
-            Lavar dinheiro sujo converte-o em dinheiro limpo, mas cobra uma taxa de 20-40% e há risco de ser apanhado.
-          </p>
-          
-          <div className="bg-surface-highlight border border-border p-4 rounded">
-            <p className="text-text-secondary text-sm mb-2">Disponível para lavar:</p>
-            <p className="text-warning text-2xl font-body">€{formatNumber(player.dirty_money || 0, 2)}</p>
-          </div>
-          
-          <Input
-            label="Montante a lavar"
-            type="number"
-            placeholder="100.00"
-            value={launderAmount}
-            onChange={(e) => setLaunderAmount(e.target.value)}
-            data-testid="launder-amount-input"
-          />
-          
-          <div className="bg-error/10 border border-error/30 p-3 text-sm rounded">
-            <p className="text-error flex items-center gap-2">
-              <Flame size={16} />
-              Risco: {player.heat_individual}% de ser apanhado
-            </p>
-          </div>
-          
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => setShowLaunderModal(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={handleLaunder}
-              loading={actionLoading}
-              data-testid="confirm-launder"
-            >
-              Lavar Dinheiro
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
       {/* Create Goal Modal */}
       <Modal
         isOpen={showGoalModal}
