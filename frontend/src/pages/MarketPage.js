@@ -268,6 +268,7 @@ export default function MarketPage() {
   const [craftedItems, setCraftedItems] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [marketStats, setMarketStats] = useState(null);
+  const [marketPrices, setMarketPrices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -277,7 +278,7 @@ export default function MarketPage() {
   
   const fetchData = async () => {
     try {
-      const [listingsRes, myListingsRes, craftedRes, inventoryRes, statsRes] = await Promise.all([
+      const [listingsRes, myListingsRes, craftedRes, inventoryRes, statsRes, pricesRes] = await Promise.all([
         fetch(`${API_URL}/api/market/listings`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -291,6 +292,9 @@ export default function MarketPage() {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch(`${API_URL}/api/market/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/economy/market-prices`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
