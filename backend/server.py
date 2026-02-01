@@ -4584,6 +4584,972 @@ async def get_event_predictions(current_user: dict = Depends(get_current_user)):
         }
     }
 
+# ============= ADVANCED PROFILE SYSTEM =============
+
+# Badge definitions
+BADGES_CONFIG = [
+    # Combat Badges
+    {"id": "first_kill", "name": "Primeiro Sangue", "description": "Completa o teu primeiro combate", "category": "combat", "icon": "sword", "requirement": {"combats_won": 1}, "rarity": "common"},
+    {"id": "fighter", "name": "Lutador", "description": "Vence 25 combates", "category": "combat", "icon": "shield", "requirement": {"combats_won": 25}, "rarity": "uncommon"},
+    {"id": "warrior", "name": "Guerreiro", "description": "Vence 100 combates", "category": "combat", "icon": "swords", "requirement": {"combats_won": 100}, "rarity": "rare"},
+    {"id": "legend_fighter", "name": "Lenda do Combate", "description": "Vence 500 combates", "category": "combat", "icon": "crown", "requirement": {"combats_won": 500}, "rarity": "legendary"},
+    {"id": "survivor", "name": "Sobrevivente", "description": "Escapa 10 vezes da polícia", "category": "combat", "icon": "run", "requirement": {"police_escapes": 10}, "rarity": "uncommon"},
+    {"id": "ghost", "name": "Fantasma", "description": "Completa 50 missões sem ser detectado", "category": "combat", "icon": "eye-off", "requirement": {"stealth_missions": 50}, "rarity": "rare"},
+    
+    # Economy Badges
+    {"id": "first_money", "name": "Primeiro Euro", "description": "Ganha os teus primeiros €1.000", "category": "economy", "icon": "coins", "requirement": {"total_earnings": 1000}, "rarity": "common"},
+    {"id": "businessman", "name": "Empresário", "description": "Acumula €100.000 em ganhos", "category": "economy", "icon": "briefcase", "requirement": {"total_earnings": 100000}, "rarity": "uncommon"},
+    {"id": "millionaire", "name": "Milionário", "description": "Acumula €1.000.000 em ganhos", "category": "economy", "icon": "gem", "requirement": {"total_earnings": 1000000}, "rarity": "rare"},
+    {"id": "billionaire", "name": "Bilionário", "description": "Acumula €10.000.000 em ganhos", "category": "economy", "icon": "trophy", "requirement": {"total_earnings": 10000000}, "rarity": "legendary"},
+    {"id": "launderer", "name": "Lavandaria", "description": "Lava €50.000 com sucesso", "category": "economy", "icon": "refresh", "requirement": {"money_laundered": 50000}, "rarity": "uncommon"},
+    {"id": "clean_operator", "name": "Operador Limpo", "description": "Lava €500.000 com sucesso", "category": "economy", "icon": "sparkles", "requirement": {"money_laundered": 500000}, "rarity": "rare"},
+    {"id": "property_owner", "name": "Proprietário", "description": "Possui 3 propriedades", "category": "economy", "icon": "home", "requirement": {"properties_owned": 3}, "rarity": "uncommon"},
+    {"id": "real_estate_mogul", "name": "Magnata Imobiliário", "description": "Possui 10 propriedades", "category": "economy", "icon": "building", "requirement": {"properties_owned": 10}, "rarity": "rare"},
+    {"id": "business_tycoon", "name": "Magnata dos Negócios", "description": "Possui 5 negócios", "category": "economy", "icon": "factory", "requirement": {"businesses_owned": 5}, "rarity": "rare"},
+    
+    # Criminal Badges
+    {"id": "rookie", "name": "Novato", "description": "Completa 10 missões", "category": "criminal", "icon": "target", "requirement": {"missions_completed": 10}, "rarity": "common"},
+    {"id": "professional", "name": "Profissional", "description": "Completa 100 missões", "category": "criminal", "icon": "crosshair", "requirement": {"missions_completed": 100}, "rarity": "uncommon"},
+    {"id": "master_criminal", "name": "Mestre do Crime", "description": "Completa 500 missões", "category": "criminal", "icon": "skull", "requirement": {"missions_completed": 500}, "rarity": "rare"},
+    {"id": "crime_lord", "name": "Senhor do Crime", "description": "Completa 1000 missões", "category": "criminal", "icon": "crown", "requirement": {"missions_completed": 1000}, "rarity": "legendary"},
+    {"id": "high_risk", "name": "Alto Risco", "description": "Completa 25 missões de alto risco", "category": "criminal", "icon": "alert-triangle", "requirement": {"high_risk_missions": 25}, "rarity": "uncommon"},
+    {"id": "heist_master", "name": "Mestre dos Assaltos", "description": "Completa 10 heists", "category": "criminal", "icon": "lock", "requirement": {"heists_completed": 10}, "rarity": "rare"},
+    {"id": "wanted", "name": "Procurado", "description": "Atinge 100% de heat", "category": "criminal", "icon": "flame", "requirement": {"max_heat_reached": 100}, "rarity": "uncommon"},
+    {"id": "notorious", "name": "Notório", "description": "Mantém 80%+ heat por 1 hora", "category": "criminal", "icon": "fire", "requirement": {"high_heat_duration": 3600}, "rarity": "rare"},
+    
+    # Social Badges
+    {"id": "networker", "name": "Networker", "description": "Conhece 5 NPCs", "category": "social", "icon": "users", "requirement": {"npcs_met": 5}, "rarity": "common"},
+    {"id": "connected", "name": "Conectado", "description": "Tem 3 NPCs com relacionamento bom+", "category": "social", "icon": "link", "requirement": {"good_relationships": 3}, "rarity": "uncommon"},
+    {"id": "influencer", "name": "Influenciador", "description": "Atinge 100 de reputação", "category": "social", "icon": "star", "requirement": {"reputation": 100}, "rarity": "uncommon"},
+    {"id": "kingpin", "name": "Chefão", "description": "Atinge 500 de reputação", "category": "social", "icon": "crown", "requirement": {"reputation": 500}, "rarity": "rare"},
+    {"id": "gang_founder", "name": "Fundador", "description": "Cria uma gangue", "category": "social", "icon": "flag", "requirement": {"gang_created": 1}, "rarity": "uncommon"},
+    {"id": "gang_leader", "name": "Líder de Gangue", "description": "Lidera uma gangue com 10+ membros", "category": "social", "icon": "users", "requirement": {"gang_members": 10}, "rarity": "rare"},
+    {"id": "territory_king", "name": "Rei do Território", "description": "Controla 5 territórios", "category": "social", "icon": "map", "requirement": {"territories_controlled": 5}, "rarity": "rare"},
+    {"id": "war_hero", "name": "Herói de Guerra", "description": "Vence 25 guerras de gangue", "category": "social", "icon": "medal", "requirement": {"wars_won": 25}, "rarity": "legendary"},
+    
+    # Special/Milestone Badges
+    {"id": "early_bird", "name": "Early Bird", "description": "Joga às 5-7h da manhã", "category": "special", "icon": "sunrise", "requirement": {"early_login": 1}, "rarity": "uncommon"},
+    {"id": "night_owl", "name": "Coruja Nocturna", "description": "Joga às 2-4h da manhã", "category": "special", "icon": "moon", "requirement": {"late_login": 1}, "rarity": "uncommon"},
+    {"id": "dedicated", "name": "Dedicado", "description": "Login 7 dias seguidos", "category": "special", "icon": "calendar", "requirement": {"daily_streak": 7}, "rarity": "uncommon"},
+    {"id": "loyal", "name": "Leal", "description": "Login 30 dias seguidos", "category": "special", "icon": "heart", "requirement": {"daily_streak": 30}, "rarity": "rare"},
+    {"id": "veteran", "name": "Veterano", "description": "Login 100 dias seguidos", "category": "special", "icon": "award", "requirement": {"daily_streak": 100}, "rarity": "legendary"},
+    {"id": "collector", "name": "Colecionador", "description": "Possui 25 itens diferentes", "category": "special", "icon": "archive", "requirement": {"unique_items": 25}, "rarity": "uncommon"},
+    {"id": "speedster", "name": "Velocista", "description": "Possui 5 veículos", "category": "special", "icon": "car", "requirement": {"vehicles_owned": 5}, "rarity": "uncommon"},
+    {"id": "jack_of_trades", "name": "Faz-Tudo", "description": "Todas as skills nível 5+", "category": "special", "icon": "tool", "requirement": {"all_skills_min": 5}, "rarity": "rare"},
+    {"id": "master_of_all", "name": "Mestre de Tudo", "description": "Todas as skills no máximo", "category": "special", "icon": "zap", "requirement": {"all_skills_max": True}, "rarity": "legendary"},
+]
+
+# Goals templates
+GOALS_TEMPLATES = [
+    {"id": "earn_money", "name": "Ganhar Dinheiro", "type": "earn", "icon": "dollar-sign", "targets": [1000, 5000, 10000, 50000, 100000]},
+    {"id": "complete_missions", "name": "Completar Missões", "type": "missions", "icon": "target", "targets": [5, 10, 25, 50, 100]},
+    {"id": "reach_level", "name": "Atingir Nível", "type": "level", "icon": "trending-up", "targets": [5, 10, 15, 25, 50]},
+    {"id": "reach_reputation", "name": "Ganhar Reputação", "type": "reputation", "icon": "star", "targets": [25, 50, 100, 250, 500]},
+    {"id": "launder_money", "name": "Lavar Dinheiro", "type": "launder", "icon": "refresh-cw", "targets": [1000, 5000, 10000, 50000, 100000]},
+    {"id": "buy_properties", "name": "Comprar Propriedades", "type": "properties", "icon": "home", "targets": [1, 2, 3, 5, 10]},
+    {"id": "buy_vehicles", "name": "Comprar Veículos", "type": "vehicles", "icon": "car", "targets": [1, 2, 3, 5, 10]},
+    {"id": "upgrade_skills", "name": "Melhorar Skills", "type": "skills", "icon": "zap", "targets": [5, 10, 20, 40, 80]},
+    {"id": "win_wars", "name": "Vencer Guerras", "type": "wars", "icon": "swords", "targets": [1, 3, 5, 10, 25]},
+    {"id": "escape_police", "name": "Escapar da Polícia", "type": "escapes", "icon": "shield", "targets": [1, 5, 10, 25, 50]},
+]
+
+class PlayerGoal(BaseModel):
+    goal_type: str
+    target_value: int
+    custom_name: Optional[str] = None
+
+class PlayerGoalUpdate(BaseModel):
+    custom_name: Optional[str] = None
+    target_value: Optional[int] = None
+
+@api_router.get("/profile/detailed-stats")
+async def get_detailed_stats(current_user: dict = Depends(get_current_user)):
+    """Retorna estatísticas detalhadas do jogador em todas as categorias"""
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Buscar dados adicionais de várias colecções
+    missions = await db.missions.find({"player_id": current_user["id"]}).to_list(1000)
+    properties = await db.player_properties.find({"player_id": current_user["id"]}).to_list(100)
+    businesses = await db.player_businesses.find({"player_id": current_user["id"]}).to_list(100)
+    vehicles = await db.player_vehicles.find({"player_id": current_user["id"]}).to_list(100)
+    inventory = await db.player_inventory.find({"player_id": current_user["id"]}).to_list(100)
+    history = await db.player_history.find({"player_id": current_user["id"]}).to_list(5000)
+    heists = await db.heist_history.find({"player_id": current_user["id"]}).to_list(100)
+    market_sales = await db.market_listings.find({"seller_id": current_user["id"], "status": "sold"}).to_list(500)
+    market_purchases = await db.market_listings.find({"buyer_id": current_user["id"]}).to_list(500)
+    npc_relationships = await db.npc_relationships.find({"player_id": current_user["id"]}).to_list(100)
+    
+    # Calcular estatísticas de missões
+    completed_missions = [m for m in missions if m.get("status") == "completed"]
+    successful_missions = [m for m in completed_missions if m.get("result") == "success"]
+    failed_missions = [m for m in completed_missions if m.get("result") == "failed"]
+    stealth_missions = [m for m in successful_missions if m.get("stealth_bonus", False)]
+    high_risk_missions = [m for m in successful_missions if m.get("risk", 0) >= 7]
+    
+    # Estatísticas de combate
+    combats = [h for h in history if h.get("action") in ["combat_won", "combat_lost", "mission_complete"]]
+    combats_won = len([h for h in history if h.get("action") == "combat_won" or (h.get("action") == "mission_complete" and h.get("details", {}).get("combat_won"))])
+    combats_lost = len([h for h in history if h.get("action") == "combat_lost"])
+    police_escapes = len([h for h in history if h.get("action") == "police_escape" or h.get("details", {}).get("escaped_police")])
+    times_arrested = player.get("times_arrested", 0)
+    
+    # Calcular KDR
+    kdr = round(combats_won / max(combats_lost, 1), 2)
+    
+    # Estatísticas de economia
+    total_earnings = player.get("total_earnings", 0)
+    total_spent = player.get("total_spent", 0)
+    clean_money = player.get("clean_money", 0)
+    dirty_money = player.get("dirty_money", 0)
+    
+    launder_history = [h for h in history if h.get("action") in ["launder_success", "launder_failed"]]
+    money_laundered = sum(h.get("details", {}).get("amount", 0) for h in launder_history if h.get("action") == "launder_success")
+    launder_attempts = len(launder_history)
+    launder_successes = len([h for h in launder_history if h.get("action") == "launder_success"])
+    launder_rate = round((launder_successes / max(launder_attempts, 1)) * 100, 1)
+    
+    # Rendimento de propriedades
+    property_income = sum(p.get("total_income", 0) for p in properties)
+    business_income = sum(b.get("total_income", 0) for b in businesses)
+    passive_income_hourly = sum(p.get("income_per_hour", 0) for p in properties) + sum(b.get("income_per_hour", 0) for b in businesses)
+    
+    # Market stats
+    market_total_sold = sum(s.get("price", 0) * s.get("quantity", 1) for s in market_sales)
+    market_total_bought = sum(p.get("price", 0) * p.get("quantity", 1) for p in market_purchases)
+    market_profit = market_total_sold - market_total_bought
+    
+    # Calcular ROI (Return on Investment)
+    investment = total_spent if total_spent > 0 else 1
+    roi = round(((total_earnings - total_spent) / investment) * 100, 1)
+    
+    # Tempo de jogo estimado (baseado em histórico)
+    if history:
+        first_action = min(history, key=lambda h: h.get("timestamp", datetime.now(timezone.utc)))
+        last_action = max(history, key=lambda h: h.get("timestamp", datetime.now(timezone.utc)))
+        first_date = first_action.get("timestamp") if isinstance(first_action.get("timestamp"), datetime) else datetime.fromisoformat(str(first_action.get("timestamp")).replace('Z', '+00:00'))
+        last_date = last_action.get("timestamp") if isinstance(last_action.get("timestamp"), datetime) else datetime.fromisoformat(str(last_action.get("timestamp")).replace('Z', '+00:00'))
+        days_playing = (last_date - first_date).days + 1
+        actions_per_day = len(history) / max(days_playing, 1)
+    else:
+        days_playing = 1
+        actions_per_day = 0
+    
+    # Estatísticas criminais
+    crimes_by_type = {}
+    for h in history:
+        action = h.get("action", "")
+        if "mission" in action or "quick_action" in action:
+            crime_type = h.get("details", {}).get("type", action)
+            crimes_by_type[crime_type] = crimes_by_type.get(crime_type, 0) + 1
+    
+    # Heat stats
+    max_heat_reached = player.get("max_heat_reached", player.get("heat_individual", 0))
+    avg_heat = player.get("avg_heat", player.get("heat_individual", 0))
+    heat_events = len([h for h in history if h.get("details", {}).get("heat_increase", 0) > 0])
+    
+    # Estatísticas sociais
+    reputation = player.get("reputation", 0)
+    npcs_met = len(npc_relationships)
+    good_relationships = len([r for r in npc_relationships if r.get("level", 0) >= 50])
+    excellent_relationships = len([r for r in npc_relationships if r.get("level", 0) >= 80])
+    
+    # Gang stats
+    gang = None
+    gang_stats = {}
+    if player.get("gang_id"):
+        gang = await db.gangs.find_one({"id": player["gang_id"]}, {"_id": 0})
+        if gang:
+            gang_members = await db.players.count_documents({"gang_id": gang["id"]})
+            gang_wars_won = await db.gang_wars.count_documents({"winner_gang_id": gang["id"]})
+            gang_wars_lost = await db.gang_wars.count_documents({
+                "$or": [{"attacker_gang_id": gang["id"]}, {"defender_gang_id": gang["id"]}],
+                "winner_gang_id": {"$ne": gang["id"]},
+                "status": "completed"
+            })
+            territories = await db.neighborhoods.count_documents({"controlled_by": gang["id"]})
+            
+            gang_stats = {
+                "name": gang.get("name"),
+                "tag": gang.get("tag"),
+                "role": "leader" if gang.get("leader_id") == current_user["id"] else "member",
+                "members": gang_members,
+                "reputation": gang.get("reputation", 0),
+                "treasury": gang.get("treasury", 0),
+                "territories": territories,
+                "wars_won": gang_wars_won,
+                "wars_lost": gang_wars_lost,
+                "win_rate": round((gang_wars_won / max(gang_wars_won + gang_wars_lost, 1)) * 100, 1)
+            }
+    
+    # Skills summary
+    skills = player.get("skills", {})
+    total_skill_levels = sum(s.get("level", 0) for s in skills.values())
+    max_skill = max((s.get("level", 0) for s in skills.values()), default=0)
+    skills_maxed = len([s for s in skills.values() if s.get("level", 0) >= 10])
+    
+    return {
+        "combat": {
+            "combats_won": combats_won,
+            "combats_lost": combats_lost,
+            "kdr": kdr,
+            "police_escapes": police_escapes,
+            "times_arrested": times_arrested,
+            "stealth_missions": len(stealth_missions),
+            "high_risk_missions": len(high_risk_missions),
+            "survival_rate": round((1 - (times_arrested / max(len(completed_missions), 1))) * 100, 1),
+            "avg_damage_dealt": round(combats_won * 50, 0),  # Estimado
+            "total_confrontations": combats_won + combats_lost
+        },
+        "economy": {
+            "total_earnings": total_earnings,
+            "total_spent": total_spent,
+            "net_worth": clean_money + dirty_money + sum(p.get("value", 0) for p in properties) + sum(v.get("value", 0) for v in vehicles),
+            "clean_money": clean_money,
+            "dirty_money": dirty_money,
+            "money_laundered": money_laundered,
+            "launder_success_rate": launder_rate,
+            "launder_attempts": launder_attempts,
+            "property_income": property_income,
+            "business_income": business_income,
+            "passive_income_hourly": passive_income_hourly,
+            "passive_income_daily": passive_income_hourly * 24,
+            "market_sold": market_total_sold,
+            "market_bought": market_total_bought,
+            "market_profit": market_profit,
+            "roi": roi,
+            "avg_earnings_per_day": round(total_earnings / max(days_playing, 1), 2),
+            "properties_owned": len(properties),
+            "businesses_owned": len(businesses),
+            "vehicles_owned": len(vehicles)
+        },
+        "criminal": {
+            "total_missions": len(missions),
+            "completed_missions": len(completed_missions),
+            "successful_missions": len(successful_missions),
+            "failed_missions": len(failed_missions),
+            "success_rate": round((len(successful_missions) / max(len(completed_missions), 1)) * 100, 1),
+            "heists_completed": len([h for h in heists if h.get("status") == "completed"]),
+            "heists_failed": len([h for h in heists if h.get("status") == "failed"]),
+            "crimes_by_type": crimes_by_type,
+            "max_heat_reached": max_heat_reached,
+            "current_heat": player.get("heat_individual", 0),
+            "heat_events": heat_events,
+            "notoriety_points": NotorietySystem.calculate_notoriety_points(player),
+            "risk_level": "Alto" if player.get("heat_individual", 0) > 60 else "Médio" if player.get("heat_individual", 0) > 30 else "Baixo"
+        },
+        "social": {
+            "reputation": reputation,
+            "reputation_rank": NotorietySystem.get_rank(NotorietySystem.calculate_notoriety_points(player))["name"],
+            "npcs_met": npcs_met,
+            "good_relationships": good_relationships,
+            "excellent_relationships": excellent_relationships,
+            "gang": gang_stats,
+            "allies_count": player.get("allies_count", 0),
+            "enemies_count": player.get("enemies_count", 0),
+            "total_interactions": len([h for h in history if "interact" in h.get("action", "")])
+        },
+        "progression": {
+            "level": player.get("level", 1),
+            "experience": player.get("experience", 0),
+            "experience_max": player.get("experience_max", 100),
+            "total_skill_levels": total_skill_levels,
+            "max_skill_level": max_skill,
+            "skills_maxed": skills_maxed,
+            "achievements_unlocked": len(player.get("achievements", [])),
+            "achievements_total": len(ACHIEVEMENTS_CONFIG),
+            "daily_streak": player.get("daily_streak", 0),
+            "daily_rewards_claimed": player.get("daily_rewards_claimed", 0),
+            "days_playing": days_playing,
+            "actions_per_day": round(actions_per_day, 1),
+            "items_collected": len(inventory)
+        },
+        "records": {
+            "biggest_heist": max((h.get("reward", 0) for h in heists), default=0),
+            "biggest_mission_reward": max((m.get("reward", 0) for m in successful_missions), default=0),
+            "longest_streak": player.get("max_daily_streak", player.get("daily_streak", 0)),
+            "highest_level_reached": player.get("level", 1),
+            "most_money_at_once": player.get("max_money_held", clean_money + dirty_money),
+            "fastest_mission": min((m.get("duration_seconds", 9999) for m in successful_missions), default=0)
+        }
+    }
+
+@api_router.get("/profile/badges")
+async def get_player_badges(current_user: dict = Depends(get_current_user)):
+    """Retorna todos os badges e quais foram desbloqueados"""
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Buscar dados para verificar requisitos
+    missions = await db.missions.count_documents({"player_id": current_user["id"], "status": "completed", "result": "success"})
+    properties = await db.player_properties.count_documents({"player_id": current_user["id"]})
+    businesses = await db.player_businesses.count_documents({"player_id": current_user["id"]})
+    vehicles = await db.player_vehicles.count_documents({"player_id": current_user["id"]})
+    inventory = await db.player_inventory.find({"player_id": current_user["id"]}).to_list(100)
+    npc_relationships = await db.npc_relationships.find({"player_id": current_user["id"]}).to_list(100)
+    heists = await db.heist_history.count_documents({"player_id": current_user["id"], "status": "completed"})
+    
+    # Calcular valores para verificar badges
+    player_stats = {
+        "combats_won": player.get("combats_won", 0),
+        "police_escapes": player.get("police_escapes", 0),
+        "stealth_missions": player.get("stealth_missions", 0),
+        "total_earnings": player.get("total_earnings", 0),
+        "money_laundered": player.get("money_laundered", 0),
+        "properties_owned": properties,
+        "businesses_owned": businesses,
+        "missions_completed": missions,
+        "high_risk_missions": player.get("high_risk_missions", 0),
+        "heists_completed": heists,
+        "max_heat_reached": player.get("max_heat_reached", 0),
+        "high_heat_duration": player.get("high_heat_duration", 0),
+        "npcs_met": len(npc_relationships),
+        "good_relationships": len([r for r in npc_relationships if r.get("level", 0) >= 50]),
+        "reputation": player.get("reputation", 0),
+        "gang_created": 1 if player.get("gang_id") and await db.gangs.find_one({"leader_id": current_user["id"]}) else 0,
+        "gang_members": 0,
+        "territories_controlled": 0,
+        "wars_won": player.get("wars_won", 0),
+        "early_login": player.get("early_login", 0),
+        "late_login": player.get("late_login", 0),
+        "daily_streak": player.get("daily_streak", 0),
+        "unique_items": len(set(i.get("item_id") for i in inventory)),
+        "vehicles_owned": vehicles,
+        "all_skills_min": min((s.get("level", 0) for s in player.get("skills", {}).values()), default=0) if player.get("skills") else 0,
+        "all_skills_max": all(s.get("level", 0) >= 10 for s in player.get("skills", {}).values()) if player.get("skills") else False
+    }
+    
+    # Se tem gangue, buscar mais dados
+    if player.get("gang_id"):
+        gang = await db.gangs.find_one({"id": player["gang_id"]})
+        if gang:
+            player_stats["gang_members"] = await db.players.count_documents({"gang_id": gang["id"]})
+            player_stats["territories_controlled"] = await db.neighborhoods.count_documents({"controlled_by": gang["id"]})
+    
+    # Verificar cada badge
+    badges_result = []
+    unlocked_badges = player.get("badges", [])
+    newly_unlocked = []
+    
+    for badge in BADGES_CONFIG:
+        is_unlocked = badge["id"] in unlocked_badges
+        progress = 0
+        
+        # Verificar requisito
+        req = badge["requirement"]
+        req_key = list(req.keys())[0]
+        req_value = req[req_key]
+        current_value = player_stats.get(req_key, 0)
+        
+        if isinstance(req_value, bool):
+            is_met = current_value == req_value
+            progress = 100 if is_met else 0
+        else:
+            progress = min(100, round((current_value / req_value) * 100, 1))
+            is_met = current_value >= req_value
+        
+        # Se requisito cumprido mas não desbloqueado, desbloquear
+        if is_met and not is_unlocked:
+            is_unlocked = True
+            newly_unlocked.append(badge["id"])
+        
+        badges_result.append({
+            "id": badge["id"],
+            "name": badge["name"],
+            "description": badge["description"],
+            "category": badge["category"],
+            "icon": badge["icon"],
+            "rarity": badge["rarity"],
+            "unlocked": is_unlocked,
+            "progress": progress,
+            "current": current_value,
+            "required": req_value,
+            "unlocked_at": player.get("badge_dates", {}).get(badge["id"])
+        })
+    
+    # Guardar novos badges
+    if newly_unlocked:
+        badge_dates = player.get("badge_dates", {})
+        for bid in newly_unlocked:
+            badge_dates[bid] = datetime.now(timezone.utc).isoformat()
+        
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {
+                "$addToSet": {"badges": {"$each": newly_unlocked}},
+                "$set": {"badge_dates": badge_dates}
+            }
+        )
+    
+    # Organizar por categoria
+    by_category = {}
+    for badge in badges_result:
+        cat = badge["category"]
+        if cat not in by_category:
+            by_category[cat] = []
+        by_category[cat].append(badge)
+    
+    unlocked_count = len([b for b in badges_result if b["unlocked"]])
+    
+    return {
+        "badges": badges_result,
+        "by_category": by_category,
+        "summary": {
+            "total": len(badges_result),
+            "unlocked": unlocked_count,
+            "locked": len(badges_result) - unlocked_count,
+            "completion": round((unlocked_count / len(badges_result)) * 100, 1),
+            "newly_unlocked": newly_unlocked,
+            "rarity_counts": {
+                "common": len([b for b in badges_result if b["unlocked"] and b["rarity"] == "common"]),
+                "uncommon": len([b for b in badges_result if b["unlocked"] and b["rarity"] == "uncommon"]),
+                "rare": len([b for b in badges_result if b["unlocked"] and b["rarity"] == "rare"]),
+                "legendary": len([b for b in badges_result if b["unlocked"] and b["rarity"] == "legendary"])
+            }
+        }
+    }
+
+@api_router.get("/profile/progress-history")
+async def get_progress_history(current_user: dict = Depends(get_current_user), days: int = 30):
+    """Retorna histórico de progresso para gráficos"""
+    
+    # Buscar snapshots de progresso ou calcular a partir do histórico
+    snapshots = await db.progress_snapshots.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("date", -1).limit(days).to_list(days)
+    
+    if not snapshots:
+        # Gerar dados a partir do histórico
+        history = await db.player_history.find(
+            {"player_id": current_user["id"]},
+            {"_id": 0}
+        ).sort("timestamp", 1).to_list(5000)
+        
+        player = await db.players.find_one({"id": current_user["id"]})
+        
+        # Agrupar por dia
+        daily_data = {}
+        cumulative = {
+            "earnings": 0,
+            "missions": 0,
+            "experience": 0,
+            "reputation": 0,
+            "heat_sum": 0,
+            "heat_count": 0
+        }
+        
+        for h in history:
+            ts = h.get("timestamp")
+            if isinstance(ts, str):
+                ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+            date_key = ts.strftime("%Y-%m-%d") if ts else "unknown"
+            
+            if date_key not in daily_data:
+                daily_data[date_key] = {
+                    "date": date_key,
+                    "earnings": 0,
+                    "missions_completed": 0,
+                    "missions_failed": 0,
+                    "experience_gained": 0,
+                    "reputation_gained": 0,
+                    "heat_changes": 0,
+                    "money_laundered": 0,
+                    "items_acquired": 0
+                }
+            
+            details = h.get("details", {})
+            action = h.get("action", "")
+            
+            if "reward" in details:
+                daily_data[date_key]["earnings"] += details["reward"]
+                cumulative["earnings"] += details["reward"]
+            
+            if action == "mission_complete" and details.get("result") == "success":
+                daily_data[date_key]["missions_completed"] += 1
+                cumulative["missions"] += 1
+            elif action == "mission_complete" and details.get("result") == "failed":
+                daily_data[date_key]["missions_failed"] += 1
+            
+            if "experience" in details:
+                daily_data[date_key]["experience_gained"] += details["experience"]
+                cumulative["experience"] += details["experience"]
+            
+            if "reputation" in details:
+                daily_data[date_key]["reputation_gained"] += details["reputation"]
+                cumulative["reputation"] += details["reputation"]
+            
+            if action == "launder_success":
+                daily_data[date_key]["money_laundered"] += details.get("amount", 0)
+        
+        # Converter para lista ordenada
+        snapshots = sorted(daily_data.values(), key=lambda x: x["date"], reverse=True)[:days]
+    
+    # Calcular tendências
+    if len(snapshots) >= 2:
+        recent = snapshots[:7] if len(snapshots) >= 7 else snapshots[:len(snapshots)//2]
+        older = snapshots[7:14] if len(snapshots) >= 14 else snapshots[len(snapshots)//2:]
+        
+        recent_avg_earnings = sum(s.get("earnings", 0) for s in recent) / len(recent) if recent else 0
+        older_avg_earnings = sum(s.get("earnings", 0) for s in older) / len(older) if older else 0
+        
+        earnings_trend = "up" if recent_avg_earnings > older_avg_earnings else "down" if recent_avg_earnings < older_avg_earnings else "stable"
+        earnings_change = round(((recent_avg_earnings - older_avg_earnings) / max(older_avg_earnings, 1)) * 100, 1)
+        
+        recent_avg_missions = sum(s.get("missions_completed", 0) for s in recent) / len(recent) if recent else 0
+        older_avg_missions = sum(s.get("missions_completed", 0) for s in older) / len(older) if older else 0
+        
+        missions_trend = "up" if recent_avg_missions > older_avg_missions else "down" if recent_avg_missions < older_avg_missions else "stable"
+        missions_change = round(((recent_avg_missions - older_avg_missions) / max(older_avg_missions, 1)) * 100, 1)
+    else:
+        earnings_trend = "stable"
+        earnings_change = 0
+        missions_trend = "stable"
+        missions_change = 0
+    
+    return {
+        "history": list(reversed(snapshots)),
+        "trends": {
+            "earnings": {
+                "direction": earnings_trend,
+                "change_percent": earnings_change
+            },
+            "missions": {
+                "direction": missions_trend,
+                "change_percent": missions_change
+            }
+        },
+        "totals": {
+            "total_earnings": sum(s.get("earnings", 0) for s in snapshots),
+            "total_missions": sum(s.get("missions_completed", 0) for s in snapshots),
+            "total_experience": sum(s.get("experience_gained", 0) for s in snapshots),
+            "avg_daily_earnings": round(sum(s.get("earnings", 0) for s in snapshots) / max(len(snapshots), 1), 2),
+            "avg_daily_missions": round(sum(s.get("missions_completed", 0) for s in snapshots) / max(len(snapshots), 1), 1)
+        }
+    }
+
+@api_router.get("/profile/goals")
+async def get_player_goals(current_user: dict = Depends(get_current_user)):
+    """Retorna metas pessoais do jogador"""
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    goals = await db.player_goals.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Calcular progresso actual para cada meta
+    for goal in goals:
+        goal_type = goal.get("goal_type")
+        target = goal.get("target_value", 0)
+        
+        if goal_type == "earn":
+            current = player.get("total_earnings", 0) - goal.get("start_value", 0)
+        elif goal_type == "missions":
+            current = await db.missions.count_documents({
+                "player_id": current_user["id"],
+                "status": "completed",
+                "result": "success",
+                "completed_at": {"$gte": goal.get("created_at", datetime.min)}
+            })
+        elif goal_type == "level":
+            current = player.get("level", 1)
+        elif goal_type == "reputation":
+            current = player.get("reputation", 0) - goal.get("start_value", 0)
+        elif goal_type == "launder":
+            history = await db.player_history.find({
+                "player_id": current_user["id"],
+                "action": "launder_success",
+                "timestamp": {"$gte": goal.get("created_at", datetime.min)}
+            }).to_list(1000)
+            current = sum(h.get("details", {}).get("amount", 0) for h in history)
+        elif goal_type == "properties":
+            current = await db.player_properties.count_documents({"player_id": current_user["id"]})
+        elif goal_type == "vehicles":
+            current = await db.player_vehicles.count_documents({"player_id": current_user["id"]})
+        elif goal_type == "skills":
+            skills = player.get("skills", {})
+            current = sum(s.get("level", 0) for s in skills.values())
+        elif goal_type == "wars":
+            current = player.get("wars_won", 0) - goal.get("start_value", 0)
+        elif goal_type == "escapes":
+            current = player.get("police_escapes", 0) - goal.get("start_value", 0)
+        else:
+            current = 0
+        
+        goal["current_value"] = current
+        goal["progress"] = min(100, round((current / max(target, 1)) * 100, 1))
+        goal["completed"] = current >= target
+        
+        # Se completada, marcar
+        if goal["completed"] and not goal.get("completed_at"):
+            await db.player_goals.update_one(
+                {"id": goal["id"]},
+                {"$set": {"completed_at": datetime.now(timezone.utc)}}
+            )
+            goal["completed_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Templates disponíveis
+    templates = []
+    for t in GOALS_TEMPLATES:
+        templates.append({
+            **t,
+            "targets": t["targets"],
+            "suggested_target": t["targets"][2] if len(t["targets"]) > 2 else t["targets"][0]
+        })
+    
+    return {
+        "goals": goals,
+        "templates": templates,
+        "active_count": len([g for g in goals if not g.get("completed")]),
+        "completed_count": len([g for g in goals if g.get("completed")]),
+        "max_active_goals": 10
+    }
+
+@api_router.post("/profile/goals")
+async def create_player_goal(goal: PlayerGoal, current_user: dict = Depends(get_current_user)):
+    """Cria uma nova meta pessoal"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Verificar limite de metas activas
+    active_goals = await db.player_goals.count_documents({
+        "player_id": current_user["id"],
+        "completed_at": None
+    })
+    
+    if active_goals >= 10:
+        raise HTTPException(status_code=400, detail="Limite de 10 metas activas atingido")
+    
+    # Encontrar template
+    template = next((t for t in GOALS_TEMPLATES if t["id"] == goal.goal_type), None)
+    if not template:
+        raise HTTPException(status_code=404, detail="Tipo de meta não encontrado")
+    
+    # Verificar target válido
+    if goal.target_value not in template["targets"]:
+        raise HTTPException(status_code=400, detail="Valor alvo inválido")
+    
+    # Calcular valor inicial
+    if goal.goal_type == "earn":
+        start_value = player.get("total_earnings", 0)
+    elif goal.goal_type == "reputation":
+        start_value = player.get("reputation", 0)
+    elif goal.goal_type == "wars":
+        start_value = player.get("wars_won", 0)
+    elif goal.goal_type == "escapes":
+        start_value = player.get("police_escapes", 0)
+    else:
+        start_value = 0
+    
+    new_goal = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "goal_type": goal.goal_type,
+        "target_value": goal.target_value,
+        "start_value": start_value,
+        "name": goal.custom_name or template["name"],
+        "icon": template["icon"],
+        "created_at": datetime.now(timezone.utc),
+        "completed_at": None
+    }
+    
+    await db.player_goals.insert_one(new_goal)
+    
+    return {
+        "success": True,
+        "message": f"Meta '{new_goal['name']}' criada!",
+        "goal": {**new_goal, "_id": None}
+    }
+
+@api_router.put("/profile/goals/{goal_id}")
+async def update_player_goal(goal_id: str, update: PlayerGoalUpdate, current_user: dict = Depends(get_current_user)):
+    """Actualiza uma meta existente"""
+    goal = await db.player_goals.find_one({"id": goal_id, "player_id": current_user["id"]})
+    
+    if not goal:
+        raise HTTPException(status_code=404, detail="Meta não encontrada")
+    
+    update_data = {}
+    
+    if update.custom_name:
+        update_data["name"] = update.custom_name
+    
+    if update.target_value:
+        # Verificar se target é válido
+        template = next((t for t in GOALS_TEMPLATES if t["id"] == goal["goal_type"]), None)
+        if template and update.target_value in template["targets"]:
+            update_data["target_value"] = update.target_value
+    
+    if update_data:
+        await db.player_goals.update_one(
+            {"id": goal_id},
+            {"$set": update_data}
+        )
+    
+    return {"success": True, "message": "Meta actualizada"}
+
+@api_router.delete("/profile/goals/{goal_id}")
+async def delete_player_goal(goal_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove uma meta"""
+    result = await db.player_goals.delete_one({
+        "id": goal_id,
+        "player_id": current_user["id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Meta não encontrada")
+    
+    return {"success": True, "message": "Meta removida"}
+
+@api_router.get("/profile/compare/{player_id}")
+async def compare_players(player_id: str, current_user: dict = Depends(get_current_user)):
+    """Compara estatísticas entre dois jogadores"""
+    
+    # Buscar dados do jogador actual
+    me = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Buscar dados do outro jogador
+    other = await db.players.find_one({"id": player_id}, {"_id": 0, "password": 0})
+    
+    if not other:
+        raise HTTPException(status_code=404, detail="Jogador não encontrado")
+    
+    # Buscar contagens adicionais
+    my_missions = await db.missions.count_documents({"player_id": current_user["id"], "status": "completed", "result": "success"})
+    other_missions = await db.missions.count_documents({"player_id": player_id, "status": "completed", "result": "success"})
+    
+    my_properties = await db.player_properties.count_documents({"player_id": current_user["id"]})
+    other_properties = await db.player_properties.count_documents({"player_id": player_id})
+    
+    my_vehicles = await db.player_vehicles.count_documents({"player_id": current_user["id"]})
+    other_vehicles = await db.player_vehicles.count_documents({"player_id": player_id})
+    
+    # Preparar comparação
+    comparison = {
+        "me": {
+            "username": me.get("username"),
+            "level": me.get("level", 1),
+            "reputation": me.get("reputation", 0),
+            "total_earnings": me.get("total_earnings", 0),
+            "missions_completed": my_missions,
+            "properties": my_properties,
+            "vehicles": my_vehicles,
+            "heat": me.get("heat_individual", 0),
+            "gang": me.get("gang_id") is not None
+        },
+        "other": {
+            "username": other.get("username"),
+            "level": other.get("level", 1),
+            "reputation": other.get("reputation", 0),
+            "total_earnings": other.get("total_earnings", 0),
+            "missions_completed": other_missions,
+            "properties": other_properties,
+            "vehicles": other_vehicles,
+            "heat": other.get("heat_individual", 0),
+            "gang": other.get("gang_id") is not None
+        }
+    }
+    
+    # Calcular vantagens
+    advantages = {
+        "me": [],
+        "other": [],
+        "tied": []
+    }
+    
+    metrics = ["level", "reputation", "total_earnings", "missions_completed", "properties", "vehicles"]
+    for metric in metrics:
+        my_val = comparison["me"][metric]
+        other_val = comparison["other"][metric]
+        
+        if my_val > other_val:
+            advantages["me"].append({
+                "metric": metric,
+                "difference": my_val - other_val,
+                "percent": round(((my_val - other_val) / max(other_val, 1)) * 100, 1)
+            })
+        elif other_val > my_val:
+            advantages["other"].append({
+                "metric": metric,
+                "difference": other_val - my_val,
+                "percent": round(((other_val - my_val) / max(my_val, 1)) * 100, 1)
+            })
+        else:
+            advantages["tied"].append(metric)
+    
+    # Score geral
+    my_score = len(advantages["me"]) * 10 + sum(a["percent"] for a in advantages["me"])
+    other_score = len(advantages["other"]) * 10 + sum(a["percent"] for a in advantages["other"])
+    
+    return {
+        "comparison": comparison,
+        "advantages": advantages,
+        "overall": {
+            "winner": "me" if my_score > other_score else "other" if other_score > my_score else "tie",
+            "my_score": round(my_score, 1),
+            "other_score": round(other_score, 1),
+            "my_wins": len(advantages["me"]),
+            "other_wins": len(advantages["other"]),
+            "ties": len(advantages["tied"])
+        }
+    }
+
+@api_router.get("/profile/activity-log")
+async def get_activity_log(
+    current_user: dict = Depends(get_current_user),
+    category: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Retorna histórico de actividades detalhado por categoria"""
+    
+    query = {"player_id": current_user["id"]}
+    
+    # Filtrar por categoria
+    category_actions = {
+        "missions": ["mission_complete", "mission_started", "mission_failed"],
+        "economy": ["launder_success", "launder_failed", "property_bought", "property_sold", "item_bought", "item_sold", "daily_reward"],
+        "combat": ["combat_won", "combat_lost", "police_escape", "arrested"],
+        "social": ["gang_created", "gang_joined", "gang_left", "npc_interaction", "war_started", "war_ended"],
+        "progression": ["level_up", "skill_upgraded", "achievement_unlocked", "badge_earned"]
+    }
+    
+    if category and category in category_actions:
+        query["action"] = {"$in": category_actions[category]}
+    
+    # Buscar actividades
+    activities = await db.player_history.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).skip(offset).limit(limit).to_list(limit)
+    
+    total = await db.player_history.count_documents(query)
+    
+    # Agrupar por tipo
+    by_type = {}
+    for activity in activities:
+        action = activity.get("action", "unknown")
+        if action not in by_type:
+            by_type[action] = []
+        by_type[action].append(activity)
+    
+    # Estatísticas de actividade
+    now = datetime.now(timezone.utc)
+    today = await db.player_history.count_documents({
+        "player_id": current_user["id"],
+        "timestamp": {"$gte": now.replace(hour=0, minute=0, second=0)}
+    })
+    this_week = await db.player_history.count_documents({
+        "player_id": current_user["id"],
+        "timestamp": {"$gte": now - timedelta(days=7)}
+    })
+    
+    return {
+        "activities": activities,
+        "by_type": by_type,
+        "pagination": {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "has_more": offset + limit < total
+        },
+        "stats": {
+            "today": today,
+            "this_week": this_week,
+            "total": total
+        },
+        "categories": list(category_actions.keys())
+    }
+
+@api_router.get("/profile/leaderboard-position")
+async def get_leaderboard_position(current_user: dict = Depends(get_current_user)):
+    """Retorna posição do jogador em várias tabelas de classificação"""
+    player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
+    # Ranking por reputação
+    reputation_rank = await db.players.count_documents({
+        "reputation": {"$gt": player.get("reputation", 0)}
+    }) + 1
+    total_players = await db.players.count_documents({})
+    
+    # Ranking por nível
+    level_rank = await db.players.count_documents({
+        "level": {"$gt": player.get("level", 1)}
+    }) + 1
+    
+    # Ranking por riqueza
+    total_wealth = player.get("clean_money", 0) + player.get("dirty_money", 0)
+    wealth_rank = await db.players.count_documents({
+        "$expr": {
+            "$gt": [
+                {"$add": [{"$ifNull": ["$clean_money", 0]}, {"$ifNull": ["$dirty_money", 0]}]},
+                total_wealth
+            ]
+        }
+    }) + 1
+    
+    # Ranking por missões
+    my_missions = await db.missions.count_documents({
+        "player_id": current_user["id"],
+        "status": "completed",
+        "result": "success"
+    })
+    
+    # Calcular percentil
+    reputation_percentile = round((1 - (reputation_rank / total_players)) * 100, 1) if total_players > 0 else 0
+    level_percentile = round((1 - (level_rank / total_players)) * 100, 1) if total_players > 0 else 0
+    wealth_percentile = round((1 - (wealth_rank / total_players)) * 100, 1) if total_players > 0 else 0
+    
+    return {
+        "rankings": {
+            "reputation": {
+                "rank": reputation_rank,
+                "total": total_players,
+                "percentile": reputation_percentile,
+                "value": player.get("reputation", 0)
+            },
+            "level": {
+                "rank": level_rank,
+                "total": total_players,
+                "percentile": level_percentile,
+                "value": player.get("level", 1)
+            },
+            "wealth": {
+                "rank": wealth_rank,
+                "total": total_players,
+                "percentile": wealth_percentile,
+                "value": total_wealth
+            }
+        },
+        "summary": {
+            "best_ranking": min(reputation_rank, level_rank, wealth_rank),
+            "avg_percentile": round((reputation_percentile + level_percentile + wealth_percentile) / 3, 1),
+            "total_players": total_players
+        }
+    }
+
+@api_router.get("/profile/search-players")
+async def search_players(
+    q: str = Query(..., min_length=2),
+    limit: int = 10
+):
+    """Pesquisa jogadores por nome"""
+    
+    players = await db.players.find(
+        {"username": {"$regex": q, "$options": "i"}},
+        {"_id": 0, "password": 0, "email": 0}
+    ).limit(limit).to_list(limit)
+    
+    results = []
+    for p in players:
+        results.append({
+            "id": p.get("id"),
+            "username": p.get("username"),
+            "level": p.get("level", 1),
+            "reputation": p.get("reputation", 0),
+            "gang_id": p.get("gang_id")
+        })
+    
+    return {"results": results, "count": len(results)}
+
 app.include_router(api_router)
 
 app.add_middleware(
