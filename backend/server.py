@@ -5060,8 +5060,15 @@ async def get_progress_history(current_user: dict = Depends(get_current_user), d
             action = h.get("action", "")
             
             if "reward" in details:
-                daily_data[date_key]["earnings"] += details["reward"]
-                cumulative["earnings"] += details["reward"]
+                reward = details["reward"]
+                if isinstance(reward, (int, float)):
+                    daily_data[date_key]["earnings"] += reward
+                    cumulative["earnings"] += reward
+                elif isinstance(reward, dict) and "amount" in reward:
+                    amount = reward["amount"]
+                    if isinstance(amount, (int, float)):
+                        daily_data[date_key]["earnings"] += amount
+                        cumulative["earnings"] += amount
             
             if action == "mission_complete" and details.get("result") == "success":
                 daily_data[date_key]["missions_completed"] += 1
