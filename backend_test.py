@@ -296,34 +296,23 @@ class SubmundoAPITester:
             self.log_result("Money Laundering", True, "No dirty money to launder (expected)")
             return True
         
-        # Try to launder small amount
+        # Try to launder small amount - the endpoint expects amount as JSON body
         launder_amount = min(dirty_money, 50)
         
         success, data, status = self.make_request(
             'POST',
             'economy/launder',
-            None,  # Amount is passed as query param, but let's try as JSON
+            launder_amount,  # Pass amount directly as JSON body
             expected_status=200
         )
         
-        # The endpoint expects amount as form data, let's try a different approach
-        url = f"{self.base_url}/api/economy/launder"
-        headers = {'Authorization': f'Bearer {self.token}'}
-        
-        try:
-            response = requests.post(url, data={'amount': launder_amount}, headers=headers, timeout=10)
-            success = response.status_code == 200
-            
-            if success:
-                data = response.json()
-                if data.get('success'):
-                    self.log_result("Money Laundering", True, f"Laundered €{launder_amount}")
-                else:
-                    self.log_result("Money Laundering", True, "Laundering failed (game mechanic)")
+        if success:
+            if data.get('success'):
+                self.log_result("Money Laundering", True, f"Laundered €{launder_amount}")
             else:
-                self.log_result("Money Laundering", False, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_result("Money Laundering", False, f"Error: {str(e)}")
+                self.log_result("Money Laundering", True, "Laundering failed (game mechanic)")
+        else:
+            self.log_result("Money Laundering", False, f"Status: {status}, Data: {data}")
 
     def test_rankings(self):
         """Test rankings endpoints"""
