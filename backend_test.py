@@ -554,11 +554,11 @@ class SubmundoAPITester:
         # Test business types
         success, data, status = self.make_request('GET', 'businesses/types')
         
-        if success and isinstance(data, list) and len(data) > 0:
-            business_types = data
+        if success and 'business_types' in data and len(data['business_types']) > 0:
+            business_types = data['business_types']
             self.log_result("Business Types", True, f"Found {len(business_types)} business types")
         else:
-            self.log_result("Business Types", False, f"Status: {status}")
+            self.log_result("Business Types", False, f"Status: {status}, Data: {data}")
             return False
         
         # Test get my businesses
