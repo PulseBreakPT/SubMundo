@@ -485,6 +485,43 @@ export default function MarketPage() {
           </div>
         </div>
       )}
+
+      {/* Dynamic Market Prices */}
+      {marketPrices.length > 0 && (
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading text-lg text-primary flex items-center gap-2">
+              <BarChart2 size={20} /> Preços de Mercado Dinâmicos
+            </h3>
+            <span className="text-xs text-text-secondary">
+              Actualizado em tempo real
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {marketPrices.map((price) => (
+              <PriceCard key={price.category} price={price} />
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-4 text-xs text-text-secondary">
+            <div className="flex items-center gap-1">
+              <TrendingUp size={12} className="text-success" />
+              <span>A subir</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <TrendingDown size={12} className="text-error" />
+              <span>A descer</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Minus size={12} />
+              <span>Estável</span>
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <AlertCircle size={12} className="text-warning" />
+              <span>Preços afectados por eventos da cidade</span>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Tabs */}
       <div className="flex gap-2 border-b border-border pb-2">
