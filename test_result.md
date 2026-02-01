@@ -362,3 +362,30 @@ agent_communication:
       - Navigation.js: Adicionado link para /contactos
       
       Por favor testar os novos endpoints do backend.
+  - agent: "testing"
+    message: |
+      ✅ NOVOS ENDPOINTS TESTADOS COM SUCESSO - Todos os 4 novos sistemas funcionando perfeitamente!
+      
+      RESULTADOS DOS TESTES:
+      
+      🔧 PROBLEMA RESOLVIDO: Conflito de rotas /npcs/contacts vs /npcs/{npc_id} - movido endpoints específicos antes do genérico
+      
+      ✅ Sistema de Relacionamentos NPCs (3/3 endpoints):
+      - GET /npcs/contacts: 10 NPCs com relacionamentos neutros, interações disponíveis
+      - GET /npcs/{id}/relationship: Detalhes completos de relacionamento funcionando
+      - POST /npcs/{id}/interact?action=gift: Interação funcional (€500, +10 pontos)
+      
+      ✅ Sistema de Economia Dinâmica (3/3 endpoints):
+      - GET /economy/market-prices: 4 categorias com preços flutuantes
+      - GET /economy/price-history/drugs: Histórico de preços funcionando
+      - POST /economy/simulate-fluctuation: Simulação de flutuações funcionando
+      
+      ✅ Sistema de Territórios Avançado (1/1 endpoint):
+      - GET /territories/analysis: Análise completa com previsões de guerra
+      
+      ✅ Sistema de Eventos Dinâmicos (3/3 endpoints):
+      - GET /events/dynamic: Eventos potenciais baseados no estado do jogo
+      - GET /events/impact: Eventos ativos com modificadores
+      - GET /events/predictions: Previsões de eventos futuros
+      
+      TOTAL: 10/10 novos endpoints funcionando corretamente. Sistema pronto para uso!
