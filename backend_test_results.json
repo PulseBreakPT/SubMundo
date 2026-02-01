@@ -1,13 +1,19 @@
 {
-  "timestamp": "2026-02-01T12:54:30.655503",
-  "total_tests": 31,
-  "passed_tests": 27,
-  "success_rate": 87.09677419354838,
+  "timestamp": "2026-02-01T12:55:10.705710",
+  "total_tests": 47,
+  "passed_tests": 39,
+  "success_rate": 82.97872340425532,
   "results": [
     {
       "test": "User Registration",
       "success": true,
-      "details": "New user registered successfully",
+      "details": "User already exists (expected)",
+      "response_data": null
+    },
+    {
+      "test": "User Login",
+      "success": true,
+      "details": "",
       "response_data": null
     },
     {
@@ -19,13 +25,13 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac1000.0",
+      "details": "Money: \u20ac54723.77359083822",
       "response_data": null
     },
     {
       "test": "Daily Reward Claim",
       "success": true,
-      "details": "Reward: \u20ac289.6",
+      "details": "Already claimed today (expected)",
       "response_data": null
     },
     {
@@ -55,31 +61,25 @@
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac198.81",
+      "details": "Success, Reward: \u20ac504.39",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
-      "success": true,
-      "details": "Mission ID: 6d1a113b-2fa6-4105-861c-952c06fd5d90, Duration: 30s",
-      "response_data": null
-    },
-    {
-      "test": "Mission Flow - Complete",
-      "success": true,
-      "details": "Mission still in progress (expected)",
+      "success": false,
+      "details": "Status: 400, Data: {'detail': 'J\u00e1 tens uma miss\u00e3o em andamento'}",
       "response_data": null
     },
     {
       "test": "Get Gangs",
       "success": true,
-      "details": "Found 0 gangs",
+      "details": "Found 1 gangs",
       "response_data": null
     },
     {
       "test": "Create Gang",
       "success": true,
-      "details": "Gang: TestGang_1769950469",
+      "details": "User already in gang or gang exists (expected)",
       "response_data": null
     },
     {
@@ -121,37 +121,31 @@
     {
       "test": "My Vehicles",
       "success": true,
-      "details": "Player has 0 vehicles",
+      "details": "Player has 1 vehicles",
       "response_data": null
     },
     {
       "test": "Buy Vehicle",
       "success": true,
-      "details": "Bought Bicicleta",
-      "response_data": null
-    },
-    {
-      "test": "Activate Vehicle",
-      "success": true,
-      "details": "Vehicle activated successfully",
+      "details": "Cannot buy vehicle (insufficient funds or already owned)",
       "response_data": null
     },
     {
       "test": "Active Events",
       "success": true,
-      "details": "Found 0 active events",
+      "details": "Found 1 active events",
       "response_data": null
     },
     {
       "test": "Event Effects",
       "success": true,
-      "details": "Heat multiplier: 1.0",
+      "details": "Heat multiplier: 1.5",
       "response_data": null
     },
     {
       "test": "Trigger Event",
       "success": true,
-      "details": "Event triggered: Visita VIP",
+      "details": "Event triggered: Motim Urbano",
       "response_data": null
     },
     {
@@ -174,20 +168,122 @@
     },
     {
       "test": "Property Types",
+      "success": true,
+      "details": "Found 6 property types",
+      "response_data": null
+    },
+    {
+      "test": "My Properties",
+      "success": true,
+      "details": "Player has 0 properties",
+      "response_data": null
+    },
+    {
+      "test": "Available Properties Centro",
       "success": false,
       "details": "Status: 200",
       "response_data": null
     },
     {
+      "test": "Buy Property",
+      "success": true,
+      "details": "Bought apartamento in centro, ID: 028b6f61-8dde-42cc-9adf-9cd7c1e91584",
+      "response_data": null
+    },
+    {
+      "test": "Collect Property Income",
+      "success": false,
+      "details": "Status: 400",
+      "response_data": null
+    },
+    {
+      "test": "Property Maintenance",
+      "success": false,
+      "details": "Status: 400",
+      "response_data": null
+    },
+    {
+      "test": "Sell Property",
+      "success": true,
+      "details": "Sold for \u20ac0",
+      "response_data": null
+    },
+    {
       "test": "Business Types",
+      "success": true,
+      "details": "Found 6 business types",
+      "response_data": null
+    },
+    {
+      "test": "My Businesses",
+      "success": true,
+      "details": "Player has 0 businesses",
+      "response_data": null
+    },
+    {
+      "test": "Buy Business",
+      "success": true,
+      "details": "Bought laboratorio, ID: bd3f11ee-29c5-415c-97c1-a0e1a5cdca9d",
+      "response_data": null
+    },
+    {
+      "test": "Business Recipes",
+      "success": true,
+      "details": "Found 3 recipes",
+      "response_data": null
+    },
+    {
+      "test": "Start Crafting",
+      "success": true,
+      "details": "Started crafting Droga Sint\u00e9tica",
+      "response_data": null
+    },
+    {
+      "test": "Collect Products",
+      "success": false,
+      "details": "Status: 400",
+      "response_data": null
+    },
+    {
+      "test": "Sell Business",
+      "success": false,
+      "details": "Status: 400",
+      "response_data": null
+    },
+    {
+      "test": "Crafted Items Storage",
       "success": false,
       "details": "Status: 200",
       "response_data": null
     },
     {
       "test": "Market Stats",
-      "success": false,
-      "details": "Status: 200",
+      "success": true,
+      "details": "Total listings: 0",
+      "response_data": null
+    },
+    {
+      "test": "Market Listings",
+      "success": true,
+      "details": "Found 0 market listings",
+      "response_data": null
+    },
+    {
+      "test": "My Market Listings",
+      "success": true,
+      "details": "Player has 0 listings",
+      "response_data": null
+    },
+    {
+      "test": "Create Market Listing",
+      "success": true,
+      "details": "Could not access inventory (expected)",
+      "response_data": null
+    },
+    {
+      "test": "Buy from Market",
+      "success": true,
+      "details": "No listings available to buy from (expected)",
       "response_data": null
     }
   ]
