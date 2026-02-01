@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button, Input } from '../components/UI';
-import { LogIn, UserPlus, Skull } from 'lucide-react';
+import { LogIn, UserPlus, Skull, Newspaper, HelpCircle, Shield, ScrollText } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, register, error, loading } = useAuth();
@@ -41,6 +42,13 @@ export default function LoginPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
     setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
+
+  const footerLinks = [
+    { to: '/novidades', icon: Newspaper, label: 'Novidades' },
+    { to: '/faq', icon: HelpCircle, label: 'FAQ' },
+    { to: '/privacidade', icon: Shield, label: 'Privacidade' },
+    { to: '/termos', icon: ScrollText, label: 'Termos' },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -146,10 +154,35 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-text-secondary text-xs mt-6 font-body">
-          Ao jogar, aceitas as regras do submundo.
-        </p>
+        {/* Footer Links */}
+        <div className="mt-6 space-y-4">
+          {/* Quick Links */}
+          <div className="flex justify-center gap-4 flex-wrap">
+            {footerLinks.map(({ to, icon: Icon, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="flex items-center gap-1.5 text-text-secondary hover:text-primary transition-colors text-xs sm:text-sm"
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+          
+          {/* Legal Text */}
+          <p className="text-center text-text-secondary text-[10px] sm:text-xs font-body">
+            Ao jogar, aceitas os{' '}
+            <Link to="/termos" className="text-primary hover:underline">Termos e Condições</Link>
+            {' '}e a{' '}
+            <Link to="/privacidade" className="text-primary hover:underline">Política de Privacidade</Link>.
+          </p>
+          
+          {/* Version */}
+          <p className="text-center text-text-secondary/50 text-[10px] uppercase tracking-widest">
+            SUBMUNDO v1.3.0
+          </p>
+        </div>
       </div>
     </div>
   );
