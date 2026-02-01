@@ -1,10 +1,20 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Map, Target, Users, User } from 'lucide-react';
+import { Home, Map, Target, Users, User, Car, Radio } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Início' },
   { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/missoes', icon: Target, label: 'Missões' },
+  { path: '/gangue', icon: Users, label: 'Gangue' },
+  { path: '/perfil', icon: User, label: 'Perfil' },
+];
+
+const sidebarItems = [
+  { path: '/', icon: Home, label: 'Início' },
+  { path: '/mapa', icon: Map, label: 'Mapa' },
+  { path: '/missoes', icon: Target, label: 'Missões' },
+  { path: '/veiculos', icon: Car, label: 'Veículos' },
+  { path: '/eventos', icon: Radio, label: 'Eventos' },
   { path: '/gangue', icon: Users, label: 'Gangue' },
   { path: '/perfil', icon: User, label: 'Perfil' },
 ];
@@ -51,9 +61,9 @@ export const Sidebar = () => {
         </h1>
       </div>
       
-      <nav className="flex-1 py-6">
-        <ul className="space-y-2">
-          {navItems.map(({ path, icon: Icon, label }) => (
+      <nav className="flex-1 py-4 overflow-y-auto">
+        <ul className="space-y-1">
+          {sidebarItems.map(({ path, icon: Icon, label }) => (
             <li key={path}>
               <NavLink
                 to={path}
@@ -66,7 +76,7 @@ export const Sidebar = () => {
                   }`
                 }
               >
-                <Icon size={22} />
+                <Icon size={20} />
                 <span className="hidden lg:block font-ui text-sm uppercase tracking-wider">{label}</span>
               </NavLink>
             </li>
@@ -76,7 +86,7 @@ export const Sidebar = () => {
       
       <div className="p-4 border-t border-border">
         <p className="text-text-secondary text-[10px] text-center lg:text-left uppercase tracking-widest">
-          v1.0.0
+          v1.1.0
         </p>
       </div>
     </aside>
