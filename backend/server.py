@@ -306,18 +306,18 @@ CONTRACTS_CONFIG = [
 ]
 
 VEHICLE_CATALOG = [
-    {"id": "bicicleta", "name": "Bicicleta", "description": "Transporte básico e silencioso.", "price": 500, "speed": 2, "stealth": 8, "capacity": 1, "maintenance_cost": 10, "category": "basic"},
-    {"id": "scooter", "name": "Scooter", "description": "Mobilidade urbana económica.", "price": 2000, "speed": 4, "stealth": 6, "capacity": 1, "maintenance_cost": 50, "category": "basic"},
-    {"id": "carro_usado", "name": "Carro Usado", "description": "Veículo discreto para o dia-a-dia.", "price": 5000, "speed": 5, "stealth": 5, "capacity": 4, "maintenance_cost": 100, "category": "standard"},
-    {"id": "mota_desportiva", "name": "Mota Desportiva", "description": "Rápida e perfeita para fugas.", "price": 15000, "speed": 9, "stealth": 4, "capacity": 1, "maintenance_cost": 200, "category": "sport"},
-    {"id": "sedan_luxo", "name": "Sedan de Luxo", "description": "Conforto e estilo para negócios.", "price": 30000, "speed": 7, "stealth": 3, "capacity": 4, "maintenance_cost": 400, "category": "luxury"},
-    {"id": "suv_blindado", "name": "SUV Blindado", "description": "Proteção máxima para situações perigosas.", "price": 50000, "speed": 5, "stealth": 2, "capacity": 6, "maintenance_cost": 600, "category": "armored"},
-    {"id": "carrinha_carga", "name": "Carrinha de Carga", "description": "Ideal para transportar mercadoria.", "price": 20000, "speed": 4, "stealth": 5, "capacity": 20, "maintenance_cost": 300, "category": "utility"},
-    {"id": "desportivo", "name": "Desportivo Exótico", "description": "O sonho de qualquer criminoso.", "price": 100000, "speed": 10, "stealth": 1, "capacity": 2, "maintenance_cost": 1000, "category": "exotic"},
-    {"id": "mota_chopper", "name": "Chopper Customizada", "description": "Estilo e presença.", "price": 25000, "speed": 7, "stealth": 3, "capacity": 2, "maintenance_cost": 350, "category": "custom"},
-    {"id": "muscle_car", "name": "Muscle Car", "description": "Potência americana clássica.", "price": 40000, "speed": 8, "stealth": 2, "capacity": 4, "maintenance_cost": 500, "category": "sport"},
-    {"id": "van_stealth", "name": "Van Operações", "description": "Equipada para operações especiais.", "price": 35000, "speed": 5, "stealth": 7, "capacity": 8, "maintenance_cost": 450, "category": "utility"},
-    {"id": "supercar", "name": "Supercar", "description": "Velocidade pura, sem compromissos.", "price": 200000, "speed": 10, "stealth": 1, "capacity": 2, "maintenance_cost": 2000, "category": "exotic"},
+    {"id": "bicicleta", "name": "Bicicleta", "description": "Transporte básico e silencioso.", "price": 800, "speed": 2, "stealth": 8, "capacity": 1, "maintenance_cost": 20, "category": "basic"},
+    {"id": "scooter", "name": "Scooter", "description": "Mobilidade urbana económica.", "price": 5000, "speed": 4, "stealth": 6, "capacity": 1, "maintenance_cost": 100, "category": "basic"},
+    {"id": "carro_usado", "name": "Carro Usado", "description": "Veículo discreto para o dia-a-dia.", "price": 15000, "speed": 5, "stealth": 5, "capacity": 4, "maintenance_cost": 250, "category": "standard"},
+    {"id": "mota_desportiva", "name": "Mota Desportiva", "description": "Rápida e perfeita para fugas.", "price": 35000, "speed": 9, "stealth": 4, "capacity": 1, "maintenance_cost": 450, "category": "sport"},
+    {"id": "sedan_luxo", "name": "Sedan de Luxo", "description": "Conforto e estilo para negócios.", "price": 75000, "speed": 7, "stealth": 3, "capacity": 4, "maintenance_cost": 800, "category": "luxury"},
+    {"id": "suv_blindado", "name": "SUV Blindado", "description": "Proteção máxima para situações perigosas.", "price": 120000, "speed": 5, "stealth": 2, "capacity": 6, "maintenance_cost": 1200, "category": "armored"},
+    {"id": "carrinha_carga", "name": "Carrinha de Carga", "description": "Ideal para transportar mercadoria.", "price": 45000, "speed": 4, "stealth": 5, "capacity": 20, "maintenance_cost": 600, "category": "utility"},
+    {"id": "desportivo", "name": "Desportivo Exótico", "description": "O sonho de qualquer criminoso.", "price": 250000, "speed": 10, "stealth": 1, "capacity": 2, "maintenance_cost": 2500, "category": "exotic"},
+    {"id": "mota_chopper", "name": "Chopper Customizada", "description": "Estilo e presença.", "price": 55000, "speed": 7, "stealth": 3, "capacity": 2, "maintenance_cost": 700, "category": "custom"},
+    {"id": "muscle_car", "name": "Muscle Car", "description": "Potência americana clássica.", "price": 90000, "speed": 8, "stealth": 2, "capacity": 4, "maintenance_cost": 1000, "category": "sport"},
+    {"id": "van_stealth", "name": "Van Operações", "description": "Equipada para operações especiais.", "price": 85000, "speed": 5, "stealth": 7, "capacity": 8, "maintenance_cost": 900, "category": "utility"},
+    {"id": "supercar", "name": "Supercar", "description": "Velocidade pura, sem compromissos.", "price": 500000, "speed": 10, "stealth": 1, "capacity": 2, "maintenance_cost": 5000, "category": "exotic"},
 ]
 
 EVENT_TEMPLATES = [
