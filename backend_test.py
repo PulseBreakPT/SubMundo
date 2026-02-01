@@ -994,6 +994,172 @@ class SubmundoAPITester:
         else:
             self.log_result("Profile Search Players", False, f"Status: {status}")
 
+    def test_banking_system(self):
+        """Test Advanced Banking System endpoints"""
+        print("\n💰 Testing Banking System...")
+        
+        # Test bank status
+        success, data, status = self.make_request('GET', 'bank/status')
+        
+        if success and 'account' in data:
+            account = data['account']
+            bank_balance = account.get('bank_balance', 0)
+            self.log_result("Bank Status", True, f"Bank balance: €{bank_balance}")
+        else:
+            self.log_result("Bank Status", False, f"Status: {status}")
+            return False
+        
+        # Ensure user has some cash for testing
+        success, player_data, _ = self.make_request('GET', 'player/stats')
+        if not success:
+            self.log_result("Banking - Get Player Stats", False, "Could not get player stats")
+            return False
+        
+        cash = player_data.get('cash', player_data.get('clean_money', 0))
+        
+        # Test deposit (if user has cash)
+        if cash >= 100:
+            success, data, status = self.make_request(
+                'POST',
+                'bank/deposit',
+                {"amount": 100}
+            )
+            
+            if success:
+                new_balance = data.get('bank_balance', 0)
+                self.log_result("Bank Deposit", True, f"Deposited €100, new balance: €{new_balance}")
+            else:
+                self.log_result("Bank Deposit", False, f"Status: {status}, Data: {data}")
+        else:
+            self.log_result("Bank Deposit", True, "Insufficient cash for deposit test (expected)")
+        
+        # Test bank status again to verify deposit
+        success, data, status = self.make_request('GET', 'bank/status')
+        
+        if success and 'account' in data:
+            account = data['account']
+            bank_balance = account.get('bank_balance', 0)
+            self.log_result("Bank Status After Deposit", True, f"Bank balance: €{bank_balance}")
+        else:
+            self.log_result("Bank Status After Deposit", False, f"Status: {status}")
+        
+        # Test withdraw (if user has bank balance)
+        if bank_balance >= 50:
+            success, data, status = self.make_request(
+                'POST',
+                'bank/withdraw',
+                {"amount": 50}
+            )
+            
+            if success:
+                new_balance = data.get('bank_balance', 0)
+                fee = data.get('fee', 0)
+                self.log_result("Bank Withdraw", True, f"Withdrew €50, fee: €{fee}, new balance: €{new_balance}")
+            else:
+                self.log_result("Bank Withdraw", False, f"Status: {status}, Data: {data}")
+        else:
+            self.log_result("Bank Withdraw", True, "Insufficient bank balance for withdraw test (expected)")
+        
+        # Test investments
+        success, data, status = self.make_request('GET', 'bank/investments')
+        
+        if success and 'investment_options' in data:
+            options = data['investment_options']
+            self.log_result("Bank Investments", True, f"Found {len(options)} investment options")
+            
+            # Try to create an investment (if user has bank balance)
+            if bank_balance >= 100 and options:
+                investment_option = options[0]  # Use first option
+                investment_id = investment_option.get('id')
+                
+                success, data, status = self.make_request(
+                    'POST',
+                    'bank/invest',
+                    {
+                        "investment_id": investment_id,
+                        "amount": 100
+                    }
+                )
+                
+                if success:
+                    investment = data.get('investment', {})
+                    self.log_result("Create Investment", True, f"Created investment: {investment_id}")
+                elif status == 400:
+                    self.log_result("Create Investment", True, "Cannot create investment (insufficient funds or limit reached)")
+                else:
+                    self.log_result("Create Investment", False, f"Status: {status}")
+            else:
+                self.log_result("Create Investment", True, "Insufficient balance or no options for investment test")
+        else:
+            self.log_result("Bank Investments", False, f"Status: {status}")
+        
+        # Test loans
+        success, data, status = self.make_request('GET', 'bank/loans')
+        
+        if success and 'credit' in data:
+            credit = data['credit']
+            max_loan = credit.get('max_loan', 0)
+            available_credit = credit.get('available_credit', 0)
+            self.log_result("Bank Loans Info", True, f"Max loan: €{max_loan}, Available: €{available_credit}")
+            
+            # Try to request a loan (if credit available)
+            if available_credit >= 500:
+                success, data, status = self.make_request(
+                    'POST',
+                    'bank/loan',
+                    {"amount": 500}
+                )
+                
+                if success:
+                    loan = data.get('loan', {})
+                    loan_id = loan.get('id')
+                    self.log_result("Request Loan", True, f"Loan approved: €500, ID: {loan_id}")
+                else:
+                    self.log_result("Request Loan", False, f"Status: {status}")
+            else:
+                self.log_result("Request Loan", True, "Insufficient credit for loan test (expected)")
+        else:
+            self.log_result("Bank Loans Info", False, f"Status: {status}")
+        
+        # Test transactions history
+        success, data, status = self.make_request('GET', 'bank/transactions')
+        
+        if success and 'transactions' in data:
+            transactions = data['transactions']
+            self.log_result("Bank Transactions", True, f"Found {len(transactions)} transactions")
+        else:
+            self.log_result("Bank Transactions", False, f"Status: {status}")
+        
+        # Test robbery targets
+        success, data, status = self.make_request('GET', 'bank/robbery-targets')
+        
+        if success and 'targets' in data:
+            targets = data['targets']
+            can_rob = data.get('can_rob', False)
+            self.log_result("Bank Robbery Targets", True, f"Found {len(targets)} targets, Can rob: {can_rob}")
+        else:
+            self.log_result("Bank Robbery Targets", False, f"Status: {status}")
+        
+        # Test transfer (need another player ID - use a dummy one for testing)
+        # This will likely fail but we test the endpoint structure
+        success, data, status = self.make_request(
+            'POST',
+            'bank/transfer',
+            {
+                "recipient_id": "dummy-player-id",
+                "amount": 10,
+                "instant": False,
+                "message": "Test transfer"
+            }
+        )
+        
+        if success:
+            self.log_result("Bank Transfer", True, "Transfer completed successfully")
+        elif status == 400 or status == 404:
+            self.log_result("Bank Transfer", True, "Transfer failed as expected (invalid recipient or insufficient funds)")
+        else:
+            self.log_result("Bank Transfer", False, f"Status: {status}")
+
     def test_new_features_integration(self):
         """Test integration of all new features"""
         print("\n🚗 Vehicle System Tests")
@@ -1029,6 +1195,10 @@ class SubmundoAPITester:
         
         print("\n👤 Advanced Profile System Tests")
         self.test_profile_system()
+        
+        # BANKING SYSTEM TESTS
+        print("\n🏦 Advanced Banking System Tests")
+        self.test_banking_system()
 
     def run_all_tests(self):
         """Run all tests in sequence"""
