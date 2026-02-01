@@ -13,7 +13,7 @@ import {
   Plus, Trash2, Edit3, Check, X, RefreshCw,
   TrendingDown, Minus, AlertTriangle, Crosshair,
   Home, Car, Briefcase, Building, Factory, Archive,
-  Medal, Flag, Link, Sunrise, Moon, Tool
+  Medal, Flag, Link, Sunrise, Moon
 } from 'lucide-react';
 import clsx from 'clsx';
 import { 
