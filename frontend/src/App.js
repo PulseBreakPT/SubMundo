@@ -9,6 +9,8 @@ import MapPage from './pages/MapPage';
 import MissionsPage from './pages/MissionsPage';
 import GangPage from './pages/GangPage';
 import ProfilePage from './pages/ProfilePage';
+import VehiclesPage from './pages/VehiclesPage';
+import EventsPage from './pages/EventsPage';
 import './App.css';
 
 // Remove Emergent badge
@@ -119,6 +121,26 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <Layout>
               <ProfilePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/veiculos"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <VehiclesPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/eventos"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <EventsPage />
             </Layout>
           </ProtectedRoute>
         }
