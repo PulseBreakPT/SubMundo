@@ -318,9 +318,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sistema de Propriedades - CRUD"
-    - "Sistema de Negócios/Crafting"
-    - "Sistema de Mercado Negro"
+    - "Sistema de Relacionamentos NPCs"
+    - "Sistema de Economia Dinâmica"
+    - "Sistema de Territórios Avançado"
+    - "Sistema de Eventos Dinâmicos"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
