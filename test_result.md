@@ -457,3 +457,33 @@ agent_communication:
       - GET /profile/search-players?q=test: Busca de jogadores por nome
       
       TOTAL: 10/10 endpoints do sistema de perfil funcionando corretamente. Sistema pronto para uso!
+  - agent: "testing"
+    message: |
+      ✅ SISTEMA BANCÁRIO AVANÇADO TESTADO COM SUCESSO - Todos os 10 endpoints funcionando perfeitamente!
+      
+      RESULTADOS DOS TESTES:
+      
+      🔧 PROBLEMA CORRIGIDO DURANTE TESTE:
+      - TypeError em calculate_daily_interest: Corrigido tratamento de timezone em datetime objects (offset-naive vs offset-aware)
+      
+      ✅ Sistema Bancário Avançado (10/10 endpoints):
+      - GET /bank/status: Status completo da conta bancária (saldo, limites, taxas, juros)
+      - POST /bank/deposit: Depósito de dinheiro funcionando (testado €100)
+      - POST /bank/withdraw: Levantamento com taxas funcionando (testado €50, taxa 0.5%)
+      - POST /bank/transfer: Transferência entre jogadores com validação
+      - GET /bank/transactions: Histórico completo de transações bancárias
+      - GET /bank/investments: 7 opções de investimento (poupança, prazo fixo, ações, crypto, imobiliário)
+      - POST /bank/invest: Criação de investimentos funcionando
+      - GET /bank/loans: Sistema de empréstimos com limites baseados no nível
+      - POST /bank/loan: Solicitação de empréstimos funcionando (testado €500)
+      - GET /bank/robbery-targets: Sistema de roubo entre jogadores
+      
+      FUNCIONALIDADES TESTADAS:
+      - Juros diários automáticos baseados no nível de segurança
+      - Taxas de levantamento (0.5%) e transferência (1.0%)
+      - Limites diários de levantamento (€100k) e transferência (€50k)
+      - Sistema de segurança bancária com 4 níveis
+      - Empréstimos com juros de 5% e prazo de 7 dias
+      - Investimentos com diferentes riscos e retornos
+      
+      TOTAL: 10/10 endpoints do sistema bancário funcionando corretamente. Sistema completo e pronto para uso!
