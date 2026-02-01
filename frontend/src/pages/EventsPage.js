@@ -206,78 +206,304 @@ export default function EventsPage() {
       )}
 
       {/* Active Events */}
-      {cityEvents.length === 0 ? (
-        <Card>
-          <div className="text-center py-8">
-            <Radio size={48} className="mx-auto text-text-secondary mb-4" />
-            <p className="text-text-secondary mb-4">Nenhum evento ativo no momento.</p>
-            <p className="text-text-secondary text-sm">Eventos afetam toda a cidade e mudam a dinâmica do jogo.</p>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cityEvents.map((event) => {
-            const Icon = getIcon(event.icon);
-            const timeRemaining = getTimeRemaining(event.ends_at);
-            
-            return (
-              <div
-                key={event.id}
-                className="bg-surface border border-primary relative overflow-hidden"
-                data-testid={`event-${event.event_id}`}
-              >
-                {/* Animated border */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-primary animate-pulse" />
+      {activeTab === 'active' && (
+        <>
+          {cityEvents.length === 0 ? (
+            <Card>
+              <div className="text-center py-8">
+                <Radio size={48} className="mx-auto text-text-secondary mb-4" />
+                <p className="text-text-secondary mb-4">Nenhum evento ativo no momento.</p>
+                <p className="text-text-secondary text-sm">Eventos afetam toda a cidade e mudam a dinâmica do jogo.</p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cityEvents.map((event) => {
+                const Icon = getIcon(event.icon);
+                const timeRemaining = getTimeRemaining(event.ends_at);
+                const loreInfo = EVENTS_LORE[event.event_id];
                 
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-primary/20 border border-primary flex items-center justify-center animate-pulse">
-                        <Icon size={24} className="text-primary" />
+                return (
+                  <div
+                    key={event.id}
+                    className="bg-surface border border-primary relative overflow-hidden"
+                    data-testid={`event-${event.event_id}`}
+                  >
+                    {/* Animated border */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-primary animate-pulse" />
+                    
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-primary/20 border border-primary flex items-center justify-center animate-pulse">
+                            <Icon size={24} className="text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-heading text-xl text-text-primary">{event.name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Clock size={14} className="text-warning" />
+                              <span className="text-warning font-body">{timeRemaining}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Badge variant="primary">ATIVO</Badge>
                       </div>
-                      <div>
-                        <h3 className="font-heading text-xl text-text-primary">{event.name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock size={14} className="text-warning" />
-                          <span className="text-warning font-body">{timeRemaining}</span>
+                      
+                      <p className="text-text-secondary text-sm mb-4">{event.description}</p>
+                      
+                      {/* Lore Tips */}
+                      {loreInfo && loreInfo.tips && (
+                        <div className="bg-primary/10 border border-primary/30 p-3 rounded mb-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Lightbulb size={14} className="text-primary" />
+                            <span className="text-xs text-primary uppercase">Dicas</span>
+                          </div>
+                          <ul className="text-xs text-text-secondary space-y-1">
+                            {loreInfo.tips.slice(0, 2).map((tip, idx) => (
+                              <li key={idx} className="flex items-start gap-1">
+                                <span className="text-primary">•</span>
+                                <span>{tip}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Effects */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs text-text-secondary uppercase tracking-wider">Efeitos:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {event.effects.heat_multiplier !== 1 && (
+                            <Badge variant={getEffectColor(event.effects.heat_multiplier)}>
+                              Heat: {event.effects.heat_multiplier}x
+                            </Badge>
+                          )}
+                          {event.effects.reward_multiplier !== 1 && (
+                            <Badge variant={getEffectColor(event.effects.reward_multiplier)}>
+                              Recompensa: {event.effects.reward_multiplier}x
+                            </Badge>
+                          )}
+                          {event.effects.risk_modifier !== 0 && (
+                            <Badge variant={getEffectColor(event.effects.risk_modifier, false)}>
+                              Risco: {event.effects.risk_modifier > 0 ? '+' : ''}{event.effects.risk_modifier}
+                            </Badge>
+                          )}
+                          {event.effects.wars_disabled && (
+                            <Badge variant="warning">
+                              Guerras Bloqueadas
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <Badge variant="primary">ATIVO</Badge>
                   </div>
-                  
-                  <p className="text-text-secondary text-sm mb-4">{event.description}</p>
-                  
-                  {/* Effects */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-text-secondary uppercase tracking-wider">Efeitos:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {event.effects.heat_multiplier !== 1 && (
-                        <Badge variant={getEffectColor(event.effects.heat_multiplier)}>
-                          Heat: {event.effects.heat_multiplier}x
-                        </Badge>
-                      )}
-                      {event.effects.reward_multiplier !== 1 && (
-                        <Badge variant={getEffectColor(event.effects.reward_multiplier)}>
-                          Recompensa: {event.effects.reward_multiplier}x
-                        </Badge>
-                      )}
-                      {event.effects.risk_modifier !== 0 && (
-                        <Badge variant={getEffectColor(event.effects.risk_modifier, false)}>
-                          Risco: {event.effects.risk_modifier > 0 ? '+' : ''}{event.effects.risk_modifier}
-                        </Badge>
-                      )}
-                      {event.effects.wars_disabled && (
-                        <Badge variant="warning">
-                          Guerras Bloqueadas
-                        </Badge>
-                      )}
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Predictions Tab */}
+      {activeTab === 'predictions' && predictions && (
+        <div className="space-y-4">
+          <Card title="Previsões de Eventos" icon={Eye}>
+            <p className="text-text-secondary text-sm mb-4">
+              Baseado nas condições actuais da cidade, estes eventos têm alta probabilidade de ocorrer:
+            </p>
+            <div className="space-y-3">
+              {predictions.predictions?.length > 0 ? (
+                predictions.predictions.map((pred, idx) => (
+                  <div key={idx} className="bg-surface-highlight border border-border p-4 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-heading text-text-primary">{pred.name}</h4>
+                        <p className="text-xs text-text-secondary">{pred.estimated_time}</p>
+                      </div>
+                      <Badge variant={pred.probability > 60 ? 'error' : pred.probability > 30 ? 'warning' : 'secondary'}>
+                        {pred.probability}% provável
+                      </Badge>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-text-secondary">Impacto:</span>
+                        <p className="text-text-primary text-xs mt-1">{pred.impact}</p>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary">Preparação:</span>
+                        <p className="text-primary text-xs mt-1">{pred.preparation}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))
+              ) : (
+                <p className="text-text-secondary text-center py-4">Sem previsões disponíveis</p>
+              )}
+            </div>
+          </Card>
+
+          <Card title="Base de Análise" icon={Activity}>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-mono text-primary">{predictions.analysis_based_on?.recent_crimes || 0}</p>
+                <p className="text-xs text-text-secondary">Crimes última hora</p>
               </div>
-            );
-          })}
+              <div>
+                <p className="text-2xl font-mono text-error">{predictions.analysis_based_on?.active_wars || 0}</p>
+                <p className="text-xs text-text-secondary">Guerras activas</p>
+              </div>
+              <div>
+                <p className="text-2xl font-mono text-secondary">{predictions.analysis_based_on?.time_of_day || 0}h</p>
+                <p className="text-xs text-text-secondary">Hora do dia</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Impact Tab */}
+      {activeTab === 'impact' && impact && (
+        <div className="space-y-4">
+          <Card title="Impacto dos Eventos em Ti" icon={Target}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className={clsx(
+                  'text-2xl font-mono',
+                  impact.combined_impact?.heat_modifier > 1 ? 'text-error' : 'text-success'
+                )}>
+                  {impact.combined_impact?.heat_modifier?.toFixed(2) || '1.00'}x
+                </p>
+                <p className="text-xs text-text-secondary">Heat</p>
+              </div>
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className={clsx(
+                  'text-2xl font-mono',
+                  impact.combined_impact?.reward_modifier > 1 ? 'text-success' : 'text-error'
+                )}>
+                  {impact.combined_impact?.reward_modifier?.toFixed(2) || '1.00'}x
+                </p>
+                <p className="text-xs text-text-secondary">Recompensa</p>
+              </div>
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className="text-2xl font-mono text-secondary">
+                  {impact.combined_impact?.stealth_modifier?.toFixed(2) || '1.00'}x
+                </p>
+                <p className="text-xs text-text-secondary">Stealth</p>
+              </div>
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className={clsx(
+                  'text-2xl font-mono',
+                  impact.combined_impact?.danger_modifier > 1 ? 'text-error' : 'text-success'
+                )}>
+                  {impact.combined_impact?.danger_modifier?.toFixed(2) || '1.00'}x
+                </p>
+                <p className="text-xs text-text-secondary">Perigo</p>
+              </div>
+            </div>
+
+            {/* Advice */}
+            {impact.advice?.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs text-text-secondary uppercase">Conselhos Personalizados:</h4>
+                {impact.advice.map((advice, idx) => (
+                  <div key={idx} className="bg-primary/10 border border-primary/30 p-3 rounded flex items-start gap-2">
+                    <Lightbulb size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-xs text-primary">{advice.event}: </span>
+                      <span className="text-sm text-text-primary">{advice.tip}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Conditions Tab */}
+      {activeTab === 'conditions' && dynamicEvents && (
+        <div className="space-y-4">
+          <Card title="Condições Actuais da Cidade" icon={Activity}>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className="text-2xl font-mono text-primary capitalize">
+                  {dynamicEvents.current_conditions?.crime_level || 'médio'}
+                </p>
+                <p className="text-xs text-text-secondary">Nível de Crime</p>
+              </div>
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className="text-2xl font-mono text-error capitalize">
+                  {dynamicEvents.current_conditions?.war_status || 'pacífico'}
+                </p>
+                <p className="text-xs text-text-secondary">Status de Guerra</p>
+              </div>
+              <div className="bg-surface-highlight p-4 text-center rounded-lg">
+                <p className="text-2xl font-mono text-success capitalize">
+                  {dynamicEvents.current_conditions?.economy || 'estável'}
+                </p>
+                <p className="text-xs text-text-secondary">Economia</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Eventos Potenciais" icon={AlertTriangle}>
+            <p className="text-text-secondary text-sm mb-4">
+              Eventos que podem ser desencadeados com base nas condições actuais:
+            </p>
+            <div className="space-y-3">
+              {dynamicEvents.potential_events?.map((event, idx) => (
+                <div key={idx} className="bg-surface-highlight border border-border p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-heading text-text-primary">{event.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-2 bg-background rounded-full overflow-hidden">
+                        <div 
+                          className={clsx(
+                            'h-full',
+                            event.probability > 60 ? 'bg-error' : 
+                            event.probability > 30 ? 'bg-warning' : 'bg-secondary'
+                          )}
+                          style={{ width: `${event.probability}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-text-secondary">{event.probability}%</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-text-secondary">{event.description}</p>
+                  {event.effects && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {Object.entries(event.effects).map(([key, value]) => (
+                        <Badge key={key} variant="secondary" size="sm">
+                          {key}: {typeof value === 'number' ? value.toFixed(1) : value}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card title="Estatísticas do Jogo" icon={TrendingUp}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-mono text-primary">{dynamicEvents.game_stats?.total_crimes_24h || 0}</p>
+                <p className="text-xs text-text-secondary">Crimes (24h)</p>
+              </div>
+              <div>
+                <p className="text-2xl font-mono text-error">{dynamicEvents.game_stats?.active_wars || 0}</p>
+                <p className="text-xs text-text-secondary">Guerras Activas</p>
+              </div>
+              <div>
+                <p className="text-2xl font-mono text-success">€{Math.round(dynamicEvents.game_stats?.avg_player_money || 0)}</p>
+                <p className="text-xs text-text-secondary">€ Média/Jogador</p>
+              </div>
+              <div>
+                <p className="text-2xl font-mono text-secondary">{dynamicEvents.game_stats?.active_players_1h || 0}</p>
+                <p className="text-xs text-text-secondary">Jogadores (1h)</p>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
 
