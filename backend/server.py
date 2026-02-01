@@ -3834,6 +3834,751 @@ async def get_neighborhood_lore(neighborhood_id: str):
     
     return lore_data[neighborhood_id]
 
+# ============= SISTEMA DE RELACIONAMENTOS COM NPCs =============
+
+@api_router.get("/npcs/contacts")
+async def get_npc_contacts(current_user: dict = Depends(get_current_user)):
+    """Lista todos os NPCs com níveis de relacionamento do jogador"""
+    player_id = current_user["id"]
+    
+    # Buscar relacionamentos existentes
+    relationships = await db.npc_relationships.find(
+        {"player_id": player_id},
+        {"_id": 0}
+    ).to_list(100)
+    
+    relationships_map = {r["npc_id"]: r for r in relationships}
+    
+    contacts = []
+    for npc in NPCS_CONFIG:
+        relation = relationships_map.get(npc["id"], {
+            "npc_id": npc["id"],
+            "player_id": player_id,
+            "points": 0,
+            "level": "neutral",
+            "interactions": 0,
+            "last_interaction": None
+        })
+        
+        # Calcular nível de relacionamento
+        points = relation.get("points", 0)
+        if points <= -75:
+            level = "enemy"
+            level_name = "Inimigo"
+            level_color = "error"
+        elif points <= -50:
+            level = "hostile"
+            level_name = "Hostil"
+            level_color = "error"
+        elif points <= -25:
+            level = "unfriendly"
+            level_name = "Desconfiado"
+            level_color = "warning"
+        elif points <= 25:
+            level = "neutral"
+            level_name = "Neutro"
+            level_color = "secondary"
+        elif points <= 50:
+            level = "friendly"
+            level_name = "Amigável"
+            level_color = "success"
+        elif points <= 75:
+            level = "allied"
+            level_name = "Aliado"
+            level_color = "primary"
+        else:
+            level = "trusted"
+            level_name = "De Confiança"
+            level_color = "gold"
+        
+        # Calcular efeitos do relacionamento
+        effects = RelationshipSystem.get_interaction_effects(
+            RelationshipSystem.calculate_relationship_level(points)
+        )
+        
+        # Determinar interações disponíveis
+        available_interactions = []
+        if effects["can_trade"]:
+            available_interactions.append({"id": "trade", "name": "Negociar", "cost": 0})
+        if level in ["friendly", "allied", "trusted"]:
+            available_interactions.append({"id": "gift", "name": "Dar Presente", "cost": 500})
+            available_interactions.append({"id": "request_favor", "name": "Pedir Favor", "cost": 0})
+        if level in ["allied", "trusted"]:
+            available_interactions.append({"id": "share_info", "name": "Partilhar Informação", "cost": 0})
+        
+        contacts.append({
+            **npc,
+            "relationship": {
+                "points": points,
+                "level": level,
+                "level_name": level_name,
+                "level_color": level_color,
+                "interactions_count": relation.get("interactions", 0),
+                "last_interaction": relation.get("last_interaction"),
+                "effects": {
+                    "price_modifier": effects["price_modifier"],
+                    "can_trade": effects["can_trade"],
+                    "will_betray": effects["will_betray"],
+                    "info_quality": effects["info_quality"],
+                    "help_chance": effects["help_chance"]
+                }
+            },
+            "available_interactions": available_interactions
+        })
+    
+    return {"contacts": contacts}
+
+@api_router.get("/npcs/{npc_id}/relationship")
+async def get_npc_relationship_detail(npc_id: str, current_user: dict = Depends(get_current_user)):
+    """Detalhes completos do relacionamento com um NPC"""
+    npc = next((n for n in NPCS_CONFIG if n["id"] == npc_id), None)
+    if not npc:
+        raise HTTPException(status_code=404, detail="NPC não encontrado")
+    
+    relation = await db.npc_relationships.find_one({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    })
+    
+    if not relation:
+        relation = {"points": 0, "interactions": 0, "history": []}
+    
+    # Buscar histórico de interações
+    history = await db.npc_interactions.find({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    }, {"_id": 0}).sort("timestamp", -1).limit(20).to_list(20)
+    
+    points = relation.get("points", 0)
+    level = RelationshipSystem.calculate_relationship_level(points)
+    effects = RelationshipSystem.get_interaction_effects(level)
+    
+    return {
+        "npc": npc,
+        "relationship": {
+            "points": points,
+            "level": level.name.lower(),
+            "effects": {
+                "price_modifier": effects["price_modifier"],
+                "can_trade": effects["can_trade"],
+                "info_quality": effects["info_quality"],
+                "help_chance": effects["help_chance"]
+            }
+        },
+        "history": history,
+        "total_interactions": relation.get("interactions", 0)
+    }
+
+@api_router.post("/npcs/{npc_id}/interact")
+async def interact_with_npc(
+    npc_id: str, 
+    action: str = Query(..., description="Tipo de interação: gift, trade, request_favor, share_info"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Interagir com um NPC"""
+    npc = next((n for n in NPCS_CONFIG if n["id"] == npc_id), None)
+    if not npc:
+        raise HTTPException(status_code=404, detail="NPC não encontrado")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Buscar ou criar relacionamento
+    relation = await db.npc_relationships.find_one({
+        "player_id": current_user["id"],
+        "npc_id": npc_id
+    })
+    
+    current_points = relation.get("points", 0) if relation else 0
+    now = datetime.now(timezone.utc)
+    
+    # Processar interação baseada no tipo
+    action_results = {
+        "gift": {"points_change": 10, "cost": 500, "success_msg": "O presente foi bem recebido!"},
+        "trade": {"points_change": 2, "cost": 0, "success_msg": "Negócio concluído."},
+        "request_favor": {"points_change": -5, "cost": 0, "success_msg": "Favor concedido."},
+        "share_info": {"points_change": 8, "cost": 0, "success_msg": "Informação partilhada com sucesso."},
+        "insult": {"points_change": -15, "cost": 0, "success_msg": "Relação danificada."},
+        "betray": {"points_change": -50, "cost": 0, "success_msg": "Relação destruída."}
+    }
+    
+    if action not in action_results:
+        raise HTTPException(status_code=400, detail="Ação inválida")
+    
+    result = action_results[action]
+    
+    # Verificar custo
+    if result["cost"] > 0 and player["clean_money"] < result["cost"]:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente")
+    
+    # Aplicar custo
+    if result["cost"] > 0:
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"clean_money": -result["cost"]}}
+        )
+    
+    # Calcular novos pontos
+    new_points = RelationshipSystem.calculate_relationship_change(
+        current_points, action, True, 1.0
+    )
+    
+    # Actualizar relacionamento
+    await db.npc_relationships.update_one(
+        {"player_id": current_user["id"], "npc_id": npc_id},
+        {
+            "$set": {
+                "points": new_points,
+                "level": RelationshipSystem.calculate_relationship_level(new_points).name.lower(),
+                "last_interaction": now
+            },
+            "$inc": {"interactions": 1}
+        },
+        upsert=True
+    )
+    
+    # Registar interação
+    await db.npc_interactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "npc_id": npc_id,
+        "action": action,
+        "points_before": current_points,
+        "points_after": new_points,
+        "timestamp": now
+    })
+    
+    return {
+        "success": True,
+        "message": result["success_msg"],
+        "points_change": new_points - current_points,
+        "new_points": new_points,
+        "new_level": RelationshipSystem.calculate_relationship_level(new_points).name.lower()
+    }
+
+# ============= ECONOMIA DINÂMICA =============
+
+@api_router.get("/economy/market-prices")
+async def get_dynamic_market_prices(current_user: dict = Depends(get_current_user)):
+    """Retorna preços de mercado dinâmicos baseados em oferta/procura"""
+    
+    # Buscar dados de mercado ou criar defaults
+    market_data = await db.market_economy.find_one({"id": "global_market"})
+    
+    if not market_data:
+        # Inicializar dados de mercado
+        market_data = {
+            "id": "global_market",
+            "last_update": datetime.now(timezone.utc),
+            "categories": {
+                "drugs": {"supply": 50, "demand": 60, "base_price": 100},
+                "weapons": {"supply": 30, "demand": 40, "base_price": 500},
+                "documents": {"supply": 40, "demand": 50, "base_price": 200},
+                "electronics": {"supply": 60, "demand": 55, "base_price": 300},
+                "vehicles_parts": {"supply": 35, "demand": 45, "base_price": 400},
+                "contraband": {"supply": 25, "demand": 70, "base_price": 800}
+            }
+        }
+        await db.market_economy.insert_one(market_data)
+    
+    # Buscar eventos activos que afectam preços
+    active_events = await db.city_events.find({"status": "active"}, {"_id": 0}).to_list(10)
+    
+    event_modifier = 1.0
+    for event in active_events:
+        if event.get("type") == "police_crackdown":
+            event_modifier *= 1.3  # Preços sobem com crackdown
+        elif event.get("type") == "festival":
+            event_modifier *= 0.9  # Preços baixam em festivais
+        elif event.get("type") == "economic_boom":
+            event_modifier *= 1.2
+    
+    # Calcular preços actuais
+    prices = []
+    for category, data in market_data.get("categories", {}).items():
+        supply = data.get("supply", 50)
+        demand = data.get("demand", 50)
+        base = data.get("base_price", 100)
+        
+        # Calcular preço dinâmico
+        price = DynamicEconomySystem.calculate_market_price(
+            category, base, supply, demand, 1.0, event_modifier, 0
+        )
+        
+        # Determinar tendência
+        ratio = demand / max(1, supply)
+        if ratio > 1.2:
+            trend = "up"
+            trend_icon = "trending-up"
+        elif ratio < 0.8:
+            trend = "down"
+            trend_icon = "trending-down"
+        else:
+            trend = "stable"
+            trend_icon = "minus"
+        
+        prices.append({
+            "category": category,
+            "category_name": {
+                "drugs": "Drogas",
+                "weapons": "Armas",
+                "documents": "Documentos",
+                "electronics": "Electrónicos",
+                "vehicles_parts": "Peças de Veículos",
+                "contraband": "Contrabando"
+            }.get(category, category),
+            "base_price": base,
+            "current_price": round(price, 2),
+            "price_change_percent": round((price - base) / base * 100, 1),
+            "supply": supply,
+            "demand": demand,
+            "trend": trend,
+            "trend_icon": trend_icon,
+            "event_modifier": round(event_modifier, 2)
+        })
+    
+    return {
+        "prices": prices,
+        "last_update": market_data.get("last_update"),
+        "active_events_count": len(active_events),
+        "global_modifier": round(event_modifier, 2)
+    }
+
+@api_router.get("/economy/price-history/{category}")
+async def get_price_history(category: str, current_user: dict = Depends(get_current_user)):
+    """Retorna histórico de preços de uma categoria"""
+    
+    # Buscar histórico ou gerar dados simulados
+    history = await db.price_history.find(
+        {"category": category},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(24).to_list(24)
+    
+    if not history:
+        # Gerar histórico simulado para últimas 24 horas
+        now = datetime.now(timezone.utc)
+        base_prices = {
+            "drugs": 100, "weapons": 500, "documents": 200,
+            "electronics": 300, "vehicles_parts": 400, "contraband": 800
+        }
+        base = base_prices.get(category, 100)
+        
+        history = []
+        for i in range(24):
+            timestamp = now - timedelta(hours=23-i)
+            variation = random.uniform(0.8, 1.3)
+            price = base * variation
+            history.append({
+                "category": category,
+                "price": round(price, 2),
+                "timestamp": timestamp.isoformat(),
+                "hour": timestamp.hour
+            })
+    
+    return {
+        "category": category,
+        "history": history,
+        "period": "24h"
+    }
+
+@api_router.post("/economy/simulate-fluctuation")
+async def simulate_market_fluctuation(current_user: dict = Depends(get_current_user)):
+    """Simula flutuação de mercado (chamado periodicamente)"""
+    
+    market_data = await db.market_economy.find_one({"id": "global_market"})
+    if not market_data:
+        return {"message": "Mercado não inicializado"}
+    
+    # Buscar eventos activos
+    active_events = await db.city_events.find({"status": "active"}, {"_id": 0}).to_list(10)
+    event_types = [e.get("type", "") for e in active_events]
+    
+    # Simular flutuação para cada categoria
+    updated_categories = {}
+    for category, data in market_data.get("categories", {}).items():
+        new_supply, new_demand = DynamicEconomySystem.simulate_market_fluctuation(
+            data.get("supply", 50),
+            data.get("demand", 50),
+            event_types
+        )
+        updated_categories[category] = {
+            **data,
+            "supply": new_supply,
+            "demand": new_demand
+        }
+    
+    # Actualizar mercado
+    await db.market_economy.update_one(
+        {"id": "global_market"},
+        {
+            "$set": {
+                "categories": updated_categories,
+                "last_update": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Mercado actualizado"}
+
+# ============= SISTEMA DE TERRITÓRIOS AVANÇADO =============
+
+@api_router.get("/territories/analysis")
+async def get_territory_analysis(current_user: dict = Depends(get_current_user)):
+    """Análise completa de territórios para guerras"""
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    if not player.get("gang_id"):
+        raise HTTPException(status_code=400, detail="Precisas de estar numa gangue")
+    
+    gang = await db.gangs.find_one({"id": player["gang_id"]})
+    if not gang:
+        raise HTTPException(status_code=404, detail="Gangue não encontrada")
+    
+    # Buscar membros da gangue
+    members = await db.players.find({"gang_id": gang["id"]}, {"_id": 0}).to_list(50)
+    
+    # Calcular poder da nossa gangue
+    our_power = TerritoryControlSystem.calculate_war_power(gang, members, len(gang.get("territories", [])) * 10)
+    
+    # Buscar todos os bairros
+    neighborhoods = await db.neighborhoods.find({}, {"_id": 0}).to_list(20)
+    
+    territories_analysis = []
+    for nh in neighborhoods:
+        controller_id = nh.get("controlled_by")
+        
+        if controller_id == gang["id"]:
+            status = "controlled"
+            can_attack = False
+            war_prediction = None
+        elif controller_id:
+            # Buscar gangue controladora
+            controller = await db.gangs.find_one({"id": controller_id})
+            if controller:
+                controller_members = await db.players.find({"gang_id": controller_id}, {"_id": 0}).to_list(50)
+                defender_power = TerritoryControlSystem.calculate_war_power(
+                    controller, controller_members, 10  # Bónus defesa
+                )
+                
+                # Simular resultado
+                prediction = TerritoryControlSystem.simulate_war_outcome(our_power, defender_power)
+                
+                war_prediction = {
+                    "attacker_chance": prediction["attacker_chance"],
+                    "defender_chance": prediction["defender_chance"],
+                    "our_power": our_power,
+                    "enemy_power": defender_power,
+                    "estimated_losses": prediction["attacker_losses_percent"],
+                    "recommendation": "Atacar" if prediction["attacker_chance"] > 50 else "Evitar"
+                }
+                status = "enemy_controlled"
+                can_attack = True
+            else:
+                status = "neutral"
+                can_attack = True
+                war_prediction = {"attacker_chance": 80, "recommendation": "Fácil conquista"}
+        else:
+            status = "neutral"
+            can_attack = True
+            war_prediction = {"attacker_chance": 90, "recommendation": "Território livre"}
+        
+        # Calcular rendimento potencial
+        income_analysis = TerritoryControlSystem.calculate_territory_income(
+            {"economic_value": nh.get("economic_value", 50), "heat_level": nh.get("heat_level", 20)},
+            gang,
+            0
+        )
+        
+        territories_analysis.append({
+            "id": nh["id"],
+            "name": nh["name"],
+            "economic_value": nh.get("economic_value", 50),
+            "status": status,
+            "controller": nh.get("controlled_by_name"),
+            "can_attack": can_attack,
+            "war_prediction": war_prediction,
+            "potential_income": income_analysis["final_income"],
+            "heat_level": nh.get("heat_level", 20)
+        })
+    
+    return {
+        "our_gang": {
+            "name": gang["name"],
+            "power": our_power,
+            "members_count": len(members),
+            "territories_count": len(gang.get("territories", []))
+        },
+        "territories": territories_analysis
+    }
+
+@api_router.get("/territories/{territory_id}/power")
+async def get_territory_power_analysis(territory_id: str, current_user: dict = Depends(get_current_user)):
+    """Análise detalhada de poder de um território específico"""
+    
+    neighborhood = await db.neighborhoods.find_one({"id": territory_id})
+    if not neighborhood:
+        raise HTTPException(status_code=404, detail="Território não encontrado")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if not player.get("gang_id"):
+        raise HTTPException(status_code=400, detail="Precisas de estar numa gangue")
+    
+    our_gang = await db.gangs.find_one({"id": player["gang_id"]})
+    our_members = await db.players.find({"gang_id": our_gang["id"]}, {"_id": 0}).to_list(50)
+    our_power = TerritoryControlSystem.calculate_war_power(our_gang, our_members, len(our_gang.get("territories", [])) * 10)
+    
+    controller_id = neighborhood.get("controlled_by")
+    enemy_analysis = None
+    
+    if controller_id and controller_id != our_gang["id"]:
+        enemy_gang = await db.gangs.find_one({"id": controller_id})
+        if enemy_gang:
+            enemy_members = await db.players.find({"gang_id": controller_id}, {"_id": 0}).to_list(50)
+            enemy_power = TerritoryControlSystem.calculate_war_power(enemy_gang, enemy_members, 10)
+            
+            prediction = TerritoryControlSystem.simulate_war_outcome(our_power, enemy_power)
+            
+            enemy_analysis = {
+                "gang_name": enemy_gang["name"],
+                "power": enemy_power,
+                "members_count": len(enemy_members),
+                "defense_bonus": 20,
+                "our_win_chance": prediction["attacker_chance"],
+                "our_estimated_losses": prediction["attacker_losses_percent"],
+                "enemy_estimated_losses": prediction["defender_losses_percent"]
+            }
+    
+    return {
+        "territory": {
+            "id": neighborhood["id"],
+            "name": neighborhood["name"],
+            "economic_value": neighborhood.get("economic_value", 50),
+            "heat_level": neighborhood.get("heat_level", 20)
+        },
+        "our_power": our_power,
+        "enemy": enemy_analysis,
+        "recommendation": "Atacar" if (enemy_analysis and enemy_analysis["our_win_chance"] > 50) or not enemy_analysis else "Evitar"
+    }
+
+# ============= EVENTOS DINÂMICOS REACTIVOS =============
+
+@api_router.get("/events/dynamic")
+async def get_dynamic_events(current_user: dict = Depends(get_current_user)):
+    """Retorna eventos dinâmicos baseados no estado do jogo"""
+    
+    # Calcular estatísticas do jogo
+    total_crimes_24h = await db.player_history.count_documents({
+        "action": {"$in": ["mission_completed", "crime_completed"]},
+        "timestamp": {"$gte": datetime.now(timezone.utc) - timedelta(hours=24)}
+    })
+    
+    active_wars = await db.gang_wars.count_documents({"status": "active"})
+    
+    # Média de dinheiro dos jogadores
+    pipeline = [
+        {"$group": {"_id": None, "avg_money": {"$avg": {"$add": ["$clean_money", "$dirty_money"]}}}}
+    ]
+    result = await db.players.aggregate(pipeline).to_list(1)
+    avg_money = result[0]["avg_money"] if result else 10000
+    
+    active_players = await db.players.count_documents({
+        "last_active": {"$gte": datetime.now(timezone.utc) - timedelta(hours=1)}
+    })
+    
+    game_stats = {
+        "total_crimes_24h": total_crimes_24h,
+        "active_wars": active_wars,
+        "avg_player_money": avg_money,
+        "active_players_1h": active_players,
+        "is_holiday": False  # Pode ser configurado
+    }
+    
+    # Verificar triggers de eventos
+    potential_events = []
+    
+    if total_crimes_24h > 50:
+        potential_events.append({
+            "type": "police_crackdown",
+            "name": "Operação Policial",
+            "description": "A polícia está a intensificar patrulhas devido à alta actividade criminal.",
+            "probability": 70,
+            "effects": {"heat_modifier": 1.5, "reward_modifier": 0.8}
+        })
+    
+    if active_wars > 1:
+        potential_events.append({
+            "type": "gang_war_tension",
+            "name": "Tensão entre Gangues",
+            "description": "Múltiplas guerras activas aumentam a violência nas ruas.",
+            "probability": 60,
+            "effects": {"danger_modifier": 1.3, "weapons_demand": 1.5}
+        })
+    
+    if avg_money < 5000:
+        potential_events.append({
+            "type": "economic_crisis",
+            "name": "Crise Económica",
+            "description": "Dinheiro escasso está a criar oportunidades no mercado negro.",
+            "probability": 50,
+            "effects": {"market_bonus": 1.2, "desperation": 1.4}
+        })
+    
+    # Eventos sempre possíveis
+    potential_events.extend([
+        {
+            "type": "festival",
+            "name": "Festival de Rua",
+            "description": "Evento popular atrai multidões - ideal para pickpockets.",
+            "probability": 20,
+            "effects": {"pickpocket_bonus": 1.5, "police_distraction": 0.7}
+        },
+        {
+            "type": "blackout",
+            "name": "Apagão",
+            "description": "Falha de energia em partes da cidade.",
+            "probability": 10,
+            "effects": {"stealth_bonus": 2.0, "alarm_systems": 0}
+        }
+    ])
+    
+    return {
+        "game_stats": game_stats,
+        "potential_events": potential_events,
+        "current_conditions": {
+            "crime_level": "alto" if total_crimes_24h > 50 else "médio" if total_crimes_24h > 20 else "baixo",
+            "war_status": "activo" if active_wars > 0 else "pacífico",
+            "economy": "em crise" if avg_money < 5000 else "estável" if avg_money < 20000 else "próspera"
+        }
+    }
+
+@api_router.get("/events/impact")
+async def get_event_impact(current_user: dict = Depends(get_current_user)):
+    """Calcula impacto dos eventos actuais no jogador"""
+    
+    # Buscar eventos activos
+    active_events = await db.city_events.find({"status": "active"}, {"_id": 0}).to_list(10)
+    
+    player_location = current_user.get("main_neighborhood", "centro")
+    
+    combined_impact = {
+        "heat_modifier": 1.0,
+        "reward_modifier": 1.0,
+        "stealth_modifier": 1.0,
+        "danger_modifier": 1.0,
+        "advice": []
+    }
+    
+    for event in active_events:
+        impact = DynamicEventSystem.calculate_event_impact(
+            event.get("type", ""),
+            current_user,
+            player_location
+        )
+        
+        combined_impact["heat_modifier"] *= impact.get("heat_modifier", 1.0)
+        combined_impact["reward_modifier"] *= impact.get("reward_modifier", 1.0)
+        
+        if impact.get("advice"):
+            combined_impact["advice"].append({
+                "event": event.get("name", event.get("type")),
+                "tip": impact["advice"]
+            })
+    
+    # Adicionar conselhos gerais baseados nos modificadores
+    if combined_impact["heat_modifier"] > 1.2:
+        combined_impact["advice"].append({
+            "event": "Condições Gerais",
+            "tip": "Heat aumentado - considera trabalhos legais ou muda de bairro"
+        })
+    
+    if combined_impact["reward_modifier"] > 1.2:
+        combined_impact["advice"].append({
+            "event": "Oportunidade",
+            "tip": "Recompensas aumentadas - bom momento para missões"
+        })
+    
+    return {
+        "active_events": active_events,
+        "combined_impact": {
+            "heat_modifier": round(combined_impact["heat_modifier"], 2),
+            "reward_modifier": round(combined_impact["reward_modifier"], 2),
+            "stealth_modifier": round(combined_impact["stealth_modifier"], 2),
+            "danger_modifier": round(combined_impact["danger_modifier"], 2)
+        },
+        "advice": combined_impact["advice"]
+    }
+
+@api_router.get("/events/predictions")
+async def get_event_predictions(current_user: dict = Depends(get_current_user)):
+    """Previsões de eventos futuros baseados no estado actual"""
+    
+    # Buscar dados para prever
+    recent_events = await db.city_events.find(
+        {},
+        {"_id": 0}
+    ).sort("started_at", -1).limit(10).to_list(10)
+    
+    # Estatísticas recentes
+    crimes_last_hour = await db.player_history.count_documents({
+        "action": "mission_completed",
+        "timestamp": {"$gte": datetime.now(timezone.utc) - timedelta(hours=1)}
+    })
+    
+    predictions = []
+    
+    # Previsão: Operação policial se crimes altos
+    if crimes_last_hour > 10:
+        predictions.append({
+            "event_type": "police_crackdown",
+            "name": "Operação Policial",
+            "probability": min(90, 30 + crimes_last_hour * 5),
+            "estimated_time": "Próximas 2-4 horas",
+            "impact": "Heat aumentado, missões mais arriscadas",
+            "preparation": "Conclui missões activas, guarda dinheiro"
+        })
+    
+    # Previsão: Festival (baseado em hora do dia)
+    hour = datetime.now().hour
+    if 18 <= hour <= 22:
+        predictions.append({
+            "event_type": "festival",
+            "name": "Evento Nocturno",
+            "probability": 40,
+            "estimated_time": "Próximas 1-3 horas",
+            "impact": "Mais oportunidades de furto",
+            "preparation": "Prepara itens de stealth"
+        })
+    
+    # Previsão: Apagão (aleatório)
+    predictions.append({
+        "event_type": "blackout",
+        "name": "Apagão",
+        "probability": 15,
+        "estimated_time": "Imprevisível",
+        "impact": "Stealth muito melhorado",
+        "preparation": "Mantém missões de assalto prontas"
+    })
+    
+    # Previsão baseada em guerras
+    active_wars = await db.gang_wars.count_documents({"status": "active"})
+    if active_wars > 0:
+        predictions.append({
+            "event_type": "gang_truce",
+            "name": "Trégua de Gangues",
+            "probability": 20 + active_wars * 10,
+            "estimated_time": "Depende das guerras",
+            "impact": "Paz temporária, sem guerras",
+            "preparation": "Expande territórios durante a trégua"
+        })
+    
+    return {
+        "predictions": predictions,
+        "analysis_based_on": {
+            "recent_crimes": crimes_last_hour,
+            "active_wars": active_wars,
+            "time_of_day": hour
+        }
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
