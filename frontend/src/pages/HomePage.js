@@ -1,7 +1,7 @@
+import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
-import { useCountdown } from '../hooks/useCountdown';
-import { useMissionTimer } from '../hooks/useCountdown';
+import { useCountdown, useMissionTimer } from '../hooks/useCountdown';
 import { StatCard, Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge } from '../components/UI';
 import { 
@@ -24,10 +24,14 @@ export default function HomePage() {
 
   const player = gameState?.player || user;
   
+  // Memoize target time to prevent infinite loop
+  const dailyRewardTarget = useMemo(() => {
+    if (!player?.last_daily_reward) return null;
+    return new Date(new Date(player.last_daily_reward).getTime() + 86400000);
+  }, [player?.last_daily_reward]);
+
   // Daily reward countdown
-  const { isExpired: canClaimDaily, formatTime: formatDailyTime } = useCountdown(
-    player?.last_daily_reward ? new Date(new Date(player.last_daily_reward).getTime() + 86400000) : null
-  );
+  const { isExpired: canClaimDaily, formatTime: formatDailyTime } = useCountdown(dailyRewardTarget);
 
   // Active mission timer
   const { progress: missionProgress, isComplete: missionComplete, formatRemaining } = useMissionTimer(
