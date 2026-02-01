@@ -5077,8 +5077,10 @@ async def get_progress_history(current_user: dict = Depends(get_current_user), d
                 daily_data[date_key]["missions_failed"] += 1
             
             if "experience" in details:
-                daily_data[date_key]["experience_gained"] += details["experience"]
-                cumulative["experience"] += details["experience"]
+                experience = details["experience"]
+                if isinstance(experience, (int, float)):
+                    daily_data[date_key]["experience_gained"] += experience
+                    cumulative["experience"] += experience
             
             if "reputation" in details:
                 daily_data[date_key]["reputation_gained"] += details["reputation"]
