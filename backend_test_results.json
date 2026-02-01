@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-02-01T10:05:48.147732",
-  "total_tests": 18,
-  "passed_tests": 17,
-  "success_rate": 94.44444444444444,
+  "timestamp": "2026-02-01T10:14:03.445787",
+  "total_tests": 17,
+  "passed_tests": 16,
+  "success_rate": 94.11764705882352,
   "results": [
     {
       "test": "User Registration",
@@ -25,13 +25,13 @@
     {
       "test": "Get Player Stats",
       "success": true,
-      "details": "Money: \u20ac1000.0",
+      "details": "Money: \u20ac1162.12",
       "response_data": null
     },
     {
       "test": "Daily Reward Claim",
       "success": true,
-      "details": "Reward: \u20ac162.12",
+      "details": "Already claimed today (expected)",
       "response_data": null
     },
     {
@@ -49,49 +49,43 @@
     {
       "test": "Quick Action: roubo_rapido",
       "success": true,
-      "details": "Success, Reward: \u20ac34.0",
+      "details": "Success, Reward: \u20ac81.43",
       "response_data": null
     },
     {
       "test": "Quick Action: hustle_rua",
       "success": true,
-      "details": "Success, Reward: \u20ac88.47",
+      "details": "Success, Reward: \u20ac65.12",
       "response_data": null
     },
     {
       "test": "Quick Action: evento_aleatorio",
       "success": true,
-      "details": "Success, Reward: \u20ac325.27",
+      "details": "Failed, Reward: \u20acNone",
       "response_data": null
     },
     {
       "test": "Mission Flow - Start",
-      "success": true,
-      "details": "Mission ID: eb24152b-98b7-4116-a160-9a9f3573f61d, Duration: 30s",
-      "response_data": null
-    },
-    {
-      "test": "Mission Flow - Complete",
-      "success": true,
-      "details": "Mission still in progress (expected)",
+      "success": false,
+      "details": "Status: 400, Data: {'detail': 'J\u00e1 tens uma miss\u00e3o em andamento'}",
       "response_data": null
     },
     {
       "test": "Get Gangs",
       "success": true,
-      "details": "Found 0 gangs",
+      "details": "Found 1 gangs",
       "response_data": null
     },
     {
       "test": "Create Gang",
       "success": true,
-      "details": "Gang: TestGang_1769940347",
+      "details": "User already in gang or gang exists (expected)",
       "response_data": null
     },
     {
       "test": "Money Laundering",
-      "success": false,
-      "details": "Status: 422",
+      "success": true,
+      "details": "Laundered \u20ac50",
       "response_data": null
     },
     {
