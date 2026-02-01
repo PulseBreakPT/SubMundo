@@ -89,7 +89,7 @@ export const Sidebar = () => {
       
       <div className="p-4 border-t border-border">
         <p className="text-text-secondary text-[10px] text-center lg:text-left uppercase tracking-widest">
-          v1.1.0
+          v1.2.0
         </p>
       </div>
     </aside>
