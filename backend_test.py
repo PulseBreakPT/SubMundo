@@ -40,7 +40,7 @@ class SubmundoAPITester:
             "response_data": response_data
         })
 
-    def make_request(self, method, endpoint, data=None, expected_status=200):
+    def make_request(self, method, endpoint, data=None, expected_status=200, params=None):
         """Make API request with proper headers"""
         url = f"{self.base_url}/api/{endpoint}"
         headers = {'Content-Type': 'application/json'}
@@ -50,13 +50,13 @@ class SubmundoAPITester:
 
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, params=params, timeout=10)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers, timeout=10)
+                response = requests.post(url, json=data, headers=headers, params=params, timeout=10)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=headers, timeout=10)
+                response = requests.put(url, json=data, headers=headers, params=params, timeout=10)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=headers, timeout=10)
+                response = requests.delete(url, headers=headers, params=params, timeout=10)
             
             success = response.status_code == expected_status
             response_data = None
