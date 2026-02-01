@@ -27,6 +27,7 @@ const menuSections = [
   {
     title: 'Negócios',
     items: [
+      { path: '/banco', icon: Landmark, label: 'Banco' },
       { path: '/propriedades', icon: Building, label: 'Propriedades' },
       { path: '/negocios', icon: Factory, label: 'Negócios' },
       { path: '/mercado', icon: Store, label: 'Mercado' },
