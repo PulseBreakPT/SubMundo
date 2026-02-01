@@ -458,7 +458,8 @@ class SubmundoAPITester:
         success, data, status = self.make_request(
             'POST',
             'gangs/treasury/deposit',
-            {"amount": 100},  # Amount should be in request body
+            data=None,
+            params={"amount": 100},  # Amount as query parameter
             expected_status=200
         )
         
