@@ -891,9 +891,10 @@ class SubmundoAPITester:
         # Test detailed stats
         success, data, status = self.make_request('GET', 'profile/detailed-stats')
         
-        if success and 'player_stats' in data:
-            stats = data['player_stats']
-            self.log_result("Profile Detailed Stats", True, f"Retrieved detailed stats with {len(stats)} categories")
+        if success and ('combat' in data or 'economy' in data):
+            # The response contains the stats directly, not wrapped in player_stats
+            categories = [k for k in data.keys() if isinstance(data[k], dict)]
+            self.log_result("Profile Detailed Stats", True, f"Retrieved detailed stats with {len(categories)} categories")
         else:
             self.log_result("Profile Detailed Stats", False, f"Status: {status}")
         
