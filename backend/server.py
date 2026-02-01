@@ -3304,6 +3304,536 @@ async def startup_event():
 async def shutdown_db_client():
     client.close()
 
+# ============= ADVANCED GAME ENGINE ENDPOINTS =============
+
+@api_router.get("/game-state")
+async def get_game_state(current_user: dict = Depends(get_current_user)):
+    """Retorna o estado completo do jogo com todos os modificadores activos"""
+    
+    # Buscar eventos activos
+    active_events = await db.city_events.find({"status": "active"}, {"_id": 0}).to_list(10)
+    
+    # Calcular modificadores
+    modifiers = get_game_state_modifiers(
+        current_user,
+        current_user.get("main_neighborhood", "centro"),
+        active_events
+    )
+    
+    return {
+        "time_of_day": modifiers["time_of_day"],
+        "weather": modifiers["weather"],
+        "time_weather_effects": modifiers["time_weather"],
+        "notoriety": modifiers["notoriety"],
+        "event_modifiers": modifiers["events"],
+        "combined_stealth_bonus": modifiers["combined_stealth_bonus"],
+        "combined_reward_modifier": modifiers["combined_reward_modifier"],
+        "active_events": active_events,
+        "server_time": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.get("/weather")
+async def get_current_weather():
+    """Retorna clima e período do dia actuais"""
+    time_of_day = TimeWeatherSystem.get_current_time_of_day()
+    weather = TimeWeatherSystem.generate_weather()
+    modifiers = TimeWeatherSystem.calculate_combined_modifiers(time_of_day, weather)
+    
+    time_labels = {
+        "dawn": "Madrugada",
+        "morning": "Manhã", 
+        "afternoon": "Tarde",
+        "evening": "Entardecer",
+        "night": "Noite",
+        "late_night": "Alta Noite"
+    }
+    
+    weather_labels = {
+        "clear": "Céu Limpo",
+        "cloudy": "Nublado",
+        "rain": "Chuva",
+        "storm": "Tempestade",
+        "fog": "Nevoeiro",
+        "heat": "Onda de Calor"
+    }
+    
+    weather_icons = {
+        "clear": "sun",
+        "cloudy": "cloud",
+        "rain": "cloud-rain",
+        "storm": "cloud-lightning",
+        "fog": "cloud-fog",
+        "heat": "thermometer"
+    }
+    
+    time_icons = {
+        "dawn": "sunrise",
+        "morning": "sun",
+        "afternoon": "sun",
+        "evening": "sunset",
+        "night": "moon",
+        "late_night": "moon-stars"
+    }
+    
+    return {
+        "time_of_day": {
+            "id": time_of_day.value,
+            "label": time_labels.get(time_of_day.value, "Desconhecido"),
+            "icon": time_icons.get(time_of_day.value, "clock")
+        },
+        "weather": {
+            "id": weather.value,
+            "label": weather_labels.get(weather.value, "Desconhecido"),
+            "icon": weather_icons.get(weather.value, "cloud")
+        },
+        "effects": {
+            "stealth_bonus": modifiers["stealth_total"],
+            "visibility": int(modifiers["visibility"] * 100),
+            "police_activity": int(modifiers["police_multiplier"] * 100),
+            "crime_opportunity": int(modifiers.get("crime_opportunity", 0.5) * 100)
+        }
+    }
+
+@api_router.get("/notoriety")
+async def get_player_notoriety(current_user: dict = Depends(get_current_user)):
+    """Retorna informação de notoriedade do jogador"""
+    points = NotorietySystem.calculate_notoriety_points(current_user)
+    rank = NotorietySystem.get_rank(points)
+    benefits = NotorietySystem.get_rank_benefits(rank)
+    
+    # Próximo rank
+    rank_thresholds = {
+        "unknown": 0,
+        "street_rat": 100,
+        "small_time": 500,
+        "rising_star": 1500,
+        "made_man": 4000,
+        "shot_caller": 10000,
+        "crime_lord": 25000,
+        "kingpin": 50000
+    }
+    
+    rank_names = {
+        "unknown": "Desconhecido",
+        "street_rat": "Rato de Rua",
+        "small_time": "Pequeno Criminoso",
+        "rising_star": "Estrela em Ascensão",
+        "made_man": "Homem Feito",
+        "shot_caller": "Mandachuva",
+        "crime_lord": "Senhor do Crime",
+        "kingpin": "Rei do Submundo"
+    }
+    
+    current_threshold = rank_thresholds.get(rank.value, 0)
+    next_rank = None
+    next_threshold = None
+    progress = 100
+    
+    ranks_list = list(rank_thresholds.keys())
+    current_index = ranks_list.index(rank.value) if rank.value in ranks_list else 0
+    
+    if current_index < len(ranks_list) - 1:
+        next_rank = ranks_list[current_index + 1]
+        next_threshold = rank_thresholds[next_rank]
+        progress = ((points - current_threshold) / (next_threshold - current_threshold)) * 100
+    
+    return {
+        "points": points,
+        "rank": {
+            "id": rank.value,
+            "name": rank_names.get(rank.value, rank.value),
+            "threshold": current_threshold
+        },
+        "next_rank": {
+            "id": next_rank,
+            "name": rank_names.get(next_rank, "Máximo"),
+            "threshold": next_threshold,
+            "progress": min(100, max(0, progress))
+        } if next_rank else None,
+        "benefits": {
+            "price_discount": benefits["price_discount"],
+            "recruitment_bonus": benefits["recruitment_bonus"],
+            "respect_modifier": benefits["respect_modifier"],
+            "special_missions": benefits["special_missions"],
+            "media_attention": benefits["media_attention"]
+        }
+    }
+
+@api_router.get("/heists")
+async def get_available_heists(current_user: dict = Depends(get_current_user)):
+    """Retorna heists disponíveis para o jogador"""
+    player_level = current_user.get("level", 1)
+    
+    heists = []
+    for heist in HeistSystem.HEIST_TEMPLATES:
+        # Verificar cooldown
+        last_heist = await db.heist_history.find_one({
+            "player_id": current_user["id"],
+            "heist_id": heist["id"],
+            "completed_at": {"$gte": datetime.now(timezone.utc) - timedelta(hours=heist["cooldown_hours"])}
+        })
+        
+        on_cooldown = last_heist is not None
+        cooldown_ends = None
+        if last_heist:
+            cooldown_ends = (last_heist["completed_at"] + timedelta(hours=heist["cooldown_hours"])).isoformat()
+        
+        # Calcular se jogador pode fazer
+        can_attempt = player_level >= heist["difficulty"] and not on_cooldown
+        
+        heists.append({
+            "id": heist["id"],
+            "name": heist["name"],
+            "description": heist["description"],
+            "difficulty": heist["difficulty"],
+            "phases": len(heist["phases"]),
+            "phase_details": heist["phases"],
+            "crew_required": heist["crew_required"],
+            "base_reward": heist["base_reward"],
+            "max_reward": heist["max_reward"],
+            "heat_impact": heist["heat_impact"],
+            "cooldown_hours": heist["cooldown_hours"],
+            "on_cooldown": on_cooldown,
+            "cooldown_ends": cooldown_ends,
+            "can_attempt": can_attempt,
+            "level_required": heist["difficulty"]
+        })
+    
+    return heists
+
+@api_router.post("/heists/{heist_id}/start")
+async def start_heist(heist_id: str, current_user: dict = Depends(get_current_user)):
+    """Inicia um heist"""
+    # Encontrar o heist
+    heist = next((h for h in HeistSystem.HEIST_TEMPLATES if h["id"] == heist_id), None)
+    if not heist:
+        raise HTTPException(status_code=404, detail="Heist não encontrado")
+    
+    # Verificar nível
+    if current_user.get("level", 1) < heist["difficulty"]:
+        raise HTTPException(status_code=400, detail="Nível insuficiente")
+    
+    # Verificar cooldown
+    last_heist = await db.heist_history.find_one({
+        "player_id": current_user["id"],
+        "heist_id": heist_id,
+        "completed_at": {"$gte": datetime.now(timezone.utc) - timedelta(hours=heist["cooldown_hours"])}
+    })
+    if last_heist:
+        raise HTTPException(status_code=400, detail="Heist em cooldown")
+    
+    # Criar sessão de heist
+    heist_session = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "heist_id": heist_id,
+        "started_at": datetime.now(timezone.utc),
+        "current_phase": 0,
+        "phase_results": [],
+        "status": "in_progress"
+    }
+    
+    await db.heist_sessions.insert_one(heist_session)
+    
+    return {
+        "session_id": heist_session["id"],
+        "heist": heist["name"],
+        "total_phases": len(heist["phases"]),
+        "current_phase": 0,
+        "next_phase": heist["phases"][0]
+    }
+
+@api_router.post("/heists/session/{session_id}/phase")
+async def complete_heist_phase(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Completa uma fase do heist"""
+    session = await db.heist_sessions.find_one({"id": session_id, "player_id": current_user["id"]})
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+    
+    if session["status"] != "in_progress":
+        raise HTTPException(status_code=400, detail="Heist já terminado")
+    
+    heist = next((h for h in HeistSystem.HEIST_TEMPLATES if h["id"] == session["heist_id"]), None)
+    current_phase_idx = session["current_phase"]
+    
+    if current_phase_idx >= len(heist["phases"]):
+        raise HTTPException(status_code=400, detail="Todas as fases completadas")
+    
+    phase = heist["phases"][current_phase_idx]
+    
+    # Calcular sucesso
+    player_skills = current_user.get("skills", {})
+    success, efficiency = HeistSystem.calculate_phase_success(
+        player_skills,
+        phase.get("skill"),
+        True,  # Simplificado - assumir que tem items
+        0
+    )
+    
+    phase_result = {
+        "phase": current_phase_idx,
+        "name": phase["name"],
+        "success": success,
+        "efficiency": efficiency
+    }
+    
+    # Atualizar sessão
+    new_phase_idx = current_phase_idx + 1
+    session["phase_results"].append(phase_result)
+    
+    if not success:
+        # Falhou - heist termina
+        await db.heist_sessions.update_one(
+            {"id": session_id},
+            {"$set": {"status": "failed", "phase_results": session["phase_results"]}}
+        )
+        
+        # Aumentar heat
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"heat_individual": heist["heat_impact"] // 2}}
+        )
+        
+        return {
+            "success": False,
+            "phase": phase["name"],
+            "message": f"Falha na fase '{phase['name']}'! O heist foi abortado.",
+            "heat_gained": heist["heat_impact"] // 2,
+            "heist_complete": True,
+            "heist_success": False
+        }
+    
+    if new_phase_idx >= len(heist["phases"]):
+        # Heist completo com sucesso!
+        efficiencies = [r["efficiency"] for r in session["phase_results"]]
+        reward_data = HeistSystem.calculate_heist_reward(heist, efficiencies, 0)
+        
+        await db.heist_sessions.update_one(
+            {"id": session_id},
+            {"$set": {"status": "completed", "phase_results": session["phase_results"]}}
+        )
+        
+        # Registrar no histórico
+        await db.heist_history.insert_one({
+            "player_id": current_user["id"],
+            "heist_id": heist["id"],
+            "completed_at": datetime.now(timezone.utc),
+            "reward": reward_data["total_reward"],
+            "efficiency": reward_data["efficiency"]
+        })
+        
+        # Dar recompensa e heat
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {
+                "$inc": {
+                    "dirty_money": reward_data["total_reward"],
+                    "heat_individual": heist["heat_impact"],
+                    "reputation": heist["difficulty"] * 2,
+                    "experience": heist["difficulty"] * 50,
+                    "total_earnings": reward_data["total_reward"]
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "phase": phase["name"],
+            "message": f"HEIST COMPLETO! '{heist['name']}' foi um sucesso!",
+            "reward": reward_data["total_reward"],
+            "efficiency": round(reward_data["efficiency"], 1),
+            "heat_gained": heist["heat_impact"],
+            "reputation_gained": heist["difficulty"] * 2,
+            "heist_complete": True,
+            "heist_success": True
+        }
+    
+    # Próxima fase
+    await db.heist_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"current_phase": new_phase_idx, "phase_results": session["phase_results"]}}
+    )
+    
+    return {
+        "success": True,
+        "phase": phase["name"],
+        "efficiency": round(efficiency * 100, 1),
+        "message": f"Fase '{phase['name']}' completada!",
+        "heist_complete": False,
+        "next_phase": heist["phases"][new_phase_idx]
+    }
+
+@api_router.get("/procedural-missions")
+async def get_procedural_missions(current_user: dict = Depends(get_current_user)):
+    """Gera missões procedurais únicas para o jogador"""
+    player_level = current_user.get("level", 1)
+    
+    # Gerar 5 missões procedurais
+    missions = []
+    for _ in range(5):
+        mission = ProceduralMissionGenerator.generate_mission(player_level)
+        
+        # Calcular dificuldade ajustada
+        active_events = await db.city_events.find({"status": "active"}, {"_id": 0}).to_list(10)
+        modifiers = get_game_state_modifiers(current_user, current_user.get("main_neighborhood", "centro"), active_events)
+        
+        difficulty_info = calculate_mission_difficulty_adjusted(
+            mission["difficulty"],
+            current_user,
+            modifiers
+        )
+        
+        mission["adjusted_difficulty"] = difficulty_info["adjusted_difficulty"]
+        mission["success_chance"] = difficulty_info["success_chance"]
+        missions.append(mission)
+    
+    return missions
+
+@api_router.get("/police-status")
+async def get_police_status(current_user: dict = Depends(get_current_user)):
+    """Retorna status policial actual"""
+    neighborhood = current_user.get("main_neighborhood", "centro")
+    player_heat = current_user.get("heat_individual", 0)
+    
+    # Buscar heat do bairro
+    nh = await db.neighborhoods.find_one({"id": neighborhood})
+    neighborhood_heat = nh.get("heat_level", 20) if nh else 20
+    
+    time_of_day = TimeWeatherSystem.get_current_time_of_day()
+    
+    alert_level = PoliceAISystem.calculate_alert_level(
+        player_heat,
+        neighborhood_heat,
+        "idle",
+        time_of_day
+    )
+    
+    response = PoliceAISystem.generate_police_response(alert_level, neighborhood)
+    patrol = PoliceAISystem.PATROL_PATTERNS.get(neighborhood, {})
+    
+    alert_names = {
+        0: "Nenhum",
+        1: "Patrulha",
+        2: "Busca",
+        3: "Perseguição",
+        4: "Lockdown",
+        5: "Caça ao Homem"
+    }
+    
+    return {
+        "alert_level": {
+            "value": alert_level.value,
+            "name": alert_names.get(alert_level.value, "Desconhecido")
+        },
+        "response": response,
+        "neighborhood_info": {
+            "id": neighborhood,
+            "patrol_frequency": patrol.get("frequency", "medium"),
+            "response_time": patrol.get("response_time", 5),
+            "units_available": patrol.get("units", 3)
+        },
+        "player_heat": player_heat,
+        "neighborhood_heat": neighborhood_heat,
+        "advice": "Mantém-te discreto" if alert_level.value > 2 else "Operações seguras"
+    }
+
+@api_router.get("/lore/neighborhoods/{neighborhood_id}")
+async def get_neighborhood_lore(neighborhood_id: str):
+    """Retorna lore detalhada de um bairro"""
+    lore_data = {
+        "centro": {
+            "name": "Centro",
+            "fullName": "Baixa-Chiado / Centro Histórico",
+            "nickname": "O Coração Podre",
+            "description": "O centro de Lisboa é onde tudo começou e onde tudo termina. As ruas calcetadas escondem séculos de história - e décadas de crime.",
+            "history": "Antes da crise, o Centro era território neutro. Hoje, múltiplas facções mantêm uma paz instável.",
+            "dangers": ["Alta presença policial", "Múltiplas gangues", "Câmaras de vigilância"],
+            "opportunities": ["Carteirismo de turistas", "Proteção de lojas", "Lavagem através de estabelecimentos"],
+            "landmarks": [
+                {"name": "Rossio", "description": "Praça central, território neutro"},
+                {"name": "Rua Augusta", "description": "Artéria comercial, ideal para carteirismo"},
+                {"name": "Café A Brasileira", "description": "Ponto de encontro para negociações"}
+            ],
+            "controllingFactions": "Território disputado - várias facções menores"
+        },
+        "porto": {
+            "name": "Porto Industrial",
+            "fullName": "Zona Portuária / Docas",
+            "nickname": "O Armazém",
+            "description": "A zona portuária onde o contrabando flui como água. Armazéns abandonados escondem operações de milhões.",
+            "history": "Sempre foi ponto de entrada para mercadoria ilegal. A polícia raramente se aventura aqui à noite.",
+            "dangers": ["Gangues de estivadores", "Contrabandistas armados", "Pouca iluminação"],
+            "opportunities": ["Contrabando marítimo", "Armazenamento seguro", "Importação de armas"],
+            "landmarks": [
+                {"name": "Doca Seca", "description": "Ponto de descarga nocturna"},
+                {"name": "Armazém 7", "description": "Leilões clandestinos"},
+                {"name": "Grua Velha", "description": "Ponto de vigia"}
+            ],
+            "controllingFactions": "Sindicato dos Estivadores"
+        },
+        "favela": {
+            "name": "Favela Norte",
+            "fullName": "Bairros Degradados / Zona Norte",
+            "nickname": "O Labirinto",
+            "description": "Ruas estreitas e becos sem saída. Quem não conhece, perde-se. Quem conhece, controla.",
+            "history": "Nasceu da pobreza e cresceu com o crime. Aqui a lei é feita por quem tem mais armas.",
+            "dangers": ["Violência constante", "Tiroteios frequentes", "Gangues juvenis"],
+            "opportunities": ["Laboratórios clandestinos", "Recrutamento barato", "Esconderijos"],
+            "landmarks": [
+                {"name": "Beco do Rato", "description": "Ponto de venda de drogas"},
+                {"name": "Praça Velha", "description": "Território dos Corvos"},
+                {"name": "Igreja Abandonada", "description": "Refúgio seguro"}
+            ],
+            "controllingFactions": "Os Corvos"
+        },
+        "noite": {
+            "name": "Distrito da Noite",
+            "fullName": "Cais do Sodré / Santos",
+            "nickname": "A Zona",
+            "description": "Onde Lisboa vem pecar. Discotecas, bares, e negócios que só funcionam depois da meia-noite.",
+            "history": "Sempre foi zona de boémia. Com a crise, tornou-se centro de tráfico de luxo.",
+            "dangers": ["Competição nocturna", "Clientes imprevisíveis", "Overdoses"],
+            "opportunities": ["Venda de drogas premium", "Festas privadas", "Contactos de elite"],
+            "landmarks": [
+                {"name": "Pink Street", "description": "Centro da vida nocturna"},
+                {"name": "Club Noir", "description": "VIPs e negócios obscuros"},
+                {"name": "Doca de Santo Amaro", "description": "Iates e dinheiro sujo"}
+            ],
+            "controllingFactions": "Sindicato da Noite"
+        },
+        "elite": {
+            "name": "Bairro Elite",
+            "fullName": "Restelo / Belém",
+            "nickname": "O Museu",
+            "description": "Mansões, embaixadas, e fortunas antigas. Crime aqui usa fato e gravata.",
+            "history": "Sempre foi reduto dos poderosos. Hoje, abriga a elite criminal que controla a cidade nas sombras.",
+            "dangers": ["Segurança privada", "Investigações federais", "Alvos de alto perfil"],
+            "opportunities": ["Fraude de elite", "Roubo de arte", "Chantagem"],
+            "landmarks": [
+                {"name": "Torre de Belém", "description": "Marco histórico e vigia"},
+                {"name": "Palácio das Sombras", "description": "Reuniões secretas"},
+                {"name": "Clube dos Industriais", "description": "Onde se fazem negócios"}
+            ],
+            "controllingFactions": "A Fundação"
+        }
+    }
+    
+    if neighborhood_id not in lore_data:
+        # Retornar dados genéricos
+        nh = await db.neighborhoods.find_one({"id": neighborhood_id})
+        if not nh:
+            raise HTTPException(status_code=404, detail="Bairro não encontrado")
+        
+        return {
+            "name": nh.get("name", neighborhood_id),
+            "description": nh.get("description", "Informação não disponível"),
+            "dangers": ["Desconhecidos"],
+            "opportunities": ["Por descobrir"],
+            "landmarks": []
+        }
+    
+    return lore_data[neighborhood_id]
+
 app.include_router(api_router)
 
 app.add_middleware(
