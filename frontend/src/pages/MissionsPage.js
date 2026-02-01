@@ -217,6 +217,8 @@ export default function MissionsPage() {
           { id: 'all', label: 'Todas' },
           { id: 'crime', label: 'Crime' },
           { id: 'legal', label: 'Legal' },
+          { id: 'procedural', label: '✨ Especiais' },
+          { id: 'heists', label: '🎯 Heists' },
         ].map(({ id, label }) => (
           <button
             key={id}
@@ -233,6 +235,189 @@ export default function MissionsPage() {
           </button>
         ))}
       </div>
+
+      {/* Active Heist Session */}
+      {activeHeistSession && (
+        <Card className="border-gold bg-gold/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Crosshair size={18} className="text-gold animate-pulse" />
+            <h3 className="font-heading text-lg text-gold">HEIST EM PROGRESSO</h3>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="font-heading text-text-primary">{activeHeistSession.heist}</h4>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="gold">
+                Fase {activeHeistSession.current_phase + 1} de {activeHeistSession.total_phases}
+              </Badge>
+            </div>
+          </div>
+          
+          {activeHeistSession.next_phase && (
+            <div className="bg-surface p-3 border border-border mb-4">
+              <p className="text-xs text-text-secondary uppercase mb-1">Próxima Fase</p>
+              <p className="font-heading text-text-primary">{activeHeistSession.next_phase.name}</p>
+              {activeHeistSession.next_phase.skill && (
+                <p className="text-sm text-primary mt-1">Skill: {activeHeistSession.next_phase.skill}</p>
+              )}
+              <p className="text-xs text-text-secondary mt-1">Duração: {activeHeistSession.next_phase.duration}s</p>
+            </div>
+          )}
+          
+          <Button
+            variant="gold"
+            fullWidth
+            onClick={handleHeistPhase}
+            loading={heistLoading}
+          >
+            Executar Fase
+          </Button>
+        </Card>
+      )}
+
+      {/* Heists Section */}
+      {filter === 'heists' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Crosshair className="text-gold" size={24} />
+            <h2 className="font-heading text-xl text-text-primary">Grandes Golpes</h2>
+          </div>
+          
+          {heists.length === 0 ? (
+            <Card>
+              <p className="text-text-secondary text-center">A carregar heists...</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {heists.map(heist => (
+                <Card key={heist.id} className={heist.on_cooldown ? 'opacity-60' : ''}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-heading text-lg text-text-primary">{heist.name}</h3>
+                      <p className="text-sm text-text-secondary">{heist.description}</p>
+                    </div>
+                    {heist.on_cooldown ? (
+                      <Badge variant="default"><Lock size={12} className="mr-1" /> Cooldown</Badge>
+                    ) : heist.can_attempt ? (
+                      <Badge variant="success"><Unlock size={12} className="mr-1" /> Disponível</Badge>
+                    ) : (
+                      <Badge variant="error">Nv.{heist.level_required} req.</Badge>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={14} className="text-warning" />
+                      <span>Dificuldade: {heist.difficulty}/10</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Target size={14} className="text-primary" />
+                      <span>{heist.phases} fases</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users size={14} className="text-text-secondary" />
+                      <span>Crew: {heist.crew_required}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Flame size={14} className="text-error" />
+                      <span>+{heist.heat_impact}% heat</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-success font-body text-lg">€{heist.base_reward.toLocaleString()}</span>
+                      <span className="text-text-secondary"> - </span>
+                      <span className="text-gold font-body text-lg">€{heist.max_reward.toLocaleString()}</span>
+                    </div>
+                    <Button
+                      variant="gold"
+                      disabled={!heist.can_attempt || heist.on_cooldown || activeHeistSession}
+                      onClick={() => handleStartHeist(heist.id)}
+                      loading={heistLoading}
+                    >
+                      {heist.on_cooldown ? 'Em Cooldown' : 'Iniciar Heist'}
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Procedural Missions Section */}
+      {filter === 'procedural' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="text-purple-400" size={24} />
+            <h2 className="font-heading text-xl text-text-primary">Missões Especiais</h2>
+            <Badge variant="secondary">Geradas Automaticamente</Badge>
+          </div>
+          
+          {proceduralMissions.length === 0 ? (
+            <Card>
+              <p className="text-text-secondary text-center">A gerar missões especiais...</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {proceduralMissions.map(mission => (
+                <Card key={mission.id} className="border-l-4 border-l-purple-400">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-heading text-lg text-text-primary">{mission.name}</h3>
+                      <p className="text-sm text-text-secondary">{mission.description}</p>
+                      {mission.modifiers?.length > 0 && (
+                        <div className="flex gap-2 mt-2">
+                          {mission.modifiers.map(mod => (
+                            <Badge key={mod} variant="secondary" size="sm">{mod}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant={getRiskColor(mission.difficulty)}>
+                      {getRiskLabel(mission.difficulty)}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Target size={14} className="text-primary" />
+                      <span>Sucesso: {mission.success_chance}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} className="text-text-secondary" />
+                      <span>{Math.round(mission.duration_seconds / 60)}min</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-secondary" />
+                      <span>{mission.energy_cost} energia</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Flame size={14} className="text-error" />
+                      <span>+{mission.heat_impact}% heat</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-success font-body">€{mission.reward_min.toLocaleString()}</span>
+                      <span className="text-text-secondary"> - </span>
+                      <span className="text-gold font-body">€{mission.reward_max.toLocaleString()}</span>
+                    </div>
+                    <Button
+                      variant="primary"
+                      disabled={activeMission || player.energy < mission.energy_cost}
+                    >
+                      Iniciar Missão
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Missions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
