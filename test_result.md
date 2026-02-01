@@ -150,6 +150,54 @@ backend:
         agent: "testing"
         comment: "✅ Sistema de mercado funcionando perfeitamente. Testado: estatísticas do mercado (taxa 5%), listagens ativas, criação de listagens, compra de itens, cancelamento de listagens. Todos os endpoints respondem corretamente com validações apropriadas."
 
+  - task: "Sistema de Relacionamentos NPCs"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /npcs/contacts (lista contactos com relacionamentos), GET /npcs/{id}/relationship (detalhes), POST /npcs/{id}/interact (interagir - gift, trade, request_favor, share_info)"
+
+  - task: "Sistema de Economia Dinâmica"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /economy/market-prices (preços flutuantes por categoria), GET /economy/price-history/{category} (histórico 24h), POST /economy/simulate-fluctuation (simular flutuação)"
+
+  - task: "Sistema de Territórios Avançado"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /territories/analysis (análise completa com previsões de guerra), GET /territories/{id}/power (poder específico de um território)"
+
+  - task: "Sistema de Eventos Dinâmicos"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementado endpoints: GET /events/dynamic (eventos reactivos ao estado do jogo), GET /events/impact (impacto no jogador), GET /events/predictions (previsões de eventos futuros)"
+
 frontend:
   - task: "Página de Propriedades"
     implemented: true
