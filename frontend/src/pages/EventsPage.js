@@ -162,7 +162,7 @@ export default function EventsPage() {
       </div>
 
       {/* Current Effects Summary */}
-      {effects && (
+      {effects && activeTab === 'active' && (
         <Card title="Efeitos Ativos" icon={Percent}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-surface-highlight border border-border p-4 text-center">
