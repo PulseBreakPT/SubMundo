@@ -801,23 +801,603 @@ async def get_gang_rankings(limit: int = 10):
     
     return {"rankings": rankings}
 
-# ============= GAME STATE =============
+# ============= VEHICLES SYSTEM =============
 
-@api_router.get("/game/state")
-async def get_game_state(current_user: dict = Depends(get_current_user)):
-    """Get full game state for polling"""
+VEHICLE_CATALOG = [
+    {"id": "bicicleta", "name": "Bicicleta", "description": "Transporte básico e silencioso.", "price": 500, "speed": 2, "stealth": 8, "capacity": 1, "maintenance_cost": 10, "category": "basic"},
+    {"id": "scooter", "name": "Scooter", "description": "Mobilidade urbana económica.", "price": 2000, "speed": 4, "stealth": 6, "capacity": 1, "maintenance_cost": 50, "category": "basic"},
+    {"id": "carro_usado", "name": "Carro Usado", "description": "Veículo discreto para o dia-a-dia.", "price": 5000, "speed": 5, "stealth": 5, "capacity": 4, "maintenance_cost": 100, "category": "standard"},
+    {"id": "mota_desportiva", "name": "Mota Desportiva", "description": "Rápida e perfeita para fugas.", "price": 15000, "speed": 9, "stealth": 4, "capacity": 1, "maintenance_cost": 200, "category": "sport"},
+    {"id": "sedan_luxo", "name": "Sedan de Luxo", "description": "Conforto e estilo para negócios.", "price": 30000, "speed": 7, "stealth": 3, "capacity": 4, "maintenance_cost": 400, "category": "luxury"},
+    {"id": "suv_blindado", "name": "SUV Blindado", "description": "Proteção máxima para situações perigosas.", "price": 50000, "speed": 5, "stealth": 2, "capacity": 6, "maintenance_cost": 600, "category": "armored"},
+    {"id": "carrinha_carga", "name": "Carrinha de Carga", "description": "Ideal para transportar mercadoria.", "price": 20000, "speed": 4, "stealth": 5, "capacity": 20, "maintenance_cost": 300, "category": "utility"},
+    {"id": "desportivo", "name": "Desportivo Exótico", "description": "O sonho de qualquer criminoso.", "price": 100000, "speed": 10, "stealth": 1, "capacity": 2, "maintenance_cost": 1000, "category": "exotic"},
+]
+
+@api_router.get("/vehicles/catalog")
+async def get_vehicle_catalog(current_user: dict = Depends(get_current_user)):
+    """Get all available vehicles to buy"""
+    return {"vehicles": VEHICLE_CATALOG}
+
+@api_router.get("/vehicles/my")
+async def get_my_vehicles(current_user: dict = Depends(get_current_user)):
+    """Get player's owned vehicles"""
+    vehicles = await db.player_vehicles.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(50)
+    return {"vehicles": vehicles}
+
+@api_router.post("/vehicles/buy/{vehicle_id}")
+async def buy_vehicle(vehicle_id: str, current_user: dict = Depends(get_current_user)):
+    """Buy a vehicle"""
+    # Find vehicle in catalog
+    vehicle_template = next((v for v in VEHICLE_CATALOG if v["id"] == vehicle_id), None)
+    if not vehicle_template:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    
+    # Check money
+    if player["clean_money"] < vehicle_template["price"]:
+        raise HTTPException(status_code=400, detail="Dinheiro limpo insuficiente")
+    
+    # Check if already owns this vehicle
+    existing = await db.player_vehicles.find_one({
+        "player_id": current_user["id"],
+        "vehicle_id": vehicle_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Já tens este veículo")
+    
+    # Deduct money
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -vehicle_template["price"]}}
+    )
+    
+    # Add vehicle
+    new_vehicle = {
+        "id": str(uuid.uuid4()),
+        "player_id": current_user["id"],
+        "vehicle_id": vehicle_id,
+        "name": vehicle_template["name"],
+        "speed": vehicle_template["speed"],
+        "stealth": vehicle_template["stealth"],
+        "capacity": vehicle_template["capacity"],
+        "maintenance_cost": vehicle_template["maintenance_cost"],
+        "condition": 100,
+        "is_active": False,
+        "purchased_at": datetime.now(timezone.utc)
+    }
+    
+    await db.player_vehicles.insert_one(new_vehicle)
+    
+    await add_player_history(current_user["id"], "vehicle_purchased", {
+        "vehicle": vehicle_template["name"],
+        "price": vehicle_template["price"]
+    })
+    
+    return {"success": True, "message": f"Compraste {vehicle_template['name']}!", "vehicle": new_vehicle}
+
+@api_router.post("/vehicles/{vehicle_instance_id}/activate")
+async def activate_vehicle(vehicle_instance_id: str, current_user: dict = Depends(get_current_user)):
+    """Set a vehicle as active"""
+    vehicle = await db.player_vehicles.find_one({
+        "id": vehicle_instance_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    
+    # Deactivate all vehicles
+    await db.player_vehicles.update_many(
+        {"player_id": current_user["id"]},
+        {"$set": {"is_active": False}}
+    )
+    
+    # Activate this one
+    await db.player_vehicles.update_one(
+        {"id": vehicle_instance_id},
+        {"$set": {"is_active": True}}
+    )
+    
+    return {"success": True, "message": f"{vehicle['name']} está agora ativo!"}
+
+@api_router.post("/vehicles/{vehicle_instance_id}/repair")
+async def repair_vehicle(vehicle_instance_id: str, current_user: dict = Depends(get_current_user)):
+    """Repair a vehicle"""
+    vehicle = await db.player_vehicles.find_one({
+        "id": vehicle_instance_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    
+    if vehicle["condition"] >= 100:
+        raise HTTPException(status_code=400, detail="Veículo já está em perfeitas condições")
+    
+    repair_cost = int((100 - vehicle["condition"]) * vehicle["maintenance_cost"] / 100)
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < repair_cost:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente para reparação")
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -repair_cost}}
+    )
+    
+    await db.player_vehicles.update_one(
+        {"id": vehicle_instance_id},
+        {"$set": {"condition": 100}}
+    )
+    
+    return {"success": True, "message": f"Veículo reparado por €{repair_cost}!", "cost": repair_cost}
+
+@api_router.post("/vehicles/{vehicle_instance_id}/sell")
+async def sell_vehicle(vehicle_instance_id: str, current_user: dict = Depends(get_current_user)):
+    """Sell a vehicle"""
+    vehicle = await db.player_vehicles.find_one({
+        "id": vehicle_instance_id,
+        "player_id": current_user["id"]
+    })
+    
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    
+    # Find original price
+    vehicle_template = next((v for v in VEHICLE_CATALOG if v["id"] == vehicle["vehicle_id"]), None)
+    if not vehicle_template:
+        raise HTTPException(status_code=500, detail="Erro ao encontrar dados do veículo")
+    
+    # Sell for 50% of original price * condition
+    sell_price = int(vehicle_template["price"] * 0.5 * (vehicle["condition"] / 100))
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": sell_price}}
+    )
+    
+    await db.player_vehicles.delete_one({"id": vehicle_instance_id})
+    
+    await add_player_history(current_user["id"], "vehicle_sold", {
+        "vehicle": vehicle["name"],
+        "price": sell_price
+    })
+    
+    return {"success": True, "message": f"Vendeste {vehicle['name']} por €{sell_price}!", "amount": sell_price}
+
+# ============= GANG WARS SYSTEM =============
+
+@api_router.get("/wars/active")
+async def get_active_wars(current_user: dict = Depends(get_current_user)):
+    """Get all active gang wars"""
+    wars = await db.gang_wars.find(
+        {"status": "active"},
+        {"_id": 0}
+    ).to_list(50)
+    return {"wars": wars}
+
+@api_router.get("/wars/my")
+async def get_my_gang_wars(current_user: dict = Depends(get_current_user)):
+    """Get wars involving player's gang"""
+    if not current_user.get("gang_id"):
+        return {"wars": []}
+    
+    wars = await db.gang_wars.find(
+        {"$or": [
+            {"attacker_gang_id": current_user["gang_id"]},
+            {"defender_gang_id": current_user["gang_id"]}
+        ]},
+        {"_id": 0}
+    ).sort("started_at", -1).to_list(20)
+    
+    return {"wars": wars}
+
+@api_router.post("/wars/attack/{neighborhood_id}")
+async def start_territory_war(neighborhood_id: str, current_user: dict = Depends(get_current_user)):
+    """Start a war to capture a neighborhood"""
+    if not current_user.get("gang_id"):
+        raise HTTPException(status_code=400, detail="Precisas de pertencer a uma gangue")
+    
+    # Check if leader
+    gang = await db.gangs.find_one({"id": current_user["gang_id"]})
+    if not gang:
+        raise HTTPException(status_code=404, detail="Gangue não encontrada")
+    
+    if gang["leader_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Apenas o líder pode iniciar guerras")
+    
+    # Check neighborhood
+    neighborhood = await db.neighborhoods.find_one({"id": neighborhood_id})
+    if not neighborhood:
+        raise HTTPException(status_code=404, detail="Bairro não encontrado")
+    
+    # Check if already owned
+    if neighborhood.get("controlling_gang") == current_user["gang_id"]:
+        raise HTTPException(status_code=400, detail="Já controlas este território")
+    
+    # Check for existing war
+    existing_war = await db.gang_wars.find_one({
+        "neighborhood_id": neighborhood_id,
+        "status": "active"
+    })
+    if existing_war:
+        raise HTTPException(status_code=400, detail="Já existe uma guerra por este território")
+    
+    # War cost based on neighborhood value
+    war_cost = neighborhood["economic_value"] * 100
+    
+    if gang["treasury"] < war_cost:
+        raise HTTPException(status_code=400, detail=f"Cofre da gangue insuficiente. Precisa: €{war_cost}")
+    
+    # Deduct from treasury
+    await db.gangs.update_one(
+        {"id": current_user["gang_id"]},
+        {"$inc": {"treasury": -war_cost}}
+    )
+    
+    # Get defender gang info
+    defender_gang = None
+    defender_gang_name = "Neutro"
+    if neighborhood.get("controlling_gang"):
+        defender_gang = await db.gangs.find_one({"id": neighborhood["controlling_gang"]})
+        if defender_gang:
+            defender_gang_name = defender_gang["name"]
+    
+    # Create war
+    war_id = str(uuid.uuid4())
+    war_duration = 300  # 5 minutes
+    
+    # Calculate power (members * avg reputation)
+    attacker_members = await db.players.find({"gang_id": current_user["gang_id"]}).to_list(100)
+    attacker_power = len(attacker_members) * (sum(m.get("reputation", 0) for m in attacker_members) / max(len(attacker_members), 1) + 10)
+    
+    defender_power = 50  # Base neutral defense
+    if defender_gang:
+        defender_members = await db.players.find({"gang_id": defender_gang["id"]}).to_list(100)
+        defender_power = len(defender_members) * (sum(m.get("reputation", 0) for m in defender_members) / max(len(defender_members), 1) + 10)
+    
+    new_war = {
+        "id": war_id,
+        "neighborhood_id": neighborhood_id,
+        "neighborhood_name": neighborhood["name"],
+        "attacker_gang_id": current_user["gang_id"],
+        "attacker_gang_name": gang["name"],
+        "attacker_power": attacker_power,
+        "defender_gang_id": neighborhood.get("controlling_gang"),
+        "defender_gang_name": defender_gang_name,
+        "defender_power": defender_power,
+        "war_cost": war_cost,
+        "status": "active",
+        "started_at": datetime.now(timezone.utc),
+        "ends_at": datetime.now(timezone.utc) + timedelta(seconds=war_duration),
+        "result": None
+    }
+    
+    await db.gang_wars.insert_one(new_war)
+    
+    # Increase neighborhood heat
+    await db.neighborhoods.update_one(
+        {"id": neighborhood_id},
+        {"$inc": {"heat_level": 20}}
+    )
+    
+    await add_player_history(current_user["id"], "war_started", {
+        "neighborhood": neighborhood["name"],
+        "cost": war_cost
+    })
+    
+    return {
+        "success": True,
+        "message": f"Guerra iniciada por {neighborhood['name']}!",
+        "war": new_war
+    }
+
+@api_router.post("/wars/{war_id}/resolve")
+async def resolve_war(war_id: str, current_user: dict = Depends(get_current_user)):
+    """Resolve a war after time has passed"""
+    war = await db.gang_wars.find_one({"id": war_id})
+    if not war:
+        raise HTTPException(status_code=404, detail="Guerra não encontrada")
+    
+    if war["status"] != "active":
+        raise HTTPException(status_code=400, detail="Guerra já foi resolvida")
+    
+    # Check if time has passed
+    ends_at = war["ends_at"]
+    if isinstance(ends_at, str):
+        ends_at = datetime.fromisoformat(ends_at.replace('Z', '+00:00'))
+    elif ends_at.tzinfo is None:
+        ends_at = ends_at.replace(tzinfo=timezone.utc)
+    
+    now = datetime.now(timezone.utc)
+    if now < ends_at:
+        remaining = (ends_at - now).total_seconds()
+        raise HTTPException(status_code=400, detail=f"Guerra ainda em progresso. Faltam {int(remaining)} segundos.")
+    
+    # Calculate result
+    attacker_roll = random.randint(1, 100) + war["attacker_power"]
+    defender_roll = random.randint(1, 100) + war["defender_power"]
+    
+    attacker_wins = attacker_roll > defender_roll
+    
+    if attacker_wins:
+        # Attacker wins - transfer territory
+        await db.neighborhoods.update_one(
+            {"id": war["neighborhood_id"]},
+            {
+                "$set": {
+                    "controlling_gang": war["attacker_gang_id"],
+                    "control_status": "controlado"
+                }
+            }
+        )
+        
+        # Update gang territories
+        await db.gangs.update_one(
+            {"id": war["attacker_gang_id"]},
+            {
+                "$addToSet": {"territories": war["neighborhood_id"]},
+                "$inc": {"reputation": 50}
+            }
+        )
+        
+        # Remove from defender
+        if war["defender_gang_id"]:
+            await db.gangs.update_one(
+                {"id": war["defender_gang_id"]},
+                {
+                    "$pull": {"territories": war["neighborhood_id"]},
+                    "$inc": {"reputation": -25}
+                }
+            )
+        
+        result = "attacker_victory"
+        message = f"{war['attacker_gang_name']} conquistou {war['neighborhood_name']}!"
+    else:
+        # Defender wins
+        if war["defender_gang_id"]:
+            await db.gangs.update_one(
+                {"id": war["defender_gang_id"]},
+                {"$inc": {"reputation": 25}}
+            )
+        
+        await db.gangs.update_one(
+            {"id": war["attacker_gang_id"]},
+            {"$inc": {"reputation": -10}}
+        )
+        
+        result = "defender_victory"
+        message = f"{war['defender_gang_name']} defendeu {war['neighborhood_name']}!"
+    
+    # Update war record
+    await db.gang_wars.update_one(
+        {"id": war_id},
+        {"$set": {"status": "completed", "result": result}}
+    )
+    
+    return {"success": True, "message": message, "result": result}
+
+@api_router.post("/gangs/treasury/deposit")
+async def deposit_to_treasury(amount: float, current_user: dict = Depends(get_current_user)):
+    """Deposit money to gang treasury"""
+    if not current_user.get("gang_id"):
+        raise HTTPException(status_code=400, detail="Não pertences a nenhuma gangue")
+    
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Montante inválido")
+    
+    player = await db.players.find_one({"id": current_user["id"]})
+    if player["clean_money"] < amount:
+        raise HTTPException(status_code=400, detail="Dinheiro insuficiente")
+    
+    await db.players.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"clean_money": -amount}}
+    )
+    
+    await db.gangs.update_one(
+        {"id": current_user["gang_id"]},
+        {"$inc": {"treasury": amount}}
+    )
+    
+    await add_player_history(current_user["id"], "treasury_deposit", {"amount": amount})
+    
+    return {"success": True, "message": f"Depositaste €{amount:.2f} no cofre da gangue!"}
+
+# ============= CITY EVENTS SYSTEM =============
+
+EVENT_TEMPLATES = [
+    {
+        "id": "police_crackdown",
+        "name": "Operação Policial",
+        "description": "A polícia está em força nas ruas. Cuidado redobrado!",
+        "duration_minutes": 30,
+        "effects": {"heat_multiplier": 2.0, "reward_multiplier": 0.8, "risk_modifier": 2},
+        "icon": "shield-alert"
+    },
+    {
+        "id": "festival",
+        "name": "Festival da Cidade",
+        "description": "Multidões distraídas, oportunidades abundantes!",
+        "duration_minutes": 60,
+        "effects": {"heat_multiplier": 0.7, "reward_multiplier": 1.5, "risk_modifier": -1},
+        "icon": "party-popper"
+    },
+    {
+        "id": "blackout",
+        "name": "Apagão Geral",
+        "description": "A cidade está às escuras. Caos total!",
+        "duration_minutes": 20,
+        "effects": {"heat_multiplier": 0.5, "reward_multiplier": 2.0, "risk_modifier": 0},
+        "icon": "zap-off"
+    },
+    {
+        "id": "gang_truce",
+        "name": "Trégua entre Gangues",
+        "description": "As gangues declararam paz temporária.",
+        "duration_minutes": 45,
+        "effects": {"heat_multiplier": 0.8, "reward_multiplier": 1.0, "risk_modifier": -2, "wars_disabled": True},
+        "icon": "handshake"
+    },
+    {
+        "id": "economic_boom",
+        "name": "Boom Económico",
+        "description": "Dinheiro a circular! Negócios em alta!",
+        "duration_minutes": 40,
+        "effects": {"heat_multiplier": 1.0, "reward_multiplier": 1.8, "risk_modifier": 0},
+        "icon": "trending-up"
+    },
+    {
+        "id": "heat_wave",
+        "name": "Onda de Calor",
+        "description": "Calor extremo. Menos polícia nas ruas.",
+        "duration_minutes": 50,
+        "effects": {"heat_multiplier": 0.6, "reward_multiplier": 1.0, "risk_modifier": -1},
+        "icon": "thermometer"
+    },
+    {
+        "id": "vip_visit",
+        "name": "Visita VIP",
+        "description": "Uma celebridade na cidade. Segurança reforçada!",
+        "duration_minutes": 25,
+        "effects": {"heat_multiplier": 1.5, "reward_multiplier": 2.0, "risk_modifier": 3},
+        "icon": "star"
+    },
+    {
+        "id": "underground_market",
+        "name": "Mercado Negro Especial",
+        "description": "Vendedores clandestinos com ofertas únicas!",
+        "duration_minutes": 35,
+        "effects": {"heat_multiplier": 1.2, "reward_multiplier": 1.5, "risk_modifier": 1},
+        "icon": "shopping-bag"
+    },
+]
+
+@api_router.get("/events/active")
+async def get_active_events(current_user: dict = Depends(get_current_user)):
+    """Get all active city events"""
+    now = datetime.now(timezone.utc)
+    
+    # Clean up expired events
+    await db.city_events.delete_many({
+        "ends_at": {"$lt": now}
+    })
+    
+    events = await db.city_events.find(
+        {"status": "active"},
+        {"_id": 0}
+    ).to_list(20)
+    
+    return {"events": events}
+
+@api_router.post("/events/trigger")
+async def trigger_random_event(current_user: dict = Depends(get_current_user)):
+    """Trigger a random city event (admin/testing)"""
+    # Check for existing active events (max 2)
+    active_count = await db.city_events.count_documents({"status": "active"})
+    if active_count >= 2:
+        raise HTTPException(status_code=400, detail="Já existem eventos ativos suficientes")
+    
+    # Pick random event
+    template = random.choice(EVENT_TEMPLATES)
+    
+    # Check if this event type is already active
+    existing = await db.city_events.find_one({
+        "event_id": template["id"],
+        "status": "active"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Este evento já está ativo")
+    
+    now = datetime.now(timezone.utc)
+    event = {
+        "id": str(uuid.uuid4()),
+        "event_id": template["id"],
+        "name": template["name"],
+        "description": template["description"],
+        "effects": template["effects"],
+        "icon": template["icon"],
+        "status": "active",
+        "started_at": now,
+        "ends_at": now + timedelta(minutes=template["duration_minutes"])
+    }
+    
+    await db.city_events.insert_one(event)
+    
+    return {"success": True, "message": f"Evento '{template['name']}' iniciado!", "event": event}
+
+@api_router.get("/events/effects")
+async def get_current_effects(current_user: dict = Depends(get_current_user)):
+    """Get combined effects of all active events"""
+    events = await db.city_events.find(
+        {"status": "active"},
+        {"_id": 0}
+    ).to_list(10)
+    
+    # Combine effects
+    combined = {
+        "heat_multiplier": 1.0,
+        "reward_multiplier": 1.0,
+        "risk_modifier": 0,
+        "wars_disabled": False,
+        "active_events": []
+    }
+    
+    for event in events:
+        effects = event.get("effects", {})
+        combined["heat_multiplier"] *= effects.get("heat_multiplier", 1.0)
+        combined["reward_multiplier"] *= effects.get("reward_multiplier", 1.0)
+        combined["risk_modifier"] += effects.get("risk_modifier", 0)
+        if effects.get("wars_disabled"):
+            combined["wars_disabled"] = True
+        combined["active_events"].append({
+            "name": event["name"],
+            "icon": event["icon"],
+            "ends_at": event["ends_at"]
+        })
+    
+    return combined
+
+# Update game state to include new features
+@api_router.get("/game/full-state")
+async def get_full_game_state(current_user: dict = Depends(get_current_user)):
+    """Get complete game state including new features"""
     player = await db.players.find_one({"id": current_user["id"]}, {"_id": 0, "password": 0})
+    
     active_mission = await db.missions.find_one(
         {"player_id": current_user["id"], "status": "active"},
         {"_id": 0}
     )
     
-    # Get player's gang
     gang = None
+    gang_wars = []
     if player.get("gang_id"):
         gang = await db.gangs.find_one({"id": player["gang_id"]}, {"_id": 0})
+        gang_wars = await db.gang_wars.find(
+            {"$or": [
+                {"attacker_gang_id": player["gang_id"]},
+                {"defender_gang_id": player["gang_id"]}
+            ], "status": "active"},
+            {"_id": 0}
+        ).to_list(10)
     
-    # Get global heat (average of all neighborhoods)
+    vehicles = await db.player_vehicles.find(
+        {"player_id": current_user["id"]},
+        {"_id": 0}
+    ).to_list(20)
+    
+    active_vehicle = next((v for v in vehicles if v.get("is_active")), None)
+    
+    events = await db.city_events.find(
+        {"status": "active"},
+        {"_id": 0}
+    ).to_list(10)
+    
     neighborhoods = await db.neighborhoods.find({}, {"_id": 0}).to_list(100)
     global_heat = sum(n.get("heat_level", 0) for n in neighborhoods) // max(len(neighborhoods), 1)
     
@@ -825,6 +1405,10 @@ async def get_game_state(current_user: dict = Depends(get_current_user)):
         "player": player,
         "active_mission": active_mission,
         "gang": gang,
+        "gang_wars": gang_wars,
+        "vehicles": vehicles,
+        "active_vehicle": active_vehicle,
+        "active_events": events,
         "global_heat": global_heat,
         "server_time": datetime.now(timezone.utc).isoformat()
     }
