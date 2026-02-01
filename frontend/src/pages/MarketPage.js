@@ -1,9 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
-import { Store, Plus, ShoppingCart, Package, Tag, Clock, X, Search, Filter, TrendingUp, DollarSign, User } from 'lucide-react';
+import { Store, Plus, ShoppingCart, Package, Tag, Clock, X, Search, Filter, TrendingUp, TrendingDown, Minus, DollarSign, User, BarChart2, AlertCircle } from 'lucide-react';
+import { EconomySystem } from '../utils/gameLogic';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Dynamic Price Card Component
+const PriceCard = ({ price }) => {
+  const getTrendIcon = () => {
+    if (price.trend === 'up') return <TrendingUp size={16} className="text-success" />;
+    if (price.trend === 'down') return <TrendingDown size={16} className="text-error" />;
+    return <Minus size={16} className="text-text-secondary" />;
+  };
+
+  const getTrendColor = () => {
+    if (price.trend === 'up') return 'text-success';
+    if (price.trend === 'down') return 'text-error';
+    return 'text-text-secondary';
+  };
+
+  return (
+    <div className="bg-surface border border-border rounded-lg p-3 hover:border-primary/50 transition-all">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-text-primary font-ui text-sm">{price.category_name}</span>
+        {getTrendIcon()}
+      </div>
+      <div className="flex items-end justify-between">
+        <div>
+          <span className="text-lg font-mono text-primary">€{price.current_price.toFixed(0)}</span>
+          <span className={`text-xs ml-2 ${getTrendColor()}`}>
+            {price.price_change_percent > 0 ? '+' : ''}{price.price_change_percent.toFixed(1)}%
+          </span>
+        </div>
+      </div>
+      <div className="mt-2 flex justify-between text-xs text-text-secondary">
+        <span>Oferta: {price.supply}</span>
+        <span>Procura: {price.demand}</span>
+      </div>
+      {/* Mini supply/demand bar */}
+      <div className="mt-1 h-1 bg-background rounded-full overflow-hidden flex">
+        <div 
+          className="h-full bg-primary" 
+          style={{ width: `${(price.supply / (price.supply + price.demand)) * 100}%` }}
+        />
+        <div 
+          className="h-full bg-warning" 
+          style={{ width: `${(price.demand / (price.supply + price.demand)) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const ListingCard = ({ listing, onBuy, onCancel, loading, isOwn }) => {
   const [quantity, setQuantity] = useState(1);
