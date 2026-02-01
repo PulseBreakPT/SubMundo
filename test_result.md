@@ -373,10 +373,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Sistema de Relacionamentos NPCs"
-    - "Sistema de Economia Dinâmica"
-    - "Sistema de Territórios Avançado"
-    - "Sistema de Eventos Dinâmicos"
+    - "Sistema Bancário Avançado"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
