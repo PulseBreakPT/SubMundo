@@ -475,11 +475,11 @@ class SubmundoAPITester:
         # Test property types
         success, data, status = self.make_request('GET', 'properties/types')
         
-        if success and isinstance(data, list) and len(data) > 0:
-            property_types = data
+        if success and 'property_types' in data and len(data['property_types']) > 0:
+            property_types = data['property_types']
             self.log_result("Property Types", True, f"Found {len(property_types)} property types")
         else:
-            self.log_result("Property Types", False, f"Status: {status}")
+            self.log_result("Property Types", False, f"Status: {status}, Data: {data}")
             return False
         
         # Test get my properties
