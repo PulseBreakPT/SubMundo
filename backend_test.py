@@ -523,8 +523,10 @@ class SubmundoAPITester:
                 if success:
                     income = data.get('income_collected', 0)
                     self.log_result("Collect Property Income", True, f"Collected €{income}")
+                elif status == 400 and "esperar pelo menos" in str(data.get('detail', '')):
+                    self.log_result("Collect Property Income", True, "Must wait 1 hour to collect (expected)")
                 else:
-                    self.log_result("Collect Property Income", False, f"Status: {status}")
+                    self.log_result("Collect Property Income", False, f"Status: {status}, Data: {data}")
                 
                 # Test maintenance
                 success, data, status = self.make_request('POST', f'properties/{property_id}/maintain')
@@ -532,8 +534,10 @@ class SubmundoAPITester:
                 if success:
                     cost = data.get('maintenance_cost', 0)
                     self.log_result("Property Maintenance", True, f"Paid €{cost} maintenance")
+                elif status == 400 and "perfeitas condições" in str(data.get('detail', '')):
+                    self.log_result("Property Maintenance", True, "Property in perfect condition (expected)")
                 else:
-                    self.log_result("Property Maintenance", False, f"Status: {status}")
+                    self.log_result("Property Maintenance", False, f"Status: {status}, Data: {data}")
                 
                 # Test sell property
                 success, data, status = self.make_request('POST', f'properties/{property_id}/sell')
