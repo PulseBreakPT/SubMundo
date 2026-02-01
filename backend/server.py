@@ -260,49 +260,49 @@ BUSINESS_TYPES = [
 ]
 
 CRAFTING_RECIPES = [
-    # Laboratório (Favela)
-    {"id": "droga_sintetica", "name": "Droga Sintética", "description": "Substância potente para revenda.", "business_type": "laboratorio", "cost": 500, "time_minutes": 30, "sell_value": 1500, "quantity": 5, "skill_bonus": "hacking", "heat_risk": 15},
-    {"id": "medicamento_ilegal", "name": "Medicamento Ilegal", "description": "Fármacos sem receita.", "business_type": "laboratorio", "cost": 300, "time_minutes": 20, "sell_value": 800, "quantity": 10, "skill_bonus": None, "heat_risk": 5},
-    {"id": "estimulante", "name": "Estimulante Extremo", "description": "Boost de energia temporário.", "business_type": "laboratorio", "cost": 800, "time_minutes": 45, "sell_value": 2500, "quantity": 3, "skill_bonus": "hacking", "heat_risk": 20},
+    # Laboratório (Favela) - Margem ~50-70% em vez de 200%+
+    {"id": "droga_sintetica", "name": "Droga Sintética", "description": "Substância potente para revenda.", "business_type": "laboratorio", "cost": 800, "time_minutes": 45, "sell_value": 1200, "quantity": 5, "skill_bonus": "hacking", "heat_risk": 20},
+    {"id": "medicamento_ilegal", "name": "Medicamento Ilegal", "description": "Fármacos sem receita.", "business_type": "laboratorio", "cost": 500, "time_minutes": 30, "sell_value": 750, "quantity": 10, "skill_bonus": None, "heat_risk": 8},
+    {"id": "estimulante", "name": "Estimulante Extremo", "description": "Boost de energia temporário.", "business_type": "laboratorio", "cost": 1200, "time_minutes": 60, "sell_value": 1900, "quantity": 3, "skill_bonus": "hacking", "heat_risk": 25},
     
-    # Oficina Clandestina (Porto)
-    {"id": "arma_modificada", "name": "Arma Modificada", "description": "Arma com performance melhorada.", "business_type": "oficina", "cost": 1500, "time_minutes": 60, "sell_value": 4000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 25},
-    {"id": "silenciador_custom", "name": "Silenciador Custom", "description": "Silenciador de alta qualidade.", "business_type": "oficina", "cost": 800, "time_minutes": 30, "sell_value": 2000, "quantity": 2, "skill_bonus": "stealth", "heat_risk": 10},
-    {"id": "colete_reforcado", "name": "Colete Reforçado", "description": "Proteção balística melhorada.", "business_type": "oficina", "cost": 2000, "time_minutes": 90, "sell_value": 5000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 15},
+    # Oficina Clandestina (Porto) - Margem ~60%
+    {"id": "arma_modificada", "name": "Arma Modificada", "description": "Arma com performance melhorada.", "business_type": "oficina", "cost": 2500, "time_minutes": 90, "sell_value": 4000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 30},
+    {"id": "silenciador_custom", "name": "Silenciador Custom", "description": "Silenciador de alta qualidade.", "business_type": "oficina", "cost": 1200, "time_minutes": 45, "sell_value": 1900, "quantity": 2, "skill_bonus": "stealth", "heat_risk": 15},
+    {"id": "colete_reforcado", "name": "Colete Reforçado", "description": "Proteção balística melhorada.", "business_type": "oficina", "cost": 3200, "time_minutes": 120, "sell_value": 5000, "quantity": 1, "skill_bonus": "combat", "heat_risk": 20},
     
-    # Falsificador (Centro)
-    {"id": "documento_falso", "name": "Documento Falso", "description": "ID falsa de alta qualidade.", "business_type": "falsificador", "cost": 400, "time_minutes": 25, "sell_value": 1200, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 8},
-    {"id": "passaporte_falso", "name": "Passaporte Falso", "description": "Passaporte internacional falso.", "business_type": "falsificador", "cost": 1000, "time_minutes": 60, "sell_value": 3000, "quantity": 1, "skill_bonus": "negotiation", "heat_risk": 20},
-    {"id": "carta_conducao_falsa", "name": "Carta de Condução Falsa", "description": "Habilitação falsificada.", "business_type": "falsificador", "cost": 300, "time_minutes": 15, "sell_value": 800, "quantity": 5, "skill_bonus": None, "heat_risk": 5},
+    # Falsificador (Centro) - Margem ~60%
+    {"id": "documento_falso", "name": "Documento Falso", "description": "ID falsa de alta qualidade.", "business_type": "falsificador", "cost": 700, "time_minutes": 35, "sell_value": 1100, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 12},
+    {"id": "passaporte_falso", "name": "Passaporte Falso", "description": "Passaporte internacional falso.", "business_type": "falsificador", "cost": 1800, "time_minutes": 90, "sell_value": 2800, "quantity": 1, "skill_bonus": "negotiation", "heat_risk": 25},
+    {"id": "carta_conducao_falsa", "name": "Carta de Condução Falsa", "description": "Habilitação falsificada.", "business_type": "falsificador", "cost": 500, "time_minutes": 25, "sell_value": 800, "quantity": 5, "skill_bonus": None, "heat_risk": 8},
     
-    # Garage Tunning (Subúrbio)
-    {"id": "turbo_kit", "name": "Kit Turbo", "description": "Aumenta velocidade do veículo.", "business_type": "garage", "cost": 2500, "time_minutes": 120, "sell_value": 6000, "quantity": 1, "skill_bonus": "driving", "heat_risk": 5},
-    {"id": "blindagem_leve", "name": "Blindagem Leve", "description": "Proteção básica para veículo.", "business_type": "garage", "cost": 3000, "time_minutes": 150, "sell_value": 7500, "quantity": 1, "skill_bonus": "driving", "heat_risk": 8},
-    {"id": "kit_fuga", "name": "Kit de Fuga", "description": "Equipamento para fugas rápidas.", "business_type": "garage", "cost": 1500, "time_minutes": 60, "sell_value": 4000, "quantity": 1, "skill_bonus": "stealth", "heat_risk": 3},
+    # Garage Tunning (Subúrbio) - Margem ~50%
+    {"id": "turbo_kit", "name": "Kit Turbo", "description": "Aumenta velocidade do veículo.", "business_type": "garage", "cost": 4000, "time_minutes": 180, "sell_value": 6000, "quantity": 1, "skill_bonus": "driving", "heat_risk": 8},
+    {"id": "blindagem_leve", "name": "Blindagem Leve", "description": "Proteção básica para veículo.", "business_type": "garage", "cost": 5000, "time_minutes": 210, "sell_value": 7500, "quantity": 1, "skill_bonus": "driving", "heat_risk": 12},
+    {"id": "kit_fuga", "name": "Kit de Fuga", "description": "Equipamento para fugas rápidas.", "business_type": "garage", "cost": 2800, "time_minutes": 90, "sell_value": 4200, "quantity": 1, "skill_bonus": "stealth", "heat_risk": 5},
     
-    # Destilaria (Noite)
-    {"id": "whisky_premium", "name": "Whisky Premium", "description": "Bebida de alta qualidade.", "business_type": "destilaria", "cost": 600, "time_minutes": 45, "sell_value": 1800, "quantity": 6, "skill_bonus": "negotiation", "heat_risk": 3},
-    {"id": "vodka_artesanal", "name": "Vodka Artesanal", "description": "Destilado puro.", "business_type": "destilaria", "cost": 400, "time_minutes": 30, "sell_value": 1200, "quantity": 8, "skill_bonus": None, "heat_risk": 2},
-    {"id": "licor_raro", "name": "Licor Raro", "description": "Bebida exclusiva e cara.", "business_type": "destilaria", "cost": 1000, "time_minutes": 90, "sell_value": 3500, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 5},
+    # Destilaria (Noite) - Margem ~50%
+    {"id": "whisky_premium", "name": "Whisky Premium", "description": "Bebida de alta qualidade.", "business_type": "destilaria", "cost": 1000, "time_minutes": 60, "sell_value": 1500, "quantity": 6, "skill_bonus": "negotiation", "heat_risk": 5},
+    {"id": "vodka_artesanal", "name": "Vodka Artesanal", "description": "Destilado puro.", "business_type": "destilaria", "cost": 700, "time_minutes": 45, "sell_value": 1050, "quantity": 8, "skill_bonus": None, "heat_risk": 3},
+    {"id": "licor_raro", "name": "Licor Raro", "description": "Bebida exclusiva e cara.", "business_type": "destilaria", "cost": 1600, "time_minutes": 120, "sell_value": 2500, "quantity": 3, "skill_bonus": "negotiation", "heat_risk": 8},
     
-    # Centro de Hacking (Comercial)
-    {"id": "malware_custom", "name": "Malware Custom", "description": "Software malicioso personalizado.", "business_type": "centro_hacking", "cost": 2000, "time_minutes": 60, "sell_value": 5500, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 30},
-    {"id": "dados_roubados", "name": "Dados Roubados", "description": "Informação sensível de empresas.", "business_type": "centro_hacking", "cost": 1500, "time_minutes": 45, "sell_value": 4000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 25},
-    {"id": "crypto_mixer", "name": "Crypto Mixer", "description": "Serviço de lavagem de criptomoedas.", "business_type": "centro_hacking", "cost": 3000, "time_minutes": 30, "sell_value": 8000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 15},
+    # Centro de Hacking (Comercial) - Margem ~60-70%
+    {"id": "malware_custom", "name": "Malware Custom", "description": "Software malicioso personalizado.", "business_type": "centro_hacking", "cost": 3200, "time_minutes": 90, "sell_value": 5200, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 35},
+    {"id": "dados_roubados", "name": "Dados Roubados", "description": "Informação sensível de empresas.", "business_type": "centro_hacking", "cost": 2500, "time_minutes": 60, "sell_value": 4000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 30},
+    {"id": "crypto_mixer", "name": "Crypto Mixer", "description": "Serviço de lavagem de criptomoedas.", "business_type": "centro_hacking", "cost": 5000, "time_minutes": 45, "sell_value": 8000, "quantity": 1, "skill_bonus": "hacking", "heat_risk": 20},
 ]
 
-# Market fee percentage
-MARKET_FEE = 0.05  # 5%
+# Market fee percentage - aumentado para 10%
+MARKET_FEE = 0.10  # 10%
 
 CONTRACTS_CONFIG = [
-    {"id": "assassination", "name": "Assassinato", "description": "Eliminar um alvo específico", "base_reward": 10000, "risk": 9, "heat_impact": 50, "reputation_impact": 20, "duration_hours": 24},
-    {"id": "kidnapping", "name": "Rapto", "description": "Sequestrar e manter refém", "base_reward": 15000, "risk": 8, "heat_impact": 40, "reputation_impact": 15, "duration_hours": 48},
-    {"id": "sabotage", "name": "Sabotagem", "description": "Destruir propriedade rival", "base_reward": 5000, "risk": 6, "heat_impact": 25, "reputation_impact": 10, "duration_hours": 12},
-    {"id": "intimidation", "name": "Intimidação", "description": "Assustar um alvo", "base_reward": 2000, "risk": 4, "heat_impact": 10, "reputation_impact": 5, "duration_hours": 6},
-    {"id": "theft_special", "name": "Roubo Especial", "description": "Roubar item específico", "base_reward": 8000, "risk": 7, "heat_impact": 30, "reputation_impact": 12, "duration_hours": 18},
-    {"id": "escort", "name": "Escolta", "description": "Proteger alguém durante viagem", "base_reward": 3000, "risk": 5, "heat_impact": 5, "reputation_impact": 8, "duration_hours": 8},
-    {"id": "delivery", "name": "Entrega Especial", "description": "Transportar mercadoria sensível", "base_reward": 4000, "risk": 5, "heat_impact": 15, "reputation_impact": 6, "duration_hours": 4},
-    {"id": "info_extraction", "name": "Extração de Info", "description": "Obter informação por qualquer meio", "base_reward": 6000, "risk": 6, "heat_impact": 20, "reputation_impact": 10, "duration_hours": 12},
+    {"id": "assassination", "name": "Assassinato", "description": "Eliminar um alvo específico", "base_reward": 5000, "risk": 9, "heat_impact": 60, "reputation_impact": 20, "duration_hours": 48},
+    {"id": "kidnapping", "name": "Rapto", "description": "Sequestrar e manter refém", "base_reward": 7000, "risk": 8, "heat_impact": 50, "reputation_impact": 15, "duration_hours": 72},
+    {"id": "sabotage", "name": "Sabotagem", "description": "Destruir propriedade rival", "base_reward": 2500, "risk": 6, "heat_impact": 35, "reputation_impact": 10, "duration_hours": 24},
+    {"id": "intimidation", "name": "Intimidação", "description": "Assustar um alvo", "base_reward": 1000, "risk": 4, "heat_impact": 15, "reputation_impact": 5, "duration_hours": 12},
+    {"id": "theft_special", "name": "Roubo Especial", "description": "Roubar item específico", "base_reward": 4000, "risk": 7, "heat_impact": 40, "reputation_impact": 12, "duration_hours": 36},
+    {"id": "escort", "name": "Escolta", "description": "Proteger alguém durante viagem", "base_reward": 1500, "risk": 5, "heat_impact": 8, "reputation_impact": 8, "duration_hours": 16},
+    {"id": "delivery", "name": "Entrega Especial", "description": "Transportar mercadoria sensível", "base_reward": 2000, "risk": 5, "heat_impact": 20, "reputation_impact": 6, "duration_hours": 8},
+    {"id": "info_extraction", "name": "Extração de Info", "description": "Obter informação por qualquer meio", "base_reward": 3000, "risk": 6, "heat_impact": 25, "reputation_impact": 10, "duration_hours": 24},
 ]
 
 VEHICLE_CATALOG = [
