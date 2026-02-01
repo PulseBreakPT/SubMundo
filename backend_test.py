@@ -302,7 +302,7 @@ class SubmundoAPITester:
         success, data, status = self.make_request(
             'POST',
             'economy/launder',
-            launder_amount,  # Pass amount directly as JSON body
+            {"amount": launder_amount},  # Pass amount as JSON object with "amount" key
             expected_status=200
         )
         
