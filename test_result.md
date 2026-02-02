@@ -257,6 +257,66 @@ backend:
         comment: "✅ Sistema bancário avançado funcionando perfeitamente! Testados todos os 10 endpoints: GET /bank/status (status da conta), POST /bank/deposit (depósito €100), POST /bank/withdraw (levantamento €50 com taxa), POST /bank/transfer (transferência entre jogadores), GET /bank/transactions (histórico), GET /bank/investments (7 opções de investimento), POST /bank/invest (criação de investimento), GET /bank/loans (informações de crédito), POST /bank/loan (empréstimo €500), GET /bank/robbery-targets (alvos para roubo). Corrigido bug de timezone em calculate_daily_interest. Sistema completo com juros diários, taxas, limites e segurança funcionando corretamente."
 
 frontend:
+  - task: "Remoção de ícone de olho duplicado"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/LoginPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removido botão manual extra de toggle de senha. O componente Input já possui suporte automático para password toggle quando type='password'."
+      - working: true
+        agent: "main"
+        comment: "✅ Corrigido! Removido ícone de olho duplicado nos formulários de Login e Register. Agora usa apenas o toggle automático do componente Input."
+
+  - task: "Criação de LandingPage separada"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/LandingPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Criado novo arquivo LandingPage.js com todo o conteúdo da landing page (Hero, Features, Screenshots, Testimonials, FAQ, Newsletter, Footer). Página pública acessível em '/'."
+      - working: true
+        agent: "main"
+        comment: "✅ LandingPage criada com sucesso! Inclui todas as seções: Navbar, Hero, Features (6 features), Screenshots, Trailer, Testimonials, FAQ (8 itens), Newsletter, CTA, Footer com redes sociais."
+
+  - task: "Restauração da HomePage como Dashboard"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "HomePage restaurada como Dashboard do jogo. Inclui: header com welcome, stats grid (dinheiro limpo/sujo, reputação, heat), level progress bar, quick actions (8 atalhos), quote of wisdom, heat warnings, next unlocks, daily reward modal."
+      - working: true
+        agent: "main"
+        comment: "✅ Dashboard criado com sucesso! Página protegida com todas as features: estatísticas do jogador, acesso rápido às funcionalidades, citações da lore, alertas de heat, progressão de nível."
+
+  - task: "Ajuste de Rotas"
+    implemented: true
+    working: true
+    file: "frontend/src/App.js, frontend/src/components/Navigation.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Rotas atualizadas: '/' → LandingPage (pública), '/dashboard' → HomePage/Dashboard (protegida), '/login' → LoginPage (pública). Navigation.js atualizada com '/dashboard' em todos os menus."
+      - working: true
+        agent: "main"
+        comment: "✅ Sistema de rotas corrigido! Agora: página inicial mostra landing page, usuários autenticados são redirecionados para /dashboard, navegação atualizada em sidebar e mobile."
+
   - task: "Página de Propriedades"
     implemented: true
     working: "NA"
