@@ -437,34 +437,32 @@ const TrailerSection = () => {
   return (
     <section id="trailer" className="py-20 bg-surface/30">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              TRAILER <span className="text-primary">OFICIAL</span>
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Assiste ao trailer e prepara-te para entrar no submundo do crime.
-            </p>
-          </div>
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+            TRAILER <span className="text-primary">OFICIAL</span>
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            Assiste ao trailer e prepara-te para entrar no submundo do crime.
+          </p>
+        </div>
 
-          {/* Video Container */}
-          <div className="relative aspect-video bg-surface border border-border overflow-hidden group cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-            
-            {/* Play Button Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Play className="w-10 h-10 text-white ml-1" />
-              </div>
-            </div>
-
-            {/* Video Info */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-6">
-              <p className="font-display text-xl text-text-primary">SUBMUNDO - Trailer Oficial</p>
-              <p className="text-sm text-text-secondary">2:34 • Gameplay & Cinematics</p>
+        {/* Video Container */}
+        <div className="relative aspect-video bg-surface border border-border overflow-hidden group cursor-pointer">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+          
+          {/* Play Button Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-20 h-20 bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Play className="w-10 h-10 text-white ml-1" />
             </div>
           </div>
-        </FadeIn>
+
+          {/* Video Info */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-6">
+            <p className="font-display text-xl text-text-primary">SUBMUNDO - Trailer Oficial</p>
+            <p className="text-sm text-text-secondary">2:34 • Gameplay & Cinematics</p>
+          </div>
+        </div>
       </div>
     </section>
   );
