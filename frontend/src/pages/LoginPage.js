@@ -642,7 +642,7 @@ export default function LoginPage() {
   const handleLogin = async (email, password, remember) => {
     const success = await login(email, password);
     if (success) {
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 
@@ -655,7 +655,7 @@ export default function LoginPage() {
 
   const handleWelcomeClose = () => {
     setShowWelcome(false);
-    navigate('/');
+    navigate('/dashboard');
   };
 
   return (
