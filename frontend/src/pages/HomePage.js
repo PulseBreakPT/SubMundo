@@ -242,16 +242,16 @@ const HeroSection = ({ onPlay }) => {
         }} />
       </div>
 
-      {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 border border-primary/30 rotate-45 animate-pulse" />
-      <div className="absolute bottom-32 right-20 w-16 h-16 border border-secondary/30 rotate-12 animate-pulse" />
+      {/* Floating Elements - Static */}
+      <div className="absolute top-20 left-10 w-20 h-20 border border-primary/30 rotate-45 opacity-50" />
+      <div className="absolute bottom-32 right-20 w-16 h-16 border border-secondary/30 rotate-12 opacity-50" />
       <div className="absolute top-40 right-32 w-12 h-12 bg-primary/10 rotate-45" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20">
-        <FadeIn>
+        <div>
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-surface/80 border border-primary/50 px-4 py-2 mb-8">
-            <Zap className="w-4 h-4 text-primary animate-pulse" />
+            <Zap className="w-4 h-4 text-primary" />
             <span className="text-sm text-text-secondary">Novo Update v2.0 Disponível</span>
           </div>
 
@@ -300,10 +300,10 @@ const HeroSection = ({ onPlay }) => {
               </div>
             ))}
           </div>
-        </FadeIn>
+        </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
           <ChevronDown className="w-8 h-8 text-text-secondary" />
         </div>
       </div>
