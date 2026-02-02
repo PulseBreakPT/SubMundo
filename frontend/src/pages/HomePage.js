@@ -539,45 +539,41 @@ const FAQSection = () => {
   return (
     <section id="faq" className="py-20 bg-surface/30">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              PERGUNTAS <span className="text-primary">FREQUENTES</span>
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Tens dúvidas? Encontra aqui as respostas às perguntas mais comuns.
-            </p>
-          </div>
-        </FadeIn>
+        <div className="text-center mb-16">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+            PERGUNTAS <span className="text-primary">FREQUENTES</span>
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            Tens dúvidas? Encontra aqui as respostas às perguntas mais comuns.
+          </p>
+        </div>
 
         <div className="space-y-3">
           {FAQ_ITEMS.map((item, i) => (
-            <FadeIn key={i} delay={i * 50}>
-              <div className="bg-surface border border-border">
-                <button
-                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-highlight transition-colors"
-                >
-                  <span className="font-display font-bold text-text-primary pr-4">
-                    {item.question}
-                  </span>
-                  <ChevronDown 
-                    className={clsx(
-                      'w-5 h-5 text-primary transition-transform flex-shrink-0',
-                      openIndex === i && 'rotate-180'
-                    )} 
-                  />
-                </button>
-                
-                {openIndex === i && (
-                  <div className="px-4 pb-4 border-t border-border">
-                    <p className="text-text-secondary pt-4 leading-relaxed">
-                      {item.answer}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </FadeIn>
+            <div key={i} className="bg-surface border border-border">
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-highlight transition-colors"
+              >
+                <span className="font-display font-bold text-text-primary pr-4">
+                  {item.question}
+                </span>
+                <ChevronDown 
+                  className={clsx(
+                    'w-5 h-5 text-primary transition-transform flex-shrink-0',
+                    openIndex === i && 'rotate-180'
+                  )} 
+                />
+              </button>
+              
+              {openIndex === i && (
+                <div className="px-4 pb-4 border-t border-border">
+                  <p className="text-text-secondary pt-4 leading-relaxed">
+                    {item.answer}
+                  </p>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
