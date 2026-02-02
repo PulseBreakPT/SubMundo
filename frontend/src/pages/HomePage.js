@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { LevelSystem, HeatSystem } from '../utils/gameLogic';
-import { QUOTES } from '../data/lore';
 
 export default function HomePage() {
   const navigate = useNavigate();
