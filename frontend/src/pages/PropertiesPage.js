@@ -397,9 +397,6 @@ export default function PropertiesPage() {
           </p>
         </div>
       </div>
-          </p>
-        </div>
-      </div>
       
       {/* Properties List */}
       {properties.length === 0 ? (
