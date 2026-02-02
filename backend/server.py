@@ -6869,6 +6869,385 @@ async def rob_player(target_id: str, current_user: dict = Depends(get_current_us
         "player_level": robber_level
     }
 
+# ============= ACHIEVEMENTS SYSTEM =============
+
+@api_router.get("/achievements")
+async def get_achievements(current_user: dict = Depends(get_current_user)):
+    """Retorna achievements do jogador com progresso detalhado"""
+    try:
+        player = await db.players.find_one({"id": current_user["id"]})
+        if not player:
+            raise HTTPException(status_code=404, detail="Jogador não encontrado")
+        
+        if not ADVANCED_SYSTEMS_ENABLED:
+            return {"achievements": [], "message": "Sistema não disponível"}
+        
+        # Verificar novos achievements
+        new_achievements = check_achievements(player)
+        
+        # Atualizar se houver novos
+        if new_achievements:
+            current_achs = player.get("achievements", [])
+            for ach in new_achievements:
+                if ach["id"] not in current_achs:
+                    current_achs.append(ach["id"])
+                    
+                    # Aplicar recompensas
+                    for reward_key, reward_value in ach["reward"].items():
+                        if reward_key == "xp":
+                            player["experience"] = player.get("experience", 0) + reward_value
+                        elif reward_key == "reputation":
+                            player["reputation"] = player.get("reputation", 0) + reward_value
+                        elif reward_key == "clean_money":
+                            player["clean_money"] = player.get("clean_money", 0) + reward_value
+            
+            await db.players.update_one(
+                {"id": current_user["id"]},
+                {
+                    "$set": {
+                        "achievements": current_achs,
+                        "experience": player["experience"],
+                        "reputation": player.get("reputation", 0),
+                        "clean_money": player.get("clean_money", 0)
+                    }
+                }
+            )
+        
+        # Preparar resposta detalhada
+        unlocked_ids = player.get("achievements", [])
+        unlocked = [ACHIEVEMENTS[ach_id] for ach_id in unlocked_ids if ach_id in ACHIEVEMENTS]
+        
+        # Calcular progresso para achievements bloqueados
+        locked = []
+        total_money = player.get("clean_money", 0) + player.get("bank_balance", 0)
+        crimes_count = player.get("crimes_committed", 0)
+        level = calc_level_advanced(player.get("experience", 0))
+        properties_count = player.get("properties_count", 0)
+        
+        for ach_id, ach_data in ACHIEVEMENTS.items():
+            if ach_id not in unlocked_ids:
+                req = ach_data["requirement"]
+                progress = 0
+                current_value = 0
+                target_value = req["value"]
+                
+                if req["type"] == "money_total":
+                    current_value = total_money
+                    progress = min(100, (current_value / target_value) * 100)
+                elif req["type"] == "crimes_count":
+                    current_value = crimes_count
+                    progress = min(100, (current_value / target_value) * 100)
+                elif req["type"] == "level":
+                    current_value = level
+                    progress = min(100, (current_value / target_value) * 100)
+                elif req["type"] == "properties_count":
+                    current_value = properties_count
+                    progress = min(100, (current_value / target_value) * 100)
+                
+                locked.append({
+                    **ach_data,
+                    "progress": round(progress, 1),
+                    "current_value": current_value,
+                    "target_value": target_value
+                })
+        
+        # Organizar por categoria
+        categories = {}
+        for ach in unlocked + locked:
+            cat = ach["category"]
+            if cat not in categories:
+                categories[cat] = {"unlocked": [], "locked": []}
+            
+            if ach in unlocked:
+                categories[cat]["unlocked"].append(ach)
+            else:
+                categories[cat]["locked"].append(ach)
+        
+        return {
+            "summary": {
+                "total_achievements": len(ACHIEVEMENTS),
+                "unlocked_count": len(unlocked),
+                "locked_count": len(locked),
+                "completion_percent": round((len(unlocked) / len(ACHIEVEMENTS)) * 100, 1),
+                "new_unlocked": len(new_achievements)
+            },
+            "unlocked": unlocked,
+            "locked": sorted(locked, key=lambda x: x["progress"], reverse=True)[:20],
+            "categories": categories,
+            "new_achievements": new_achievements
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro em achievements: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============= RANKINGS & LEADERBOARDS =============
+
+@api_router.get("/rankings")
+async def get_rankings(current_user: dict = Depends(get_current_user)):
+    """Retorna rankings globais detalhados"""
+    try:
+        if not ADVANCED_SYSTEMS_ENABLED:
+            return {"rankings": {}, "message": "Sistema não disponível"}
+        
+        # Calcular rankings
+        rankings = await calculate_rankings(db)
+        
+        # Encontrar posição do jogador
+        player = await db.players.find_one({"id": current_user["id"]})
+        
+        player_positions = {}
+        total_money = player.get("clean_money", 0) + player.get("bank_balance", 0)
+        
+        # Posição no ranking de dinheiro
+        money_rank = await db.players.count_documents({
+            "$expr": {
+                "$gt": [
+                    {"$add": ["$clean_money", "$bank_balance"]},
+                    total_money
+                ]
+            }
+        })
+        player_positions["money"] = money_rank + 1
+        
+        # Posição no ranking de XP
+        xp_rank = await db.players.count_documents({
+            "experience": {"$gt": player.get("experience", 0)}
+        })
+        player_positions["experience"] = xp_rank + 1
+        
+        # Posição no ranking de reputação
+        rep_rank = await db.players.count_documents({
+            "reputation": {"$gt": player.get("reputation", 0)}
+        })
+        player_positions["reputation"] = rep_rank + 1
+        
+        # Posição no ranking de crimes
+        crimes_rank = await db.players.count_documents({
+            "crimes_committed": {"$gt": player.get("crimes_committed", 0)}
+        })
+        player_positions["crimes"] = crimes_rank + 1
+        
+        # Total de jogadores
+        total_players = await db.players.count_documents({})
+        
+        # Calcular percentil
+        percentiles = {}
+        for rank_type, position in player_positions.items():
+            percentile = ((total_players - position) / total_players) * 100
+            percentiles[rank_type] = round(percentile, 1)
+        
+        return {
+            "rankings": rankings,
+            "player_position": player_positions,
+            "player_percentile": percentiles,
+            "total_players": total_players,
+            "player_stats": {
+                "total_money": total_money,
+                "experience": player.get("experience", 0),
+                "reputation": player.get("reputation", 0),
+                "crimes_committed": player.get("crimes_committed", 0)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro em rankings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============= PLAYER STATISTICS & ANALYTICS =============
+
+@api_router.get("/player/statistics")
+async def get_player_statistics(current_user: dict = Depends(get_current_user)):
+    """Retorna estatísticas detalhadas e análises do jogador"""
+    try:
+        player = await db.players.find_one({"id": current_user["id"]})
+        if not player:
+            raise HTTPException(status_code=404, detail="Jogador não encontrado")
+        
+        if not ADVANCED_SYSTEMS_ENABLED:
+            return {"statistics": {}, "message": "Sistema não disponível"}
+        
+        # Calcular estatísticas avançadas
+        stats = calculate_player_statistics(player)
+        
+        # Histórico de atividades (últimos 30 dias)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        
+        activities = await db.activity_log.find({
+            "player_id": current_user["id"],
+            "timestamp": {"$gte": thirty_days_ago}
+        }).sort("timestamp", -1).limit(100).to_list(100)
+        
+        # Análise de atividades por tipo
+        activity_breakdown = {}
+        for activity in activities:
+            act_type = activity.get("type", "unknown")
+            activity_breakdown[act_type] = activity_breakdown.get(act_type, 0) + 1
+        
+        # Progressão de wealth (últimos 7 registros)
+        wealth_history = await db.wealth_snapshots.find({
+            "player_id": current_user["id"]
+        }).sort("timestamp", -1).limit(7).to_list(7)
+        
+        wealth_progression = [
+            {
+                "date": w["timestamp"].isoformat(),
+                "total": w.get("total_wealth", 0),
+                "clean": w.get("clean_money", 0),
+                "bank": w.get("bank_balance", 0)
+            }
+            for w in reversed(wealth_history)
+        ]
+        
+        # Comparação com média global
+        global_stats = await db.players.aggregate([
+            {
+                "$group": {
+                    "_id": None,
+                    "avg_experience": {"$avg": "$experience"},
+                    "avg_reputation": {"$avg": "$reputation"},
+                    "avg_money": {
+                        "$avg": {"$add": ["$clean_money", "$bank_balance"]}
+                    }
+                }
+            }
+        ]).to_list(1)
+        
+        global_avg = global_stats[0] if global_stats else {}
+        
+        player_experience = player.get("experience", 0)
+        player_reputation = player.get("reputation", 0)
+        player_money = player.get("clean_money", 0) + player.get("bank_balance", 0)
+        
+        comparison = {
+            "experience": {
+                "player": player_experience,
+                "global_avg": round(global_avg.get("avg_experience", 0), 2),
+                "difference_percent": round(
+                    ((player_experience / max(global_avg.get("avg_experience", 1), 1)) - 1) * 100,
+                    1
+                )
+            },
+            "reputation": {
+                "player": player_reputation,
+                "global_avg": round(global_avg.get("avg_reputation", 0), 2),
+                "difference_percent": round(
+                    ((player_reputation / max(global_avg.get("avg_reputation", 1), 1)) - 1) * 100,
+                    1
+                )
+            },
+            "wealth": {
+                "player": player_money,
+                "global_avg": round(global_avg.get("avg_money", 0), 2),
+                "difference_percent": round(
+                    ((player_money / max(global_avg.get("avg_money", 1), 1)) - 1) * 100,
+                    1
+                )
+            }
+        }
+        
+        # Recomendações baseadas em estatísticas
+        recommendations = []
+        
+        if stats["crimes"]["success_rate"] < 50:
+            recommendations.append({
+                "type": "warning",
+                "message": "Taxa de sucesso em crimes baixa. Considera melhorar skills ou escolher crimes mais fáceis.",
+                "priority": "high"
+            })
+        
+        if player.get("heat", 0) > 70:
+            recommendations.append({
+                "type": "warning",
+                "message": "Heat muito alto! Evita crimes e considera trabalhos legais temporariamente.",
+                "priority": "high"
+            })
+        
+        if player_money < global_avg.get("avg_money", 0):
+            recommendations.append({
+                "type": "tip",
+                "message": "Teu wealth está abaixo da média. Foca em trabalhos bem pagos ou investimentos.",
+                "priority": "medium"
+            })
+        
+        if player.get("properties_count", 0) == 0 and stats["basic"]["level"] >= 5:
+            recommendations.append({
+                "type": "tip",
+                "message": "Compra a tua primeira propriedade para começar a construir assets.",
+                "priority": "medium"
+            })
+        
+        return {
+            "statistics": stats,
+            "activity_breakdown": activity_breakdown,
+            "wealth_progression": wealth_progression,
+            "global_comparison": comparison,
+            "recommendations": recommendations,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro em estatísticas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============= RANDOM EVENTS SYSTEM =============
+
+@api_router.post("/events/check")
+async def check_random_events(current_user: dict = Depends(get_current_user)):
+    """Verifica e dispara eventos aleatórios"""
+    try:
+        player = await db.players.find_one({"id": current_user["id"]})
+        if not player:
+            raise HTTPException(status_code=404, detail="Jogador não encontrado")
+        
+        if not ADVANCED_SYSTEMS_ENABLED:
+            return {"event": None, "message": "Sistema não disponível"}
+        
+        # Tentar disparar evento
+        event = trigger_random_event(player)
+        
+        if not event:
+            return {
+                "event": None,
+                "message": "Nenhum evento neste momento",
+                "next_check_available": "1 hora"
+            }
+        
+        # Aplicar efeitos
+        level = calc_level_advanced(player.get("experience", 0))
+        updated_player, changes = apply_event_effects(player, event, level)
+        
+        # Atualizar no DB
+        await db.players.update_one(
+            {"id": current_user["id"]},
+            {"$set": updated_player}
+        )
+        
+        # Registrar evento
+        await db.events_log.insert_one({
+            "player_id": current_user["id"],
+            "event_id": event["id"],
+            "event_name": event["name"],
+            "timestamp": datetime.now(timezone.utc),
+            "effects": changes
+        })
+        
+        return {
+            "event": {
+                "id": event["id"],
+                "name": event["name"],
+                "description": event["description"],
+                "type": event["type"],
+                "icon": event.get("icon", "🎲")
+            },
+            "effects": changes,
+            "message": f"Evento: {event['name']}!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro em eventos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 app.include_router(api_router)
 
 app.add_middleware(
