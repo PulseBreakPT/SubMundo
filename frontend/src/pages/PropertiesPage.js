@@ -44,11 +44,6 @@ const PropertyCard = ({ property, onMaintain, onSell, loading }) => {
             <p className="text-xs text-text-secondary">Condição: {property.condition}%</p>
           </div>
         </div>
-              <TrendingUp size={14} /> Rendimento pendente
-            </span>
-            <span className="font-mono text-success">€{property.pending_income.toFixed(2)}</span>
-          </div>
-        )}
         
         <div className="flex items-center justify-center mt-2 text-text-secondary">
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
