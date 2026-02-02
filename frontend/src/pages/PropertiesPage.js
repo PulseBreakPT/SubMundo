@@ -396,6 +396,7 @@ export default function PropertiesPage() {
             €{properties.reduce((sum, p) => sum + p.purchase_price, 0).toLocaleString()}
           </p>
         </div>
+      </div>
           </p>
         </div>
       </div>
