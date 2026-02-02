@@ -380,10 +380,10 @@ export default function BankPage() {
         onClose={() => setShowWithdrawModal(false)}
         title="Levantar Dinheiro"
       >
-        <div className="space-y-4">
-          <div className="bg-surface-highlight p-3 rounded border border-border">
-            <p className="text-xs text-text-secondary mb-1">Disponível no Banco</p>
-            <p className="text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
+        <div className="space-y-3">
+          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+            <p className="text-xs text-text-secondary mb-0.5">Disponível no Banco</p>
+            <p className="text-lg md:text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
           </div>
 
           <Input
@@ -422,10 +422,10 @@ export default function BankPage() {
         onClose={() => setShowTransferModal(false)}
         title="Transferir Dinheiro"
       >
-        <div className="space-y-4">
-          <div className="bg-surface-highlight p-3 rounded border border-border">
-            <p className="text-xs text-text-secondary mb-1">Disponível no Banco</p>
-            <p className="text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
+        <div className="space-y-3">
+          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+            <p className="text-xs text-text-secondary mb-0.5">Disponível no Banco</p>
+            <p className="text-lg md:text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
           </div>
 
           <Input
