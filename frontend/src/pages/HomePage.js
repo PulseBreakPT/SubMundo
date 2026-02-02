@@ -807,32 +807,11 @@ const Footer = () => {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
-
-  // Se o utilizador já está logado, redireciona para o dashboard
-  useEffect(() => {
-    if (user && !loading) {
-      navigate('/dashboard');
-    }
-  }, [user, loading, navigate]);
+  const { user } = useAuth();
 
   const handleLogin = () => navigate('/login');
   const handleRegister = () => navigate('/login?register=true');
   const handlePlay = () => navigate('/login');
-
-  // Mostra loading enquanto verifica autenticação
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-primary text-xl">Carregando...</div>
-      </div>
-    );
-  }
-
-  // Se já está logado, não renderiza nada (vai redirecionar)
-  if (user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-background">
