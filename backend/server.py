@@ -2373,8 +2373,9 @@ async def buy_property(purchase: PropertyPurchase, current_user: dict = Depends(
     
     return {"success": True, "message": f"Compraste {property_type['name']} em {neighborhood['name']}!", "property": new_property}
 
-@api_router.post("/properties/{property_id}/collect")
-async def collect_property_income(property_id: str, current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Propriedades não geram rendimento
+# @api_router.post("/properties/{property_id}/collect")
+# async def collect_property_income(property_id: str, current_user: dict = Depends(get_current_user)):
     """Collect accumulated income from a property"""
     prop = await db.player_properties.find_one({
         "id": property_id,
