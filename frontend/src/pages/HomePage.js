@@ -5,7 +5,7 @@ import { useGame } from '../contexts/GameContext';
 import { Button, Badge, Modal, Alert } from '../components/UI';
 import { Card, ProgressBar } from '../components/ProgressBar';
 import { 
-  Skull, Target, Users, Car, Building2, Shield, Zap, Star,
+  Target, Users, Car, Building2, Shield, Zap, Star,
   ChevronRight, TrendingUp, TrendingDown, DollarSign, Flame,
   Award, Clock, AlertTriangle, MapPin, Briefcase, Factory, Gift
 } from 'lucide-react';
