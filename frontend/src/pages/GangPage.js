@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, ProgressBar } from '../components/ProgressBar';
-import { Button, Badge, Modal, Input } from '../components/UI';
+import { Button, Badge, Modal, Input, Alert } from '../components/UI';
 import { useMissionTimer } from '../hooks/useCountdown';
 import { GangSystem } from '../utils/gameLogic';
 import { GANGS_LORE } from '../data/lore';
@@ -10,9 +10,438 @@ import {
   Users, Crown, Shield, DollarSign, Map, 
   Plus, LogOut, Swords, ChevronRight, Clock,
   Wallet, Target, AlertTriangle, TrendingUp, Eye,
-  Info, Zap
+  Info, Zap, Star, Award, Trophy, Medal, Gift,
+  Sparkles, Heart, Skull, Flame, Crosshair, Flag,
+  MapPin, Navigation, Building, Home, Factory,
+  RefreshCw, Search, Filter, Grid, List, SortAsc, SortDesc,
+  ChevronDown, ChevronUp, ChevronLeft, MoreHorizontal,
+  Settings, Bell, Bookmark, BookmarkCheck, Copy, Share2,
+  ExternalLink, Download, Upload, Edit, Save, Trash2,
+  Check, X, Lock, Unlock, Key, Fingerprint,
+  BarChart2, PieChart, Activity, TrendingDown, Percent,
+  Calendar, Timer, Hourglass, Play, Pause, Square,
+  MessageSquare, MessageCircle, Mail, Send, UserPlus,
+  UserMinus, UserCheck, UserX, User, Users2,
+  Coins, Banknote, CreditCard, PiggyBank, CircleDollarSign,
+  Hash, AtSign, Link, CheckCircle, XCircle, AlertCircle,
+  HelpCircle, Loader2, Volume2, VolumeX, Smile, Frown
 } from 'lucide-react';
 import clsx from 'clsx';
+
+// ==================== CONSTANTES E CONFIGURAÇÕES ====================
+
+const GANG_CONFIG = {
+  maxMembers: 50,
+  minMembersForWar: 3,
+  warCooldownHours: 24,
+  depositFee: 0,
+  withdrawalFee: 0.05,
+  territoryBonusMultiplier: 1.1,
+  rankUpdateInterval: 60000,
+};
+
+const GANG_RANKS = [
+  { id: 'recruit', label: 'Recruta', minRep: 0, icon: User, color: 'secondary' },
+  { id: 'soldier', label: 'Soldado', minRep: 100, icon: Shield, color: 'primary' },
+  { id: 'captain', label: 'Capitão', minRep: 500, icon: Star, color: 'warning' },
+  { id: 'lieutenant', label: 'Tenente', minRep: 1000, icon: Crown, color: 'gold' },
+  { id: 'boss', label: 'Chefe', minRep: 5000, icon: Crown, color: 'error' },
+];
+
+const GANG_ACTIVITIES = {
+  HEIST: { id: 'heist', label: 'Assalto', icon: Target, color: 'error', requiredRank: 'soldier' },
+  TURF_WAR: { id: 'turf_war', label: 'Guerra de Território', icon: Swords, color: 'warning', requiredRank: 'captain' },
+  RECRUITMENT: { id: 'recruitment', label: 'Recrutamento', icon: UserPlus, color: 'success', requiredRank: 'recruit' },
+  TREASURY: { id: 'treasury', label: 'Tesouraria', icon: Wallet, color: 'gold', requiredRank: 'soldier' },
+  MEETINGS: { id: 'meetings', label: 'Reuniões', icon: MessageSquare, color: 'primary', requiredRank: 'recruit' },
+};
+
+const WAR_STRATEGIES = [
+  { id: 'offensive', name: 'Ofensiva', description: 'Ataque direto com força máxima', bonus: '+20% poder de ataque, -10% defesa', icon: Swords },
+  { id: 'defensive', name: 'Defensiva', description: 'Proteger território a todo custo', bonus: '+20% defesa, -10% ataque', icon: Shield },
+  { id: 'guerrilla', name: 'Guerrilha', description: 'Táticas de emboscada', bonus: '+15% sucesso de surpresa', icon: Crosshair },
+  { id: 'diplomatic', name: 'Diplomática', description: 'Tentar negociação antes do conflito', bonus: 'Chance de resolver sem luta', icon: Handshake },
+];
+
+const GANG_TIPS = [
+  'Uma gangue forte precisa de membros ativos e dedicados.',
+  'Guerras de território são arriscadas mas muito lucrativas.',
+  'Contribui para a tesouraria para desbloquear upgrades.',
+  'Recruta membros com habilidades complementares.',
+  'Defende os teus territórios para manter os bónus.',
+  'O líder pode expulsar membros inativos.',
+  'Alianças temporárias podem ser úteis contra inimigos comuns.',
+];
+
+const TERRITORY_BONUSES = {
+  income: { label: 'Bónus de Rendimento', icon: DollarSign, color: 'gold' },
+  respect: { label: 'Bónus de Respeito', icon: Star, color: 'warning' },
+  protection: { label: 'Proteção', icon: Shield, color: 'primary' },
+  recruitment: { label: 'Bónus de Recrutamento', icon: UserPlus, color: 'success' },
+};
+
+// ==================== HOOKS PERSONALIZADOS ====================
+
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// ==================== COMPONENTES AUXILIARES ====================
+
+const Tooltip = ({ children, content, position = 'top' }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  const positions = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+  };
+  
+  return (
+    <div className="relative inline-block" onMouseEnter={() => setIsVisible(true)} onMouseLeave={() => setIsVisible(false)}>
+      {children}
+      {isVisible && (
+        <div className={clsx('absolute z-50 px-2 py-1 text-xs bg-surface border border-border rounded shadow-lg whitespace-nowrap', positions[position])}>
+          {content}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Skeleton = ({ className = '' }) => (
+  <div className={clsx('animate-pulse bg-surface-highlight rounded', className)} />
+);
+
+const EmptyState = ({ icon: Icon, title, description, action, actionLabel }) => (
+  <div className="text-center py-8">
+    <div className="w-16 h-16 mx-auto mb-4 bg-surface-highlight border border-border rounded-full flex items-center justify-center">
+      <Icon size={32} className="text-text-secondary" />
+    </div>
+    <h3 className="font-heading text-lg text-text-primary mb-2">{title}</h3>
+    <p className="text-text-secondary text-sm mb-4 max-w-md mx-auto">{description}</p>
+    {action && <Button variant="primary" onClick={action}>{actionLabel}</Button>}
+  </div>
+);
+
+const CircularProgress = ({ value, max, size = 60, strokeWidth = 4, color = 'primary' }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const progress = Math.min(value / max, 1);
+  const offset = circumference - progress * circumference;
+  
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-border" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className={`text-${color} transition-all duration-500`} />
+    </svg>
+  );
+};
+
+const PulsingDot = ({ color = 'primary', size = 'md' }) => {
+  const sizes = { sm: 'w-2 h-2', md: 'w-3 h-3', lg: 'w-4 h-4' };
+  
+  return (
+    <span className="relative flex">
+      <span className={clsx('animate-ping absolute inline-flex rounded-full opacity-75', sizes[size], `bg-${color}`)} />
+      <span className={clsx('relative inline-flex rounded-full', sizes[size], `bg-${color}`)} />
+    </span>
+  );
+};
+
+const StatCard = ({ icon: Icon, label, value, color = 'primary', subtext, trend }) => (
+  <div className="bg-surface border border-border rounded-lg p-3 hover:border-primary/30 transition-all">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-text-secondary text-xs uppercase mb-1">{label}</p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-xl font-mono text-${color}`}>{value}</p>
+          {trend && (
+            <span className={clsx('flex items-center text-xs', trend > 0 ? 'text-success' : 'text-error')}>
+              {trend > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {Math.abs(trend)}%
+            </span>
+          )}
+        </div>
+        {subtext && <p className="text-xs text-text-secondary mt-1">{subtext}</p>}
+      </div>
+      <Icon size={24} className={`text-${color} opacity-50`} />
+    </div>
+  </div>
+);
+
+const TipsCarousel = ({ tips }) => {
+  const [currentTip, setCurrentTip] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTip(prev => (prev + 1) % tips.length), 8000);
+    return () => clearInterval(interval);
+  }, [tips.length]);
+
+  return (
+    <div className="flex items-start gap-3 p-3 bg-primary/10 border border-primary/30 rounded">
+      <Info size={18} className="text-primary flex-shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <p className="text-xs text-primary uppercase mb-1">Dica</p>
+        <p className="text-sm text-text-secondary">{tips[currentTip]}</p>
+      </div>
+    </div>
+  );
+};
+
+const MemberRankBadge = ({ rank }) => {
+  const rankData = GANG_RANKS.find(r => r.id === rank) || GANG_RANKS[0];
+  const Icon = rankData.icon;
+  
+  return (
+    <Badge variant={rankData.color} size="sm" className="flex items-center gap-1">
+      <Icon size={10} /> {rankData.label}
+    </Badge>
+  );
+};
+
+const GangMemberCard = ({ member, isLeader, canKick, onKick, onPromote }) => (
+  <div className="flex items-center justify-between p-3 bg-surface-highlight border border-border rounded hover:border-primary/30 transition-all">
+    <div className="flex items-center gap-3">
+      <div className={clsx(
+        'w-10 h-10 rounded-full flex items-center justify-center',
+        isLeader ? 'bg-gold/20 border border-gold' : 'bg-primary/20 border border-primary/30'
+      )}>
+        {isLeader ? <Crown size={16} className="text-gold" /> : <User size={16} className="text-primary" />}
+      </div>
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="font-heading text-text-primary">{member.username}</p>
+          {isLeader && <Badge variant="gold" size="xs">Líder</Badge>}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-text-secondary">
+          <MemberRankBadge rank={member.rank} />
+          <span>Rep: {member.reputation || 0}</span>
+        </div>
+      </div>
+    </div>
+    {canKick && !isLeader && (
+      <div className="flex gap-1">
+        {onPromote && (
+          <Tooltip content="Promover">
+            <button onClick={() => onPromote(member.id)} className="p-2 hover:bg-success/20 rounded transition-all">
+              <TrendingUp size={14} className="text-success" />
+            </button>
+          </Tooltip>
+        )}
+        <Tooltip content="Expulsar">
+          <button onClick={() => onKick(member.id)} className="p-2 hover:bg-error/20 rounded transition-all">
+            <UserMinus size={14} className="text-error" />
+          </button>
+        </Tooltip>
+      </div>
+    )}
+  </div>
+);
+
+const TerritoryCard = ({ territory, isOwned, canAttack, onAttack, loading }) => {
+  const bonusTypes = territory.bonuses || [];
+  
+  return (
+    <div className={clsx(
+      'p-4 border rounded-lg transition-all',
+      isOwned ? 'bg-primary/10 border-primary' : 'bg-surface border-border hover:border-primary/50'
+    )}>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className={isOwned ? 'text-primary' : 'text-text-secondary'} />
+            <h4 className="font-heading text-text-primary">{territory.name}</h4>
+          </div>
+          <p className="text-xs text-text-secondary mt-1">
+            {territory.controller_name ? `Controlado por: ${territory.controller_name}` : 'Sem controlo'}
+          </p>
+        </div>
+        {isOwned && <Badge variant="primary">Teu</Badge>}
+      </div>
+      
+      {/* Bonuses */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {bonusTypes.map((bonus, idx) => {
+          const config = TERRITORY_BONUSES[bonus.type] || TERRITORY_BONUSES.income;
+          const Icon = config.icon;
+          return (
+            <Badge key={idx} variant={config.color} size="xs">
+              <Icon size={10} className="mr-1" /> +{bonus.value}% {config.label}
+            </Badge>
+          );
+        })}
+      </div>
+      
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+        <div className="p-2 bg-background rounded">
+          <span className="text-text-secondary">Defesa</span>
+          <p className="font-mono text-text-primary">{territory.defense || 0}</p>
+        </div>
+        <div className="p-2 bg-background rounded">
+          <span className="text-text-secondary">Valor</span>
+          <p className="font-mono text-gold">{territory.value || 0}</p>
+        </div>
+      </div>
+      
+      {canAttack && !isOwned && (
+        <Button
+          variant="error"
+          fullWidth
+          size="sm"
+          onClick={() => onAttack(territory)}
+          loading={loading}
+          icon={Swords}
+        >
+          Atacar
+        </Button>
+      )}
+    </div>
+  );
+};
+
+const WarStrategySelector = ({ strategies, selected, onSelect }) => (
+  <div className="space-y-2">
+    <p className="text-xs text-text-secondary uppercase mb-2">Estratégia de Guerra</p>
+    {strategies.map(strategy => {
+      const Icon = strategy.icon;
+      const isSelected = selected?.id === strategy.id;
+      
+      return (
+        <button
+          key={strategy.id}
+          onClick={() => onSelect(strategy)}
+          className={clsx(
+            'w-full p-3 rounded border text-left transition-all',
+            isSelected ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <Icon size={20} className={isSelected ? 'text-primary' : 'text-text-secondary'} />
+            <div className="flex-1">
+              <p className="font-heading text-text-primary text-sm">{strategy.name}</p>
+              <p className="text-xs text-text-secondary">{strategy.description}</p>
+              <Badge variant="secondary" size="xs" className="mt-1">{strategy.bonus}</Badge>
+            </div>
+            {isSelected && <Check size={16} className="text-primary" />}
+          </div>
+        </button>
+      );
+    })}
+  </div>
+);
+
+const GangActivityCard = ({ activity, isAvailable, onClick }) => {
+  const Icon = activity.icon;
+  
+  return (
+    <button
+      onClick={onClick}
+      disabled={!isAvailable}
+      className={clsx(
+        'p-4 border rounded-lg text-left transition-all',
+        isAvailable 
+          ? `border-${activity.color}/30 hover:border-${activity.color} bg-${activity.color}/5`
+          : 'border-border opacity-50 cursor-not-allowed'
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className={clsx('w-12 h-12 rounded-lg flex items-center justify-center', `bg-${activity.color}/20`)}>
+          <Icon size={24} className={`text-${activity.color}`} />
+        </div>
+        <div>
+          <p className="font-heading text-text-primary">{activity.label}</p>
+          <p className="text-xs text-text-secondary">
+            Requer: {GANG_RANKS.find(r => r.id === activity.requiredRank)?.label || 'Recruta'}
+          </p>
+        </div>
+      </div>
+      {!isAvailable && (
+        <div className="flex items-center gap-1 mt-2 text-xs text-text-secondary">
+          <Lock size={10} /> Rank insuficiente
+        </div>
+      )}
+    </button>
+  );
+};
+
+const GangLeaderboard = ({ gangs, myGangId }) => (
+  <div className="space-y-2">
+    {gangs.slice(0, 10).map((gang, idx) => {
+      const isMyGang = gang.id === myGangId;
+      const position = idx + 1;
+      
+      return (
+        <div key={gang.id} className={clsx(
+          'flex items-center justify-between p-3 rounded border',
+          isMyGang ? 'bg-primary/10 border-primary' : 'bg-surface border-border'
+        )}>
+          <div className="flex items-center gap-3">
+            <div className={clsx(
+              'w-8 h-8 rounded-full flex items-center justify-center font-heading text-sm',
+              position === 1 ? 'bg-gold/20 text-gold' :
+              position === 2 ? 'bg-secondary/20 text-secondary' :
+              position === 3 ? 'bg-warning/20 text-warning' :
+              'bg-surface-highlight text-text-secondary'
+            )}>
+              {position}
+            </div>
+            <div>
+              <p className="font-heading text-text-primary">[{gang.tag}] {gang.name}</p>
+              <p className="text-xs text-text-secondary">{gang.member_count || 0} membros</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-gold">€{(gang.treasury || 0).toLocaleString()}</p>
+            <p className="text-xs text-text-secondary">{gang.territories_count || 0} territórios</p>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const Handshake = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/>
+    <path d="M3 5 1.5 3.5"/>
+    <path d="M21 5l1.5-1.5"/>
+  </svg>
+);
+
+// ==================== COMPONENTE PRINCIPAL ====================
 
 export default function GangPage() {
   const { user, api } = useAuth();
