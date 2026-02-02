@@ -547,3 +547,38 @@ agent_communication:
       - Investimentos com diferentes riscos e retornos
       
       TOTAL: 10/10 endpoints do sistema bancário funcionando corretamente. Sistema completo e pronto para uso!
+  - agent: "main"
+    message: |
+      ✅ CORREÇÕES DE UI E ESTRUTURA COMPLETAS - Problemas reportados pelo usuário resolvidos!
+      
+      PROBLEMAS RESOLVIDOS:
+      
+      1. ❌ Ícone de olho duplicado no campo de senha → ✅ CORRIGIDO
+         - Removido botão manual extra nos formulários de Login e Register
+         - Agora usa apenas o toggle automático do componente Input
+         - Arquivo: frontend/src/pages/LoginPage.js
+      
+      2. ❌ Página inicial era dashboard/login → ✅ CORRIGIDO
+         - Criada nova LandingPage.js com todo o conteúdo público
+         - HomePage.js restaurada como Dashboard do jogo
+         - Rota "/" agora mostra a landing page pública
+         - Rota "/dashboard" mostra o dashboard do jogo (protegida)
+         - Arquivos: frontend/src/pages/LandingPage.js, HomePage.js, App.js
+      
+      3. ❌ Dashboard desapareceu → ✅ RESTAURADO
+         - Dashboard recriado com todas as funcionalidades:
+           • Header com boas-vindas e badges (nível, heat)
+           • Grid de estatísticas (dinheiro limpo/sujo, reputação, heat)
+           • Barra de progresso de nível
+           • Quick actions (8 atalhos para páginas principais)
+           • Quote of wisdom da lore
+           • Alertas de heat crítico
+           • Próximos desbloqueios
+           • Modal de recompensa diária
+      
+      NAVEGAÇÃO ATUALIZADA:
+      - Todos os links da Navigation.js atualizados para usar "/dashboard"
+      - PublicRoute agora suporta parâmetro redirectIfAuth
+      - Landing page acessível mesmo para usuários autenticados
+      
+      STATUS: Todas as correções implementadas e frontend reiniciado com sucesso!
