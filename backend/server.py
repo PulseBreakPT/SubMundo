@@ -44,6 +44,97 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# ============= SISTEMA DE COOLDOWNS E DESBLOQUEIOS =============
+
+COOLDOWNS = {
+    "daily_reward": 86400,  # 24 horas
+    "crime": 300,           # 5 minutos
+    "work": 600,            # 10 minutos  
+    "heist": 3600,          # 1 hora
+    "property_maintain": 7200,  # 2 horas
+    "gang_war": 14400,      # 4 horas
+    "mission": 180,         # 3 minutos
+}
+
+LEVEL_UNLOCKS = {
+    1: ["crimes_basic", "work", "market", "bank_basic"],
+    5: ["bank_advanced", "property_apartment"],
+    10: ["crimes_medium", "vehicles_basic", "property_house"],
+    15: ["business_buy", "gang_join", "property_warehouse"],
+    20: ["heists_basic", "gang_create", "vehicles_premium"],
+    25: ["crimes_advanced", "property_mansion"],
+    30: ["gang_wars", "business_advanced", "heists_medium"],
+    40: ["heists_advanced", "market_premium", "property_bunker"],
+    50: ["empire_building", "territory_control"],
+    75: ["legendary_missions", "ultimate_vehicles"],
+}
+
+def check_cooldown(player_data: dict, action: str) -> tuple:
+    """Verifica se ação está em cooldown. Retorna (pode_usar, tempo_restante)"""
+    if action not in COOLDOWNS:
+        return True, 0
+    
+    last_action_key = f"last_{action}"
+    last_action_time = player_data.get(last_action_key)
+    
+    if not last_action_time:
+        return True, 0
+    
+    # Garantir que last_action_time é um datetime
+    if isinstance(last_action_time, str):
+        last_action_time = datetime.fromisoformat(last_action_time.replace('Z', '+00:00'))
+    
+    cooldown_seconds = COOLDOWNS[action]
+    now = datetime.now(timezone.utc) if last_action_time.tzinfo else datetime.utcnow()
+    elapsed = (now - last_action_time).total_seconds()
+    
+    if elapsed >= cooldown_seconds:
+        return True, 0
+    
+    remaining = int(cooldown_seconds - elapsed)
+    return False, remaining
+
+def set_cooldown(player_data: dict, action: str) -> dict:
+    """Define o cooldown para uma ação"""
+    last_action_key = f"last_{action}"
+    player_data[last_action_key] = datetime.utcnow()
+    return player_data
+
+def check_level_unlock(player_level: int, feature: str) -> bool:
+    """Verifica se um recurso está desbloqueado pelo nível"""
+    for level, unlocks in LEVEL_UNLOCKS.items():
+        if player_level >= level and feature in unlocks:
+            return True
+    return False
+
+def get_next_unlocks(player_level: int, limit: int = 5) -> list:
+    """Retorna próximos desbloqueios"""
+    next_unlocks = []
+    for level in sorted(LEVEL_UNLOCKS.keys()):
+        if level > player_level:
+            for feature in LEVEL_UNLOCKS[level]:
+                feature_name = feature.replace('_', ' ').title()
+                next_unlocks.append({
+                    "level": level,
+                    "feature": feature_name,
+                    "levels_remaining": level - player_level
+                })
+                if len(next_unlocks) >= limit:
+                    return next_unlocks
+    return next_unlocks
+
+def format_cooldown_time(seconds: int) -> str:
+    """Formata tempo de cooldown em formato legível"""
+    if seconds < 60:
+        return f"{seconds}s"
+    elif seconds < 3600:
+        mins = seconds // 60
+        return f"{mins}m"
+    else:
+        hours = seconds // 3600
+        mins = (seconds % 3600) // 60
+        return f"{hours}h {mins}m" if mins > 0 else f"{hours}h"
+
 # ============= EXTENDED MODELS =============
 
 class UserCreate(BaseModel):
