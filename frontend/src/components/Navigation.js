@@ -8,7 +8,7 @@ import {
 
 // Main navigation items for mobile bottom bar
 const navItems = [
-  { path: '/', icon: Home, label: 'Início' },
+  { path: '/dashboard', icon: Home, label: 'Início' },
   { path: '/missoes', icon: Target, label: 'Missões' },
   { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/gangue', icon: Users, label: 'Gangue' },
@@ -19,7 +19,7 @@ const menuSections = [
   {
     title: 'Principal',
     items: [
-      { path: '/', icon: Home, label: 'Início' },
+      { path: '/dashboard', icon: Home, label: 'Início' },
       { path: '/mapa', icon: Map, label: 'Mapa' },
       { path: '/missoes', icon: Target, label: 'Missões' },
     ]
@@ -61,7 +61,7 @@ const menuSections = [
 
 // Sidebar items for desktop
 const sidebarItems = [
-  { path: '/', icon: Home, label: 'Início' },
+  { path: '/dashboard', icon: Home, label: 'Início' },
   { path: '/mapa', icon: Map, label: 'Mapa' },
   { path: '/missoes', icon: Target, label: 'Missões' },
   { path: '/banco', icon: Landmark, label: 'Banco' },
