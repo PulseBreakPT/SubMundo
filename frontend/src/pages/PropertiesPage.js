@@ -316,29 +316,6 @@ export default function PropertiesPage() {
     }
   };
   
-  const handleMaintain = async (propertyId) => {
-    setActionLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}/maintain`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
-        showNotif(data.message);
-        fetchData();
-        refreshStats();
-      } else {
-        showNotif(data.detail || 'Erro na manutenção', 'error');
-      }
-    } catch (error) {
-      showNotif('Erro de conexão', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-  
   const handleSell = async (propertyId) => {
     if (!window.confirm('Tens a certeza que queres vender esta propriedade?')) return;
     
