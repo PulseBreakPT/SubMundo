@@ -119,23 +119,23 @@ export default function HomePage() {
   const stats = [
     {
       icon: DollarSign,
-      label: 'Dinheiro Limpo',
+      label: 'Dinheiro na Mão',
       value: `€${cleanMoney.toLocaleString()}`,
       color: 'success',
       trend: null
     },
     {
       icon: DollarSign,
-      label: 'Dinheiro Sujo',
+      label: 'Dinheiro no Banco',
       value: `€${dirtyMoney.toLocaleString()}`,
-      color: 'warning',
+      color: 'primary',
       trend: null
     },
     {
       icon: Award,
       label: 'Reputação',
       value: reputation.toLocaleString(),
-      color: 'primary',
+      color: 'warning',
       trend: 'up'
     },
     {
