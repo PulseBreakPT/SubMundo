@@ -582,3 +582,36 @@ agent_communication:
       - Landing page acessível mesmo para usuários autenticados
       
       STATUS: Todas as correções implementadas e frontend reiniciado com sucesso!
+  - agent: "main"
+    message: |
+      ✅ CORREÇÃO DE REDIRECIONAMENTO APÓS LOGIN - Problema resolvido!
+      
+      PROBLEMA IDENTIFICADO:
+      - Após fazer login, o usuário não era redirecionado para o dashboard
+      - Permanecia na página de login ou era enviado para "/"
+      
+      CAUSA RAIZ:
+      - handleLogin e handleRegister redirecionavam para "/" em vez de "/dashboard"
+      - useEffect no LoginPage redirecionava usuários autenticados para "/" 
+      - LandingPage sempre redirecionava para "/login" mesmo quando usuário já estava autenticado
+      
+      CORREÇÕES APLICADAS:
+      1. LoginPage.js:
+         - handleLogin: navigate('/') → navigate('/dashboard')
+         - handleRegister + handleWelcomeClose: navigate('/') → navigate('/dashboard')
+         - useEffect redirect: searchParams.get('redirect') || '/' → || '/dashboard'
+      
+      2. LandingPage.js:
+         - Renomeado export: HomePage → LandingPage
+         - handlePlay agora verifica isAuthenticated:
+           • Se autenticado → navigate('/dashboard')
+           • Se não autenticado → navigate('/login')
+         - Removido import desnecessário de GameContext
+      
+      FLUXO CORRETO AGORA:
+      1. Usuário acessa "/" → vê Landing Page
+      2. Clica em "Jogar Grátis" ou "Entrar" → vai para /login
+      3. Faz login com sucesso → é redirecionado para /dashboard
+      4. Dashboard mostra: perfil, economia, missões, quick actions, etc.
+      
+      STATUS: Frontend compilado com sucesso e redirecionamento funcionando corretamente!
