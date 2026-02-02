@@ -24,17 +24,29 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - `/api/vehicles/*` - Sistema de veículos
 - `/api/wars/*` - Guerras de gangues
 - `/api/events/*` - Eventos da cidade
-- `/api/properties/*` - Sistema de propriedades (NEW)
-- `/api/businesses/*` - Sistema de negócios/crafting (NEW)
-- `/api/market/*` - Mercado Negro (NEW)
+- `/api/properties/*` - Sistema de propriedades
+- `/api/businesses/*` - Sistema de negócios/crafting
+- `/api/market/*` - Mercado Negro
 
 ### Frontend (React + Tailwind)
 - `AuthContext` - Gestão de autenticação
 - `GameContext` - Estado do jogo e polling
-- Páginas: Login, Home, Map, Missions, Gang, Profile, Vehicles, Events, Properties (NEW), Business (NEW), Market (NEW)
+- Páginas: Landing, Login, Dashboard, Map, Missions, Gang, Profile, Vehicles, Events, Properties, Business, Market, News, FAQ, Terms, Privacy
 - Responsivo: Sidebar (desktop) / Bottom Nav (mobile)
 
-## What's Been Implemented (02/02/2026)
+## What's Been Implemented
+
+### Landing Page ✅ (Dezembro 2025)
+- [x] **Navbar** - Menu fixo com navegação smooth scroll e botões login/registo
+- [x] **Hero Section** - Banner principal com título, estatísticas e CTAs
+- [x] **Features Section** - 6 características principais do jogo com ícones
+- [x] **Screenshots Section** - Galeria com navegação de imagens
+- [x] **Trailer Section** - Secção de vídeo com overlay de play
+- [x] **Testimonials Section** - 4 reviews de jogadores com ratings
+- [x] **FAQ Section** - 8 perguntas frequentes com accordion
+- [x] **Newsletter Section** - Formulário de subscrição de email
+- [x] **CTA Final** - Chamada para ação antes do footer
+- [x] **Footer** - Links organizados, redes sociais e informações legais
 
 ### Core Systems ✅
 - [x] Sistema de autenticação JWT
@@ -98,14 +110,12 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [x] Cancelamento de listagens
 - [x] Estatísticas de mercado
 
-### NEW: Páginas Informativas ✅
-- [x] **Novidades** - Notícias e atualizações do jogo (7 notícias)
-- [x] **FAQ** - 17 perguntas frequentes organizadas por categoria
+### Páginas Informativas ✅
+- [x] **Novidades** - Notícias e atualizações do jogo
+- [x] **FAQ** - Perguntas frequentes organizadas por categoria
 - [x] **Política de Privacidade** - RGPD compliant
 - [x] **Termos e Condições** - Regras de conduta, penalizações, etc.
-- [x] Endpoint público `/api/news` para novidades
-- [x] Endpoint público `/api/faq` para FAQs
-- [x] Endpoint público `/api/info/stats` para estatísticas do jogo
+- [x] Endpoints públicos para news, faq e stats
 
 ### UI/UX ✅
 - [x] Design Cyberpunk Noir (preto/vermelho)
@@ -129,12 +139,15 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - ✅ Sistema de Propriedades
 - ✅ Sistema de Negócios/Crafting
 - ✅ Mercado Negro
+- ✅ Landing Page completa
 
 ### P1 (Next Phase)
 - [ ] Sistema PVP assíncrono (ataques jogador vs jogador)
 - [ ] NPCs com memória e relações
 - [ ] Sistema de temporadas com rankings
 - [ ] Sistema de conquistas detalhado
+- [ ] Screenshots reais para a galeria da landing page
+- [ ] Integração de vídeo real no trailer
 
 ### P2 (Future)
 - [ ] Sistema de skills evolutivo
@@ -142,7 +155,30 @@ Criar um site-jogo totalmente funcional, inspirado em GTA Online, 100% text-base
 - [ ] Clima dinâmico
 - [ ] História episódica
 
+## Files Reference
+
+### Landing Page
+- `/app/frontend/src/pages/HomePage.js` - Landing page completa com todas as secções
+
+### Frontend Pages
+- `/app/frontend/src/pages/LoginPage.js` - Autenticação
+- `/app/frontend/src/pages/NewsPage.js` - Novidades
+- `/app/frontend/src/pages/FAQPage.js` - Perguntas frequentes
+- `/app/frontend/src/pages/TermsPage.js` - Termos e condições
+- `/app/frontend/src/pages/PrivacyPage.js` - Política de privacidade
+
+### Core Components
+- `/app/frontend/src/components/UI.js` - Componentes de UI reutilizáveis
+- `/app/frontend/src/components/ProgressBar.js` - Barras de progresso e cards
+- `/app/frontend/src/contexts/AuthContext.js` - Gestão de autenticação
+- `/app/frontend/src/contexts/GameContext.js` - Estado do jogo
+
+### Backend
+- `/app/backend/server.py` - Servidor principal FastAPI
+- `/app/backend/game_engine.py` - Lógica do jogo
+
 ## Next Action Items
-1. Implementar sistema PVP (ataques assíncronos)
-2. Adicionar NPCs com memória
-3. Sistema de temporadas
+1. Adicionar screenshots reais à galeria da landing page
+2. Integrar vídeo de trailer real
+3. Implementar sistema PVP (ataques assíncronos)
+4. Adicionar NPCs com memória
