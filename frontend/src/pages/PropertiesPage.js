@@ -365,7 +365,8 @@ export default function PropertiesPage() {
   };
   
   const totalIncome = properties.reduce((sum, p) => sum + p.income_per_hour, 0);
-  const totalPending = properties.reduce((sum, p) => sum + (p.pending_income || 0), 0);
+  // Removed - Properties don't generate income
+  // const totalPending = properties.reduce((sum, p) => sum + (p.pending_income || 0), 0);
   
   if (loading) {
     return (
