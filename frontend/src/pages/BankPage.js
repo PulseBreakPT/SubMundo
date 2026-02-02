@@ -309,19 +309,19 @@ export default function BankPage() {
                 return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-surface-highlight hover:bg-surface border border-border rounded transition-colors"
+                    className="flex items-center justify-between p-2 md:p-3 bg-surface-highlight hover:bg-surface border border-border rounded transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={clsx('w-10 h-10 flex items-center justify-center rounded', config.color)}>
-                        <Icon size={20} />
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className={clsx('w-8 h-8 flex items-center justify-center rounded', config.color)}>
+                        <Icon size={16} />
                       </div>
                       <div>
-                        <p className="text-sm text-text-primary font-body">{config.label}</p>
+                        <p className="text-xs md:text-sm text-text-primary font-body">{config.label}</p>
                         <p className="text-xs text-text-secondary">{formatDate(tx.timestamp)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={clsx('font-body', isPositive ? 'text-success' : 'text-error')}>
+                      <p className={clsx('font-body text-sm md:text-base', isPositive ? 'text-success' : 'text-error')}>
                         {isPositive ? '+' : ''}{formatCurrency(tx.amount)}
                       </p>
                       <p className="text-xs text-text-secondary">
@@ -342,10 +342,10 @@ export default function BankPage() {
         onClose={() => setShowDepositModal(false)}
         title="Depositar Dinheiro"
       >
-        <div className="space-y-4">
-          <div className="bg-surface-highlight p-3 rounded border border-border">
-            <p className="text-xs text-text-secondary mb-1">Disponível na Mão</p>
-            <p className="text-xl text-success font-body">{formatCurrency(bankStatus.player_cash)}</p>
+        <div className="space-y-3">
+          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+            <p className="text-xs text-text-secondary mb-0.5">Disponível na Mão</p>
+            <p className="text-lg md:text-xl text-success font-body">{formatCurrency(bankStatus.player_cash)}</p>
           </div>
 
           <Input
