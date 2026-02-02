@@ -1,1092 +1,857 @@
-import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useGame } from '../contexts/GameContext';
-import { useCountdown, useMissionTimer } from '../hooks/useCountdown';
-import { StatCard, Card, ProgressBar, CircularProgress, LevelProgress, HeatMeter, MiniSparkline, DonutChart, TrendIndicator } from '../components/ProgressBar';
-import { Button, Badge, Modal, Tooltip, FadeIn, SlideIn, Tabs, Alert, Skeleton, Avatar, CountdownTimer, Dropdown } from '../components/UI';
-import { LevelSystem, HeatSystem, getTipsAndStrategies, EconomySystem, TimeSystem, NotificationSystem } from '../utils/gameLogic';
-import { getRandomWisdomQuote, QUOTES } from '../data/lore';
+import { Button, FadeIn, Modal } from '../components/UI';
 import { 
-  DollarSign, Flame, Star, Zap, Gift, Target, 
-  Skull, Wallet, Clock, ChevronRight, Shield,
-  TrendingUp, Users, Car, Radio, Swords, Lightbulb, AlertTriangle,
-  Home, Building2, Factory, ShoppingBag, Banknote, Award,
-  Activity, Calendar, Bell, Settings, MessageSquare, MapPin,
-  Eye, EyeOff, RefreshCw, Info, Crown, Sparkles,
-  ArrowUp, ArrowDown, Minus, Heart, Lock, Unlock,
-  BarChart2, PieChart, Layers, MoreVertical, ExternalLink,
-  CheckCircle, XCircle, AlertCircle, Timer, Gauge, Compass
+  Skull, Target, Users, Car, Building2, Shield, Zap, Star,
+  ChevronRight, ChevronDown, Play, Mail, Check, X,
+  Gamepad2, Trophy, Swords, MapPin, DollarSign, Flame,
+  Eye, Lock, Crown, Gift, Clock, ArrowRight, Menu,
+  Twitter, Youtube, Instagram, MessageCircle, Send
 } from 'lucide-react';
 import clsx from 'clsx';
 
 // ============================================================================
-// CONSTANTES E HELPERS
+// DADOS DA LANDING PAGE
 // ============================================================================
 
-const QUICK_ACTIONS = [
-  { id: 'roubo_rapido', name: 'Roubo Rápido', energy: 5, icon: Skull, color: 'error', risk: 'médio' },
-  { id: 'hustle_rua', name: 'Hustle de Rua', energy: 8, icon: DollarSign, color: 'success', risk: 'baixo' },
-  { id: 'evento_aleatorio', name: 'Evento Aleatório', energy: 3, icon: Star, color: 'gold', risk: 'variável' }
-];
-
-const DASHBOARD_TABS = [
-  { id: 'overview', label: 'Visão Geral', icon: Home },
-  { id: 'economy', label: 'Economia', icon: Banknote },
-  { id: 'stats', label: 'Estatísticas', icon: BarChart2 },
-  { id: 'activity', label: 'Atividade', icon: Activity }
-];
-
-const formatMoney = (value) => {
-  if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `€${(value / 1000).toFixed(1)}K`;
-  return `€${value?.toFixed(0) || 0}`;
-};
-
-const formatTime = (seconds) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
-};
-
-// ============================================================================
-// WIDGET: Quick Stats Banner
-// ============================================================================
-
-const QuickStatsBanner = ({ player, onClick }) => {
-  const stats = [
-    { label: 'Limpo', value: formatMoney(player.clean_money), icon: DollarSign, color: 'success' },
-    { label: 'Sujo', value: formatMoney(player.dirty_money), icon: Wallet, color: 'warning' },
-    { label: 'Heat', value: `${player.heat_individual}%`, icon: Flame, color: player.heat_individual > 50 ? 'error' : 'primary' },
-    { label: 'Rep', value: player.reputation, icon: Star, color: 'gold' }
-  ];
-
-  return (
-    <div className="grid grid-cols-4 gap-2">
-      {stats.map((stat, i) => (
-        <FadeIn key={stat.label} delay={i * 50}>
-          <div 
-            className="bg-surface border border-border p-3 text-center cursor-pointer hover:border-primary/50 transition-all"
-            onClick={() => onClick?.(stat.label.toLowerCase())}
-          >
-            <stat.icon size={16} className={`text-${stat.color} mx-auto mb-1`} />
-            <p className={`text-lg font-body font-bold text-${stat.color}`}>{stat.value}</p>
-            <p className="text-[10px] text-text-secondary uppercase">{stat.label}</p>
-          </div>
-        </FadeIn>
-      ))}
-    </div>
-  );
-};
-
-// ============================================================================
-// WIDGET: Active Mission Card
-// ============================================================================
-
-const ActiveMissionWidget = ({ mission, onComplete, loading }) => {
-  const { progress, isComplete, formatRemaining } = useMissionTimer(
-    mission?.started_at,
-    mission?.duration_seconds
-  );
-
-  if (!mission) return null;
-
-  return (
-    <FadeIn>
-      <Card 
-        title="Missão Ativa" 
-        icon={Target}
-        accentColor={isComplete ? 'success' : 'warning'}
-        badge={isComplete ? 'PRONTA' : 'EM PROGRESSO'}
-      >
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h4 className="font-heading text-lg text-text-primary">{mission.name}</h4>
-              <p className="text-text-secondary text-sm">{mission.description}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-success font-body">
-                €{mission.reward_min} - €{mission.reward_max}
-              </p>
-              <p className="text-xs text-text-secondary">Recompensa</p>
-            </div>
-          </div>
-          
-          <ProgressBar
-            value={progress}
-            max={100}
-            color={isComplete ? 'success' : 'warning'}
-            showLabel={false}
-            height="h-3"
-            glow={isComplete}
-          />
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Clock size={14} />
-              <span>{isComplete ? 'Concluída!' : formatRemaining()}</span>
-            </div>
-            
-            {mission.heat_impact > 0 && (
-              <div className="flex items-center gap-1 text-sm text-error">
-                <Flame size={14} />
-                <span>+{mission.heat_impact}% heat</span>
-              </div>
-            )}
-          </div>
-          
-          {isComplete && (
-            <Button
-              variant="success"
-              fullWidth
-              onClick={onComplete}
-              loading={loading}
-              icon={CheckCircle}
-              glow
-            >
-              Concluir Missão
-            </Button>
-          )}
-        </div>
-      </Card>
-    </FadeIn>
-  );
-};
-
-// ============================================================================
-// WIDGET: Quick Actions Panel
-// ============================================================================
-
-const QuickActionsPanel = ({ player, onAction, loading, disabled }) => {
-  const [selectedAction, setSelectedAction] = useState(null);
-
-  return (
-    <Card title="Ações Rápidas" icon={Zap}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {QUICK_ACTIONS.map((action, i) => {
-          const canPerform = player?.energy >= action.energy && !disabled;
-          
-          return (
-            <FadeIn key={action.id} delay={i * 100}>
-              <button
-                className={clsx(
-                  'w-full p-4 border transition-all',
-                  canPerform 
-                    ? 'bg-surface border-border hover:border-primary cursor-pointer' 
-                    : 'bg-surface-highlight border-border opacity-50 cursor-not-allowed'
-                )}
-                onClick={() => canPerform && onAction(action.id)}
-                disabled={!canPerform || loading}
-              >
-                <div className="flex flex-col items-center">
-                  <div className={`w-12 h-12 flex items-center justify-center border border-${action.color}/30 bg-${action.color}/10 mb-2`}>
-                    <action.icon size={24} className={`text-${action.color}`} />
-                  </div>
-                  <span className="font-heading text-sm text-text-primary">{action.name}</span>
-                  <div className="flex items-center gap-2 mt-2 text-xs">
-                    <span className="text-secondary">{action.energy} ⚡</span>
-                    <span className="text-text-secondary">|</span>
-                    <span className={clsx(
-                      action.risk === 'baixo' && 'text-success',
-                      action.risk === 'médio' && 'text-warning',
-                      action.risk === 'alto' && 'text-error',
-                      action.risk === 'variável' && 'text-purple-400'
-                    )}>
-                      Risco {action.risk}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            </FadeIn>
-          );
-        })}
-      </div>
-      
-      {player?.energy < 3 && (
-        <Alert variant="warning" className="mt-4">
-          Energia baixa! Aguarda regeneração ou descansa.
-        </Alert>
-      )}
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Daily Reward
-// ============================================================================
-
-const DailyRewardWidget = ({ player, onClaim, loading }) => {
-  const dailyRewardTarget = useMemo(() => {
-    if (!player?.last_daily_reward) return null;
-    return new Date(new Date(player.last_daily_reward).getTime() + 86400000);
-  }, [player?.last_daily_reward]);
-
-  const { isExpired: canClaim, formatTime: formatDailyTime } = useCountdown(dailyRewardTarget);
-  const isAvailable = canClaim || !player.last_daily_reward;
-
-  return (
-    <Card 
-      title="Recompensa Diária" 
-      icon={Gift}
-      accentColor={isAvailable ? 'gold' : 'default'}
-      headerAction={
-        <Badge variant={isAvailable ? 'success' : 'default'}>
-          {isAvailable ? 'Disponível' : formatDailyTime()}
-        </Badge>
-      }
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-text-secondary text-sm mb-1">
-            {isAvailable 
-              ? 'Reclama a tua recompensa diária!' 
-              : 'Volta amanhã para mais recompensas.'}
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-gold text-xl font-body">€100 - €500</span>
-            {player.daily_streak > 0 && (
-              <Badge variant="gold" size="sm">
-                <Flame size={12} className="mr-1" />
-                {player.daily_streak} dias
-              </Badge>
-            )}
-          </div>
-        </div>
-        <Button
-          variant={isAvailable ? 'gold' : 'secondary'}
-          disabled={!isAvailable}
-          onClick={onClaim}
-          loading={loading}
-          icon={Gift}
-          glow={isAvailable}
-        >
-          {isAvailable ? 'Reclamar' : 'Aguardar'}
-        </Button>
-      </div>
-      
-      {/* Streak bonus preview */}
-      {player.daily_streak >= 3 && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-text-secondary">Bónus de streak:</span>
-            <span className="text-gold">+{Math.min(player.daily_streak * 5, 50)}%</span>
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Gang Status
-// ============================================================================
-
-const GangStatusWidget = ({ gang, wars, onClick }) => {
-  if (!gang) {
-    return (
-      <Card title="Gangue" icon={Users} onClick={onClick} className="cursor-pointer">
-        <div className="text-center py-6">
-          <Users size={40} className="mx-auto text-text-secondary mb-3" />
-          <p className="text-text-secondary mb-4">Ainda não pertences a nenhuma gangue.</p>
-          <Button variant="primary" icon={Users}>
-            Ver Gangues
-          </Button>
-        </div>
-      </Card>
-    );
+const GAME_FEATURES = [
+  {
+    icon: Skull,
+    title: 'Vida do Crime',
+    description: 'Constrói o teu império criminoso desde a rua até ao topo. Começa como um pequeno ladrão e torna-te o maior chefe do submundo.',
+    color: 'primary'
+  },
+  {
+    icon: Building2,
+    title: 'Negócios Ilegais',
+    description: 'Gere propriedades, lavandarias de dinheiro, clubes noturnos e muito mais. Cada negócio tem os seus próprios desafios e recompensas.',
+    color: 'secondary'
+  },
+  {
+    icon: Users,
+    title: 'Gangues & Territórios',
+    description: 'Junta-te a gangues poderosas ou cria a tua própria. Conquista territórios e defende-os contra rivais.',
+    color: 'warning'
+  },
+  {
+    icon: Car,
+    title: 'Veículos & Roubos',
+    description: 'Coleciona veículos de luxo, planeia assaltos elaborados e escapa da polícia em perseguições intensas.',
+    color: 'success'
+  },
+  {
+    icon: Swords,
+    title: 'Combate & PvP',
+    description: 'Sistema de combate estratégico contra NPCs e outros jogadores. Escolhe as tuas armas e táticas sabiamente.',
+    color: 'error'
+  },
+  {
+    icon: MapPin,
+    title: 'Mundo Aberto',
+    description: 'Explora bairros distintos, cada um com a sua própria economia, facções e oportunidades criminosas.',
+    color: 'gold'
   }
+];
 
-  return (
-    <Card 
-      title={gang.name} 
-      icon={Users}
-      badge={`[${gang.tag}]`}
-      headerAction={<ChevronRight size={18} className="text-text-secondary" />}
-      onClick={onClick}
-      className="cursor-pointer"
-    >
-      <div className="space-y-4">
-        {/* Gang Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center">
-            <p className="text-xl font-body text-primary">{gang.members_count || 1}</p>
-            <p className="text-[10px] text-text-secondary uppercase">Membros</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-body text-gold">{gang.territories?.length || 0}</p>
-            <p className="text-[10px] text-text-secondary uppercase">Territórios</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-body text-success">{formatMoney(gang.treasury)}</p>
-            <p className="text-[10px] text-text-secondary uppercase">Cofre</p>
-          </div>
-        </div>
-        
-        {/* Active Wars */}
-        {wars.length > 0 && (
-          <div className="pt-3 border-t border-border">
-            <div className="flex items-center gap-2 mb-2">
-              <Swords size={14} className="text-error" />
-              <span className="text-xs text-error uppercase">Guerras Ativas</span>
-            </div>
-            {wars.slice(0, 2).map(war => (
-              <div key={war.id} className="flex items-center justify-between text-sm py-1">
-                <span className="text-text-primary">{war.neighborhood_name}</span>
-                <Badge variant="warning" size="xs">EM GUERRA</Badge>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-};
+const SCREENSHOTS = [
+  { id: 1, title: 'Dashboard Principal', desc: 'Controla o teu império' },
+  { id: 2, title: 'Mapa de Territórios', desc: 'Conquista a cidade' },
+  { id: 3, title: 'Sistema de Missões', desc: 'Completa trabalhos' },
+  { id: 4, title: 'Mercado Negro', desc: 'Compra e vende' },
+  { id: 5, title: 'Gestão de Gangue', desc: 'Lidera a tua crew' },
+  { id: 6, title: 'Garagem de Veículos', desc: 'Coleciona carros' }
+];
 
-// ============================================================================
-// WIDGET: Active Vehicle
-// ============================================================================
+const TESTIMONIALS = [
+  {
+    name: 'DarkLord_PT',
+    avatar: 'DL',
+    rating: 5,
+    text: 'O melhor jogo de crime que já joguei! A profundidade estratégica é incrível e a comunidade é muito ativa.',
+    level: 47,
+    gang: 'Cartel das Sombras'
+  },
+  {
+    name: 'CrimeBoss99',
+    avatar: 'CB',
+    rating: 5,
+    text: 'Viciei completamente. Cada decisão importa e o sistema de heat deixa tudo mais tenso. 10/10!',
+    level: 62,
+    gang: 'Máfia do Porto'
+  },
+  {
+    name: 'StreetQueen',
+    avatar: 'SQ',
+    rating: 5,
+    text: 'Finalmente um jogo que respeita o nosso tempo. Podes jogar casualmente ou hardcore, funciona dos dois jeitos.',
+    level: 38,
+    gang: 'As Rainhas'
+  },
+  {
+    name: 'NightHunter',
+    avatar: 'NH',
+    rating: 4,
+    text: 'Gráficos estilo cyberpunk brutal, gameplay viciante. Só queria mais missões de história.',
+    level: 55,
+    gang: 'Caçadores Noturnos'
+  }
+];
 
-const ActiveVehicleWidget = ({ vehicle, onClick }) => {
-  if (!vehicle) return null;
+const FAQ_ITEMS = [
+  {
+    question: 'O jogo é gratuito?',
+    answer: 'Sim! SUBMUNDO é free-to-play. Podes jogar todo o conteúdo principal sem gastar dinheiro. Oferecemos itens cosméticos opcionais para quem quiser apoiar o desenvolvimento.'
+  },
+  {
+    question: 'Em que plataformas posso jogar?',
+    answer: 'SUBMUNDO é um jogo web-based que funciona em qualquer browser moderno (Chrome, Firefox, Safari, Edge). Podes jogar no PC, Mac, tablet ou smartphone.'
+  },
+  {
+    question: 'Preciso de um PC potente?',
+    answer: 'Não! Como é um jogo baseado em browser, os requisitos são mínimos. Qualquer dispositivo que corra um browser moderno consegue jogar SUBMUNDO sem problemas.'
+  },
+  {
+    question: 'Posso jogar sozinho ou preciso de uma gangue?',
+    answer: 'Podes jogar completamente sozinho se preferires. No entanto, juntar-te a uma gangue desbloqueia conteúdo extra, missões cooperativas e territórios exclusivos.'
+  },
+  {
+    question: 'O progresso é guardado automaticamente?',
+    answer: 'Sim! Todo o teu progresso é guardado automaticamente nos nossos servidores. Podes continuar de onde paraste em qualquer dispositivo.'
+  },
+  {
+    question: 'Como funciona o sistema de Heat?',
+    answer: 'O Heat representa a atenção policial sobre ti. Atividades ilegais aumentam o Heat, enquanto manter-se discreto ou subornar autoridades o diminui. Heat alto significa mais riscos mas também mais recompensas.'
+  },
+  {
+    question: 'Há eventos especiais?',
+    answer: 'Sim! Organizamos eventos semanais e sazonais com missões exclusivas, recompensas limitadas e competições entre gangues. Segue-nos nas redes sociais para não perderes nada.'
+  },
+  {
+    question: 'Como reporto bugs ou dou sugestões?',
+    answer: 'Podes contactar-nos através do Discord oficial, email de suporte ou nas redes sociais. Valorizamos muito o feedback da comunidade!'
+  }
+];
 
-  const conditionColor = vehicle.condition > 70 ? 'success' : vehicle.condition > 30 ? 'warning' : 'error';
-
-  return (
-    <Card 
-      title="Veículo Ativo" 
-      icon={Car}
-      headerAction={<ChevronRight size={18} className="text-text-secondary" />}
-      onClick={onClick}
-      className="cursor-pointer"
-    >
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 bg-surface-highlight border border-border flex items-center justify-center">
-          <Car size={32} className="text-primary" />
-        </div>
-        <div className="flex-1">
-          <p className="text-text-primary font-body text-lg">{vehicle.name}</p>
-          <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
-            <div>
-              <span className="text-text-secondary">Vel:</span>
-              <span className="text-primary ml-1">{vehicle.speed}</span>
-            </div>
-            <div>
-              <span className="text-text-secondary">Furt:</span>
-              <span className="text-secondary ml-1">{vehicle.stealth}</span>
-            </div>
-            <div>
-              <span className="text-text-secondary">Cond:</span>
-              <span className={`text-${conditionColor} ml-1`}>{vehicle.condition}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {vehicle.condition < 30 && (
-        <Alert variant="error" className="mt-3">
-          <AlertTriangle size={14} className="inline mr-1" />
-          Veículo precisa de reparação!
-        </Alert>
-      )}
-    </Card>
-  );
-};
+const STATS = [
+  { value: '50K+', label: 'Jogadores Ativos' },
+  { value: '1M+', label: 'Missões Completadas' },
+  { value: '500+', label: 'Gangues Criadas' },
+  { value: '24/7', label: 'Servidores Online' }
+];
 
 // ============================================================================
-// WIDGET: Events Banner
+// COMPONENTE: Navbar
 // ============================================================================
 
-const EventsBanner = ({ events, onClick }) => {
-  if (!events || events.length === 0) return null;
+const Navbar = ({ onLogin, onRegister }) => {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  return (
-    <FadeIn>
-      <div 
-        className="bg-primary/10 border border-primary p-4 cursor-pointer hover:bg-primary/20 transition-all"
-        onClick={onClick}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Radio size={24} className="text-primary animate-pulse" />
-            <div>
-              <p className="text-primary font-ui uppercase text-sm">Eventos Ativos</p>
-              <p className="text-text-primary">
-                {events.map(e => e.name).join(' • ')}
-              </p>
-            </div>
-          </div>
-          <ChevronRight size={20} className="text-primary" />
-        </div>
-      </div>
-    </FadeIn>
-  );
-};
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-// ============================================================================
-// WIDGET: Level Analysis
-// ============================================================================
-
-const LevelAnalysisWidget = ({ player }) => {
-  const levelInfo = useMemo(() => {
-    if (!player?.level) return null;
-    const title = LevelSystem.getLevelTitle(player.level);
-    const bonuses = LevelSystem.getLevelBonuses(player.level);
-    const nextLevelXP = LevelSystem.calculateXPForLevel(player.level + 1);
-    return { title, bonuses, nextLevelXP };
-  }, [player?.level]);
-
-  if (!levelInfo) return null;
-
-  const bonusList = [
-    { label: 'Sucesso Missões', value: `+${levelInfo.bonuses.missionSuccessBonus.toFixed(1)}%`, icon: Target },
-    { label: 'Recompensas', value: `x${levelInfo.bonuses.rewardBonus.toFixed(2)}`, icon: DollarSign },
-    { label: 'Energia Máx', value: `+${levelInfo.bonuses.maxEnergyBonus}`, icon: Zap },
-    { label: 'Reputação', value: `x${levelInfo.bonuses.reputationMultiplier.toFixed(2)}`, icon: Star }
-  ];
-
-  return (
-    <Card title="Análise de Nível" icon={TrendingUp}>
-      <div className="space-y-4">
-        {/* Current Level */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gold/10 border border-gold/30 flex items-center justify-center">
-              <span className="text-xl font-heading text-gold">{player.level}</span>
-            </div>
-            <div>
-              <p className="text-xs text-text-secondary uppercase">Título</p>
-              <p className={clsx('font-heading', levelInfo.title.color)}>{levelInfo.title.title}</p>
-            </div>
-          </div>
-          <CircularProgress
-            value={player.experience}
-            max={player.experience_max}
-            size="sm"
-            color="gold"
-            showValue
-          />
-        </div>
-        
-        {/* Progress to next level */}
-        <ProgressBar
-          label="Experiência"
-          value={player.experience}
-          max={player.experience_max}
-          color="gold"
-          showPercentage
-        />
-        
-        {/* Bonuses */}
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border">
-          {bonusList.map((bonus, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              <bonus.icon size={12} className="text-gold" />
-              <span className="text-text-secondary">{bonus.label}:</span>
-              <span className="text-gold">{bonus.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Heat Status
-// ============================================================================
-
-const HeatStatusWidget = ({ player }) => {
-  const heatStatus = useMemo(() => {
-    if (player?.heat_individual === undefined) return null;
-    const danger = HeatSystem.getDangerLevel(player.heat_individual);
-    const advice = HeatSystem.getHeatAdvice(player.heat_individual);
-    const modifiers = HeatSystem.getHeatModifiers(player.heat_individual);
-    return { ...danger, advice, modifiers };
-  }, [player?.heat_individual]);
-
-  if (!heatStatus) return null;
-
-  return (
-    <HeatMeter
-      value={player.heat_individual}
-      showEffects
-      effects={heatStatus.advice.slice(0, 3)}
-    />
-  );
-};
-
-// ============================================================================
-// WIDGET: Economy Overview
-// ============================================================================
-
-const EconomyOverviewWidget = ({ player }) => {
-  const totalWealth = (player?.clean_money || 0) + (player?.dirty_money || 0) + (player?.bank_balance || 0);
-  
-  const economyData = [
-    { label: 'Limpo', value: player?.clean_money || 0, color: 'success' },
-    { label: 'Sujo', value: player?.dirty_money || 0, color: 'warning' },
-    { label: 'Banco', value: player?.bank_balance || 0, color: 'primary' }
-  ];
-
-  return (
-    <Card title="Visão Económica" icon={Banknote}>
-      <div className="flex items-center gap-6">
-        <DonutChart
-          data={economyData}
-          size={100}
-          strokeWidth={15}
-          showLegend={false}
-          showTotal
-          totalLabel="Total"
-        />
-        
-        <div className="flex-1 space-y-2">
-          {economyData.map((item, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 bg-${item.color}`} />
-                <span className="text-sm text-text-secondary">{item.label}</span>
-              </div>
-              <span className={`text-sm font-body text-${item.color}`}>
-                {formatMoney(item.value)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      {/* Quick actions */}
-      <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-        <Button variant="secondary" size="sm" fullWidth icon={Banknote}>
-          Depositar
-        </Button>
-        <Button variant="secondary" size="sm" fullWidth icon={RefreshCw}>
-          Lavar
-        </Button>
-      </div>
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Wisdom Quote
-// ============================================================================
-
-const WisdomQuoteWidget = () => {
-  const [quote, setQuote] = useState(() => getRandomWisdomQuote());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const refreshQuote = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setQuote(getRandomWisdomQuote());
-      setIsRefreshing(false);
-    }, 300);
+  const scrollToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="bg-primary/10 border border-primary/30 p-4 relative">
-      <button 
-        onClick={refreshQuote}
-        className="absolute top-2 right-2 p-1 hover:bg-primary/20 rounded transition-colors"
-      >
-        <RefreshCw size={14} className={clsx('text-primary', isRefreshing && 'animate-spin')} />
-      </button>
+    <nav className={clsx(
+      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+      scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'
+    )}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Skull className="w-8 h-8 text-primary" />
+            <span className="font-display text-xl sm:text-2xl font-bold text-primary tracking-wider">
+              SUBMUNDO
+            </span>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <button onClick={() => scrollToSection('features')} className="text-text-secondary hover:text-primary transition-colors">
+              Features
+            </button>
+            <button onClick={() => scrollToSection('screenshots')} className="text-text-secondary hover:text-primary transition-colors">
+              Screenshots
+            </button>
+            <button onClick={() => scrollToSection('reviews')} className="text-text-secondary hover:text-primary transition-colors">
+              Reviews
+            </button>
+            <button onClick={() => scrollToSection('faq')} className="text-text-secondary hover:text-primary transition-colors">
+              FAQ
+            </button>
+          </div>
+
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" onClick={onLogin}>Entrar</Button>
+            <Button variant="primary" onClick={onRegister}>Jogar Agora</Button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2 text-text-secondary"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Menu size={24} />
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-surface border-t border-border py-4 px-4 space-y-4">
+            <button onClick={() => scrollToSection('features')} className="block w-full text-left py-2 text-text-secondary">Features</button>
+            <button onClick={() => scrollToSection('screenshots')} className="block w-full text-left py-2 text-text-secondary">Screenshots</button>
+            <button onClick={() => scrollToSection('reviews')} className="block w-full text-left py-2 text-text-secondary">Reviews</button>
+            <button onClick={() => scrollToSection('faq')} className="block w-full text-left py-2 text-text-secondary">FAQ</button>
+            <div className="flex gap-2 pt-4 border-t border-border">
+              <Button variant="ghost" onClick={onLogin} className="flex-1">Entrar</Button>
+              <Button variant="primary" onClick={onRegister} className="flex-1">Jogar</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Hero Section
+// ============================================================================
+
+const HeroSection = ({ onPlay }) => {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background to-background" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
       
-      <div className="flex items-start gap-3 pr-8">
-        <Lightbulb size={24} className="text-primary flex-shrink-0" />
-        <div>
-          <p className="text-xs text-primary uppercase tracking-wider mb-1">Sabedoria do Submundo</p>
-          <p className={clsx(
-            'text-text-primary italic transition-opacity',
-            isRefreshing ? 'opacity-0' : 'opacity-100'
-          )}>
-            "{quote}"
+      {/* Animated Grid */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(var(--primary) 1px, transparent 1px), linear-gradient(90deg, var(--primary) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }} />
+      </div>
+
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-20 h-20 border border-primary/30 rotate-45 animate-pulse" />
+      <div className="absolute bottom-32 right-20 w-16 h-16 border border-secondary/30 rotate-12 animate-pulse" />
+      <div className="absolute top-40 right-32 w-12 h-12 bg-primary/10 rotate-45" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20">
+        <FadeIn>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-surface/80 border border-primary/50 px-4 py-2 mb-8">
+            <Zap className="w-4 h-4 text-primary animate-pulse" />
+            <span className="text-sm text-text-secondary">Novo Update v2.0 Disponível</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
+            <span className="text-text-primary">BEM-VINDO AO</span>
+            <br />
+            <span className="text-primary text-glow">SUBMUNDO</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-8">
+            Entra no jogo de crime mais intenso da web. Constrói o teu império, 
+            lidera gangues e domina as ruas neste RPG de estratégia criminal.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+            <Button 
+              variant="primary" 
+              size="lg" 
+              onClick={onPlay}
+              className="group min-w-[200px] text-lg py-4"
+            >
+              <Gamepad2 className="mr-2" />
+              Jogar Grátis
+              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="lg"
+              onClick={() => document.getElementById('trailer')?.scrollIntoView({ behavior: 'smooth' })}
+              className="min-w-[200px] text-lg py-4"
+            >
+              <Play className="mr-2" />
+              Ver Trailer
+            </Button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {STATS.map((stat, i) => (
+              <div key={i} className="bg-surface/50 border border-border p-4">
+                <p className="font-display text-2xl sm:text-3xl font-bold text-primary">{stat.value}</p>
+                <p className="text-xs sm:text-sm text-text-secondary">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <ChevronDown className="w-8 h-8 text-text-secondary" />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Features Section
+// ============================================================================
+
+const FeaturesSection = () => {
+  return (
+    <section id="features" className="py-20 bg-surface/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+              FEATURES DO <span className="text-primary">JOGO</span>
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Descobre tudo o que podes fazer no SUBMUNDO. Cada feature foi desenhada 
+              para te proporcionar horas de gameplay estratégico e envolvente.
+            </p>
+          </div>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {GAME_FEATURES.map((feature, i) => (
+            <FadeIn key={feature.title} delay={i * 100}>
+              <div className="group relative bg-surface border border-border p-6 hover:border-primary/50 transition-all duration-300 h-full">
+                {/* Accent Line */}
+                <div className={`absolute top-0 left-0 w-1 h-full bg-${feature.color}`} />
+                
+                {/* Icon */}
+                <div className={`w-12 h-12 bg-${feature.color}/10 border border-${feature.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <feature.icon className={`w-6 h-6 text-${feature.color}`} />
+                </div>
+
+                {/* Content */}
+                <h3 className="font-display text-xl font-bold text-text-primary mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-text-secondary text-sm leading-relaxed">
+                  {feature.description}
+                </p>
+
+                {/* Hover Effect */}
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Screenshots Section
+// ============================================================================
+
+const ScreenshotsSection = () => {
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  return (
+    <section id="screenshots" className="py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+              <span className="text-primary">SCREENSHOTS</span> DO JOGO
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Vê como é o SUBMUNDO por dentro. Interface moderna, gráficos estilizados 
+              e informação clara para dominares o jogo.
+            </p>
+          </div>
+        </FadeIn>
+
+        {/* Main Screenshot Display */}
+        <div className="relative mb-6">
+          <div className="aspect-video bg-surface border border-border overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface to-background">
+              <div className="text-center">
+                <Eye className="w-16 h-16 text-primary/50 mx-auto mb-4" />
+                <p className="text-text-secondary">{SCREENSHOTS[selectedImage].title}</p>
+                <p className="text-sm text-text-secondary/60">{SCREENSHOTS[selectedImage].desc}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Navigation Arrows */}
+          <button 
+            onClick={() => setSelectedImage(prev => prev === 0 ? SCREENSHOTS.length - 1 : prev - 1)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 border border-border flex items-center justify-center hover:border-primary transition-colors"
+          >
+            <ChevronRight className="w-5 h-5 text-text-primary rotate-180" />
+          </button>
+          <button 
+            onClick={() => setSelectedImage(prev => prev === SCREENSHOTS.length - 1 ? 0 : prev + 1)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/80 border border-border flex items-center justify-center hover:border-primary transition-colors"
+          >
+            <ChevronRight className="w-5 h-5 text-text-primary" />
+          </button>
+        </div>
+
+        {/* Thumbnail Grid */}
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+          {SCREENSHOTS.map((screenshot, i) => (
+            <button
+              key={screenshot.id}
+              onClick={() => setSelectedImage(i)}
+              className={clsx(
+                'aspect-video bg-surface border transition-all',
+                selectedImage === i ? 'border-primary' : 'border-border hover:border-primary/50'
+              )}
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-xs text-text-secondary">{i + 1}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Trailer Section
+// ============================================================================
+
+const TrailerSection = () => {
+  return (
+    <section id="trailer" className="py-20 bg-surface/30">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="text-center mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+              TRAILER <span className="text-primary">OFICIAL</span>
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Assiste ao trailer e prepara-te para entrar no submundo do crime.
+            </p>
+          </div>
+
+          {/* Video Container */}
+          <div className="relative aspect-video bg-surface border border-border overflow-hidden group cursor-pointer">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
+            
+            {/* Play Button Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Play className="w-10 h-10 text-white ml-1" />
+              </div>
+            </div>
+
+            {/* Video Info */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-6">
+              <p className="font-display text-xl text-text-primary">SUBMUNDO - Trailer Oficial</p>
+              <p className="text-sm text-text-secondary">2:34 • Gameplay & Cinematics</p>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Testimonials Section
+// ============================================================================
+
+const TestimonialsSection = () => {
+  return (
+    <section id="reviews" className="py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+              O QUE OS <span className="text-primary">JOGADORES</span> DIZEM
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Junta-te a milhares de jogadores que já descobriram o SUBMUNDO.
+            </p>
+          </div>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {TESTIMONIALS.map((review, i) => (
+            <FadeIn key={review.name} delay={i * 100}>
+              <div className="bg-surface border border-border p-6 h-full">
+                {/* Header */}
+                <div className="flex items-start gap-4 mb-4">
+                  {/* Avatar */}
+                  <div className="w-12 h-12 bg-primary/20 border border-primary/30 flex items-center justify-center font-bold text-primary">
+                    {review.avatar}
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="flex-1">
+                    <p className="font-display font-bold text-text-primary">{review.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <span>Level {review.level}</span>
+                      <span>•</span>
+                      <span>{review.gang}</span>
+                    </div>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, j) => (
+                      <Star 
+                        key={j} 
+                        className={clsx(
+                          'w-4 h-4',
+                          j < review.rating ? 'text-gold fill-gold' : 'text-border'
+                        )} 
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review Text */}
+                <p className="text-text-secondary leading-relaxed">"{review.text}"</p>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: FAQ Section
+// ============================================================================
+
+const FAQSection = () => {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  return (
+    <section id="faq" className="py-20 bg-surface/30">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+              PERGUNTAS <span className="text-primary">FREQUENTES</span>
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Tens dúvidas? Encontra aqui as respostas às perguntas mais comuns.
+            </p>
+          </div>
+        </FadeIn>
+
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, i) => (
+            <FadeIn key={i} delay={i * 50}>
+              <div className="bg-surface border border-border">
+                <button
+                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-highlight transition-colors"
+                >
+                  <span className="font-display font-bold text-text-primary pr-4">
+                    {item.question}
+                  </span>
+                  <ChevronDown 
+                    className={clsx(
+                      'w-5 h-5 text-primary transition-transform flex-shrink-0',
+                      openIndex === i && 'rotate-180'
+                    )} 
+                  />
+                </button>
+                
+                {openIndex === i && (
+                  <div className="px-4 pb-4 border-t border-border">
+                    <p className="text-text-secondary pt-4 leading-relaxed">
+                      {item.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Newsletter Section
+// ============================================================================
+
+const NewsletterSection = () => {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (email) {
+      setSubmitted(true);
+      setEmail('');
+    }
+  };
+
+  return (
+    <section className="py-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <FadeIn>
+          <div className="bg-surface border border-border p-8 sm:p-12 text-center relative overflow-hidden">
+            {/* Background Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
+            
+            <div className="relative z-10">
+              <Gift className="w-12 h-12 text-primary mx-auto mb-4" />
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+                RECEBE NOVIDADES & BÓNUS
+              </h2>
+              <p className="text-text-secondary mb-8 max-w-lg mx-auto">
+                Subscreve a nossa newsletter e recebe atualizações exclusivas, 
+                dicas de jogo e bónus especiais diretamente no teu email.
+              </p>
+
+              {submitted ? (
+                <div className="flex items-center justify-center gap-2 text-success">
+                  <Check className="w-5 h-5" />
+                  <span>Obrigado! Confirma o teu email.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="O teu email..."
+                    className="flex-1 bg-background border border-border px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-primary focus:outline-none"
+                    required
+                  />
+                  <Button type="submit" variant="primary" className="whitespace-nowrap">
+                    <Mail className="w-4 h-4 mr-2" />
+                    Subscrever
+                  </Button>
+                </form>
+              )}
+
+              <p className="text-xs text-text-secondary/60 mt-4">
+                Sem spam. Podes cancelar a qualquer momento.
+              </p>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: CTA Section
+// ============================================================================
+
+const CTASection = ({ onPlay }) => {
+  return (
+    <section className="py-20 bg-gradient-to-b from-surface/30 to-background relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <FadeIn>
+          <Skull className="w-16 h-16 text-primary mx-auto mb-6" />
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-4">
+            PRONTO PARA <span className="text-primary text-glow">DOMINAR</span>?
+          </h2>
+          <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+            O submundo espera por ti. Cria a tua conta gratuita agora e começa 
+            a construir o teu império criminoso hoje mesmo.
+          </p>
+          
+          <Button 
+            variant="primary" 
+            size="lg" 
+            onClick={onPlay}
+            className="text-lg px-8 py-4 animate-pulse-red"
+          >
+            <Gamepad2 className="mr-2" />
+            Começar a Jogar - É Grátis!
+          </Button>
+
+          <p className="text-sm text-text-secondary/60 mt-6">
+            Não é necessário cartão de crédito • Registo em 30 segundos
+          </p>
+        </FadeIn>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// COMPONENTE: Footer
+// ============================================================================
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = {
+    jogo: [
+      { label: 'Jogar Agora', href: '/login' },
+      { label: 'Novidades', href: '/news' },
+      { label: 'Guia do Jogo', href: '/faq' },
+      { label: 'Rankings', href: '/rankings' }
+    ],
+    legal: [
+      { label: 'Termos de Serviço', href: '/terms' },
+      { label: 'Política de Privacidade', href: '/privacy' },
+      { label: 'Regras do Jogo', href: '/rules' }
+    ],
+    suporte: [
+      { label: 'FAQ', href: '/faq' },
+      { label: 'Contacto', href: '/contact' },
+      { label: 'Reportar Bug', href: '/contact' }
+    ]
+  };
+
+  const socialLinks = [
+    { icon: Twitter, href: '#', label: 'Twitter' },
+    { icon: Youtube, href: '#', label: 'YouTube' },
+    { icon: Instagram, href: '#', label: 'Instagram' },
+    { icon: MessageCircle, href: '#', label: 'Discord' }
+  ];
+
+  return (
+    <footer className="bg-surface border-t border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+          {/* Brand */}
+          <div className="col-span-2">
+            <div className="flex items-center gap-2 mb-4">
+              <Skull className="w-8 h-8 text-primary" />
+              <span className="font-display text-xl font-bold text-primary">SUBMUNDO</span>
+            </div>
+            <p className="text-sm text-text-secondary mb-4 max-w-xs">
+              O jogo de crime mais intenso da web. Constrói o teu império e domina as ruas.
+            </p>
+            
+            {/* Social Links */}
+            <div className="flex gap-3">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  className="w-10 h-10 bg-background border border-border flex items-center justify-center hover:border-primary hover:text-primary transition-colors"
+                  aria-label={social.label}
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Links */}
+          <div>
+            <h4 className="font-display font-bold text-text-primary mb-4">JOGO</h4>
+            <ul className="space-y-2">
+              {footerLinks.jogo.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-text-secondary hover:text-primary transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-display font-bold text-text-primary mb-4">LEGAL</h4>
+            <ul className="space-y-2">
+              {footerLinks.legal.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-text-secondary hover:text-primary transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-display font-bold text-text-primary mb-4">SUPORTE</h4>
+            <ul className="space-y-2">
+              {footerLinks.suporte.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-sm text-text-secondary hover:text-primary transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-text-secondary">
+            © {currentYear} SUBMUNDO. Todos os direitos reservados.
+          </p>
+          <p className="text-xs text-text-secondary/60">
+            Este é um jogo de ficção. Todas as atividades são virtuais.
           </p>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 
 // ============================================================================
-// WIDGET: Tips Panel
-// ============================================================================
-
-const TipsPanel = ({ player }) => {
-  const tips = useMemo(() => {
-    const allTips = getTipsAndStrategies();
-    const level = player?.level || 1;
-    
-    if (level < 5) return allTips.beginner || allTips.general?.slice(0, 3);
-    if (level < 20) return allTips.general?.slice(0, 4);
-    return allTips.advanced || allTips.general?.slice(-3);
-  }, [player?.level]);
-
-  if (!tips?.length) return null;
-
-  return (
-    <Card title="Dicas" icon={Lightbulb} collapsible defaultCollapsed>
-      <div className="space-y-2">
-        {tips.map((tip, idx) => (
-          <div key={idx} className="flex items-start gap-2 text-sm text-text-secondary">
-            <span className="text-primary">•</span>
-            <span>{tip}</span>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Stats Summary
-// ============================================================================
-
-const StatsSummaryWidget = ({ player }) => {
-  const stats = [
-    { label: 'Missões', value: player.total_missions, color: 'primary' },
-    { label: 'Sucessos', value: player.successful_missions, color: 'success' },
-    { label: 'Prisões', value: player.times_arrested, color: 'error' }
-  ];
-
-  const successRate = player.total_missions > 0 
-    ? ((player.successful_missions / player.total_missions) * 100).toFixed(1)
-    : 0;
-
-  return (
-    <Card title="Resumo" icon={BarChart2}>
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        {stats.map((stat, i) => (
-          <div key={i} className="text-center">
-            <p className={`text-2xl font-body text-${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-text-secondary uppercase">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-      
-      <div className="pt-4 border-t border-border">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-text-secondary">Taxa de Sucesso</span>
-          <span className={clsx(
-            'text-sm font-body',
-            successRate >= 70 ? 'text-success' : successRate >= 40 ? 'text-warning' : 'text-error'
-          )}>
-            {successRate}%
-          </span>
-        </div>
-        <ProgressBar
-          value={parseFloat(successRate)}
-          max={100}
-          color={successRate >= 70 ? 'success' : successRate >= 40 ? 'warning' : 'error'}
-          showLabel={false}
-          height="h-2"
-        />
-      </div>
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Activity Timeline
-// ============================================================================
-
-const ActivityTimelineWidget = ({ activities = [] }) => {
-  const recentActivities = activities.slice(0, 5);
-
-  if (recentActivities.length === 0) {
-    return (
-      <Card title="Atividade Recente" icon={Activity}>
-        <div className="text-center py-6 text-text-secondary">
-          <Activity size={32} className="mx-auto mb-2 opacity-50" />
-          <p>Sem atividade recente</p>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card title="Atividade Recente" icon={Activity}>
-      <div className="space-y-3">
-        {recentActivities.map((activity, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className={clsx(
-              'w-8 h-8 flex items-center justify-center rounded-full',
-              activity.type === 'success' && 'bg-success/20',
-              activity.type === 'error' && 'bg-error/20',
-              activity.type === 'info' && 'bg-primary/20',
-              activity.type === 'warning' && 'bg-warning/20'
-            )}>
-              {activity.icon ? (
-                <activity.icon size={14} className={clsx(
-                  activity.type === 'success' && 'text-success',
-                  activity.type === 'error' && 'text-error',
-                  activity.type === 'info' && 'text-primary',
-                  activity.type === 'warning' && 'text-warning'
-                )} />
-              ) : (
-                <Activity size={14} className="text-text-secondary" />
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-text-primary">{activity.title}</p>
-              <p className="text-xs text-text-secondary">{activity.time}</p>
-            </div>
-            {activity.value && (
-              <span className={clsx(
-                'text-sm font-body',
-                activity.type === 'success' && 'text-success',
-                activity.type === 'error' && 'text-error'
-              )}>
-                {activity.value}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Properties Overview
-// ============================================================================
-
-const PropertiesOverviewWidget = ({ properties = [], onClick }) => {
-  const totalIncome = properties.reduce((sum, p) => sum + (p.income_per_hour || 0), 0);
-  const needsMaintenance = properties.filter(p => p.condition < 50).length;
-
-  return (
-    <Card 
-      title="Propriedades" 
-      icon={Building2}
-      headerAction={
-        <Badge variant="primary">{properties.length}</Badge>
-      }
-      onClick={onClick}
-      className="cursor-pointer"
-    >
-      {properties.length === 0 ? (
-        <div className="text-center py-4">
-          <Building2 size={32} className="mx-auto mb-2 text-text-secondary" />
-          <p className="text-text-secondary text-sm">Sem propriedades</p>
-          <Button variant="primary" size="sm" className="mt-3">
-            Comprar Propriedade
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-text-secondary text-sm">Rendimento/hora:</span>
-            <span className="text-success font-body">{formatMoney(totalIncome)}</span>
-          </div>
-          
-          {needsMaintenance > 0 && (
-            <Alert variant="warning" closable={false}>
-              {needsMaintenance} propriedade(s) precisa(m) de manutenção
-            </Alert>
-          )}
-          
-          <Button variant="secondary" size="sm" fullWidth icon={ChevronRight}>
-            Ver Propriedades
-          </Button>
-        </div>
-      )}
-    </Card>
-  );
-};
-
-// ============================================================================
-// WIDGET: Businesses Overview
-// ============================================================================
-
-const BusinessesOverviewWidget = ({ businesses = [], onClick }) => {
-  const activeProduction = businesses.filter(b => b.production_active).length;
-
-  return (
-    <Card 
-      title="Negócios" 
-      icon={Factory}
-      headerAction={
-        <Badge variant="gold">{businesses.length}</Badge>
-      }
-      onClick={onClick}
-      className="cursor-pointer"
-    >
-      {businesses.length === 0 ? (
-        <div className="text-center py-4">
-          <Factory size={32} className="mx-auto mb-2 text-text-secondary" />
-          <p className="text-text-secondary text-sm">Sem negócios</p>
-          <Button variant="gold" size="sm" className="mt-3">
-            Abrir Negócio
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {activeProduction > 0 && (
-            <div className="flex items-center gap-2 p-2 bg-gold/10 border border-gold/30">
-              <Activity size={16} className="text-gold animate-pulse" />
-              <span className="text-sm text-gold">
-                {activeProduction} produção(s) ativa(s)
-              </span>
-            </div>
-          )}
-          
-          <Button variant="secondary" size="sm" fullWidth icon={ChevronRight}>
-            Gerir Negócios
-          </Button>
-        </div>
-      )}
-    </Card>
-  );
-};
-
-// ============================================================================
-// MAIN COMPONENT
+// PÁGINA PRINCIPAL: HomePage (Landing Page)
 // ============================================================================
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    gameState, 
-    activeMission, 
-    myGang,
-    gangWars,
-    activeVehicle,
-    cityEvents,
-    actionLoading,
-    performQuickAction, 
-    claimDailyReward,
-    completeMission 
-  } = useGame();
 
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showDetailedStats, setShowDetailedStats] = useState(false);
-
-  const player = gameState?.player || user;
-
-  // Handler functions
-  const handleQuickAction = useCallback(async (actionType) => {
-    await performQuickAction(actionType);
-  }, [performQuickAction]);
-
-  const handleClaimDaily = useCallback(async () => {
-    await claimDailyReward();
-  }, [claimDailyReward]);
-
-  const handleCompleteMission = useCallback(async () => {
-    if (activeMission) {
-      await completeMission(activeMission.id);
+  // Se o utilizador já está logado, redireciona para o dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
     }
-  }, [activeMission, completeMission]);
+  }, [user, navigate]);
 
-  // Loading state
-  if (!player) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <Skeleton variant="title" />
-        <div className="grid grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} variant="card" />)}
-        </div>
-        <Skeleton variant="card" height={200} />
-      </div>
-    );
-  }
+  const handleLogin = () => navigate('/login');
+  const handleRegister = () => navigate('/login?register=true');
+  const handlePlay = () => navigate('/login');
 
   return (
-    <div className="space-y-6 animate-fade-in" data-testid="home-page">
-      {/* Welcome Section */}
-      <FadeIn>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar
-              name={player.username}
-              size="lg"
-              status="online"
-            />
-            <div>
-              <h1 className="font-heading text-2xl md:text-3xl text-text-primary">
-                Olá, {player.username}
-              </h1>
-              <p className="text-text-secondary text-sm flex items-center gap-2">
-                <Crown size={14} className="text-gold" />
-                Nível {player.level} • {player.main_neighborhood?.toUpperCase() || 'CENTRO'}
-              </p>
-            </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-2">
-            <Tooltip content="Configurações">
-              <button className="p-2 hover:bg-surface-highlight transition-colors">
-                <Settings size={20} className="text-text-secondary" />
-              </button>
-            </Tooltip>
-            <Tooltip content="Notificações">
-              <button className="p-2 hover:bg-surface-highlight transition-colors relative">
-                <Bell size={20} className="text-text-secondary" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />
-              </button>
-            </Tooltip>
-          </div>
-        </div>
-      </FadeIn>
-
-      {/* Quick Stats */}
-      <QuickStatsBanner 
-        player={player} 
-        onClick={(stat) => {
-          if (stat === 'heat') navigate('/perfil');
-          if (stat === 'limpo' || stat === 'sujo') navigate('/banco');
-        }}
-      />
-
-      {/* Active Events Banner */}
-      <EventsBanner events={cityEvents} onClick={() => navigate('/eventos')} />
-
-      {/* Dashboard Tabs (Mobile) */}
-      <div className="md:hidden">
-        <Tabs
-          tabs={DASHBOARD_TABS}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          variant="pills"
-          fullWidth
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Progress Section */}
-          <FadeIn delay={100}>
-            <Card title="Progresso" icon={TrendingUp}>
-              <div className="space-y-4">
-                <ProgressBar
-                  label="Experiência"
-                  value={player.experience}
-                  max={player.experience_max}
-                  color="primary"
-                  showPercentage
-                />
-                <ProgressBar
-                  label="Energia"
-                  value={player.energy}
-                  max={player.energy_max}
-                  color="secondary"
-                  showPercentage
-                />
-                <ProgressBar
-                  label="Reputação"
-                  value={player.reputation}
-                  max={player.reputation_max}
-                  color="gold"
-                  showPercentage
-                />
-              </div>
-            </Card>
-          </FadeIn>
-
-          {/* Active Mission */}
-          <ActiveMissionWidget 
-            mission={activeMission}
-            onComplete={handleCompleteMission}
-            loading={actionLoading}
-          />
-
-          {/* Quick Actions */}
-          {!activeMission && (
-            <FadeIn delay={200}>
-              <QuickActionsPanel
-                player={player}
-                onAction={handleQuickAction}
-                loading={actionLoading}
-                disabled={activeMission}
-              />
-            </FadeIn>
-          )}
-
-          {/* Level & Heat Analysis */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FadeIn delay={250}>
-              <LevelAnalysisWidget player={player} />
-            </FadeIn>
-            <FadeIn delay={300}>
-              <HeatStatusWidget player={player} />
-            </FadeIn>
-          </div>
-
-          {/* Stats Summary */}
-          <FadeIn delay={350}>
-            <StatsSummaryWidget player={player} />
-          </FadeIn>
-        </div>
-
-        {/* Right Column - Sidebar */}
-        <div className="space-y-6">
-          {/* Daily Reward */}
-          <FadeIn delay={100}>
-            <DailyRewardWidget
-              player={player}
-              onClaim={handleClaimDaily}
-              loading={actionLoading}
-            />
-          </FadeIn>
-
-          {/* Active Vehicle */}
-          <FadeIn delay={150}>
-            <ActiveVehicleWidget 
-              vehicle={activeVehicle}
-              onClick={() => navigate('/veiculos')}
-            />
-          </FadeIn>
-
-          {/* Gang Status */}
-          <FadeIn delay={200}>
-            <GangStatusWidget
-              gang={myGang}
-              wars={gangWars}
-              onClick={() => navigate('/gangue')}
-            />
-          </FadeIn>
-
-          {/* Economy Overview */}
-          <FadeIn delay={250}>
-            <EconomyOverviewWidget player={player} />
-          </FadeIn>
-
-          {/* Properties Overview */}
-          <FadeIn delay={300}>
-            <PropertiesOverviewWidget 
-              properties={player.properties || []}
-              onClick={() => navigate('/propriedades')}
-            />
-          </FadeIn>
-
-          {/* Businesses Overview */}
-          <FadeIn delay={350}>
-            <BusinessesOverviewWidget
-              businesses={player.businesses || []}
-              onClick={() => navigate('/negocios')}
-            />
-          </FadeIn>
-
-          {/* Wisdom Quote */}
-          <FadeIn delay={400}>
-            <WisdomQuoteWidget />
-          </FadeIn>
-
-          {/* Tips Panel */}
-          <FadeIn delay={450}>
-            <TipsPanel player={player} />
-          </FadeIn>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar onLogin={handleLogin} onRegister={handleRegister} />
+      <HeroSection onPlay={handlePlay} />
+      <FeaturesSection />
+      <ScreenshotsSection />
+      <TrailerSection />
+      <TestimonialsSection />
+      <FAQSection />
+      <NewsletterSection />
+      <CTASection onPlay={handlePlay} />
+      <Footer />
     </div>
   );
 }
