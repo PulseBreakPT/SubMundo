@@ -251,27 +251,20 @@ const LoginForm = ({ onSubmit, loading, error }) => {
         data-testid="email-input"
       />
       
-      <div className="relative">
-        <Input
-          label="Password"
-          name="password"
-          type={showPassword ? 'text' : 'password'}
-          placeholder="••••••••"
-          value={formData.password}
-          onChange={handleChange}
-          error={formErrors.password}
-          icon={Lock}
-          iconPosition="left"
-          data-testid="password-input"
-        />
-        <button
-          type="button"
-          className="absolute right-4 top-9 text-text-secondary hover:text-text-primary"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </div>
+      <Input
+        label="Password"
+        name="password"
+        type={showPassword ? 'text' : 'password'}
+        placeholder="••••••••"
+        value={formData.password}
+        onChange={handleChange}
+        error={formErrors.password}
+        icon={Lock}
+        iconPosition="left"
+        rightIcon={showPassword ? EyeOff : Eye}
+        onRightIconClick={() => setShowPassword(!showPassword)}
+        data-testid="password-input"
+      />
       
       <div className="flex items-center justify-between">
         <Checkbox
@@ -479,27 +472,20 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
               <ArrowLeft size={14} /> Voltar
             </button>
             
-            <div className="relative">
-              <Input
-                label="Password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                error={formErrors.password}
-                icon={Lock}
-                iconPosition="left"
-                data-testid="password-input"
-              />
-              <button
-                type="button"
-                className="absolute right-4 top-9 text-text-secondary hover:text-text-primary"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
+            <Input
+              label="Password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              error={formErrors.password}
+              icon={Lock}
+              iconPosition="left"
+              rightIcon={showPassword ? EyeOff : Eye}
+              onRightIconClick={() => setShowPassword(!showPassword)}
+              data-testid="password-input"
+            />
             
             <PasswordStrengthIndicator password={formData.password} />
             
