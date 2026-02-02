@@ -36,7 +36,18 @@ export default function HomePage() {
 
   const playerLevel = LevelSystem.getLevel(gameState?.player?.experience || 0);
   const heatStatus = HeatSystem.getHeatStatus(gameState?.player?.heat || 0);
-  const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  
+  // Get random wisdom quote
+  const wisdomQuotes = [
+    { text: "Amigos próximos, inimigos mais perto ainda.", author: "Provérbio do Submundo" },
+    { text: "O silêncio é mais valioso que o ouro.", author: "Código Criminal" },
+    { text: "Quem muito fala, pouco vive.", author: "Lei das Ruas" },
+    { text: "A paciência é a arma dos vencedores.", author: "Máxima dos Veteranos" },
+    { text: "Três podem guardar um segredo, se dois estiverem mortos.", author: "Sabedoria da Máfia" },
+    { text: "Não mostres as cartas antes do fim do jogo.", author: "Regra de Ouro" },
+    { text: "A vingança é um prato que se serve frio.", author: "Tradição Siciliana" }
+  ];
+  const randomQuote = wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
 
   const quickActions = [
     { 
