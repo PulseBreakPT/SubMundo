@@ -44,6 +44,19 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Import advanced game systems
+try:
+    from game_systems import (
+        ACHIEVEMENTS, check_achievements, calculate_level as calc_level_advanced,
+        calculate_rankings, trigger_random_event, apply_event_effects,
+        calculate_player_statistics, calculate_market_prices
+    )
+    ADVANCED_SYSTEMS_ENABLED = True
+except ImportError:
+    logger.warning("game_systems.py não encontrado, usando fallbacks")
+    ACHIEVEMENTS = {}
+    ADVANCED_SYSTEMS_ENABLED = False
+
 # ============= SISTEMA DE COOLDOWNS E DESBLOQUEIOS =============
 
 COOLDOWNS = {
