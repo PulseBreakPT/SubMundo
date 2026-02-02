@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button, FadeIn, Modal } from '../components/UI';
+import { Button, Modal } from '../components/UI';
 import { 
   Skull, Target, Users, Car, Building2, Shield, Zap, Star,
   ChevronRight, ChevronDown, Play, Mail, Check, X,
