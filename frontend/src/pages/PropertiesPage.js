@@ -70,13 +70,6 @@ const PropertyCard = ({ property, onMaintain, onSell, loading }) => {
           
           <div className="flex gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); onCollect(property.id); }}
-              disabled={loading || property.pending_income < 1}
-              className="flex-1 py-2 px-3 bg-success/20 hover:bg-success/30 border border-success/50 rounded text-success text-sm font-ui flex items-center justify-center gap-1 disabled:opacity-50"
-            >
-              <DollarSign size={14} /> Coletar
-            </button>
-            <button
               onClick={(e) => { e.stopPropagation(); onMaintain(property.id); }}
               disabled={loading || property.condition >= 100}
               className="flex-1 py-2 px-3 bg-warning/20 hover:bg-warning/30 border border-warning/50 rounded text-warning text-sm font-ui flex items-center justify-center gap-1 disabled:opacity-50"
