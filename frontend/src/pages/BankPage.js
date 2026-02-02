@@ -167,7 +167,7 @@ export default function BankPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 md:space-y-3">
       {/* Notification */}
       {notification && (
         <Alert variant={notification.type}>
@@ -178,21 +178,21 @@ export default function BankPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl md:text-3xl text-text-primary mb-1">Banco SUBMUNDO</h1>
-          <p className="text-text-secondary text-sm">Gestão financeira segura</p>
+          <h1 className="font-heading text-xl md:text-2xl text-text-primary mb-0.5">Banco SUBMUNDO</h1>
+          <p className="text-text-secondary text-xs md:text-sm">Gestão financeira segura</p>
         </div>
-        <Landmark className="w-10 h-10 md:w-12 md:h-12 text-primary opacity-50" />
+        <Landmark className="w-8 h-8 md:w-10 md:h-10 text-primary opacity-50" />
       </div>
 
       {/* Balance Cards */}
-      <div className="grid md:grid-cols-3 gap-3">
+      <div className="grid md:grid-cols-3 gap-2">
         <Card className="bg-gradient-to-br from-success/10 to-transparent border-success/30">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-secondary uppercase mb-0.5">Dinheiro na Mão</p>
-              <p className="text-xl md:text-2xl font-heading text-success">{formatCurrency(bankStatus.player_cash)}</p>
+              <p className="text-lg md:text-xl font-heading text-success">{formatCurrency(bankStatus.player_cash)}</p>
             </div>
-            <Wallet className="w-8 h-8 md:w-10 md:h-10 text-success opacity-50" />
+            <Wallet className="w-7 h-7 md:w-8 md:h-8 text-success opacity-50" />
           </div>
         </Card>
 
@@ -200,9 +200,9 @@ export default function BankPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-secondary uppercase mb-0.5">Dinheiro no Banco</p>
-              <p className="text-xl md:text-2xl font-heading text-primary">{formatCurrency(bankStatus.bank_balance)}</p>
+              <p className="text-lg md:text-xl font-heading text-primary">{formatCurrency(bankStatus.bank_balance)}</p>
             </div>
-            <Landmark className="w-8 h-8 md:w-10 md:h-10 text-primary opacity-50" />
+            <Landmark className="w-7 h-7 md:w-8 md:h-8 text-primary opacity-50" />
           </div>
         </Card>
 
@@ -210,18 +210,18 @@ export default function BankPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-secondary uppercase mb-0.5">Total</p>
-              <p className="text-xl md:text-2xl font-heading text-gold">
+              <p className="text-lg md:text-xl font-heading text-gold">
                 {formatCurrency(bankStatus.player_cash + bankStatus.bank_balance)}
               </p>
             </div>
-            <DollarSign className="w-8 h-8 md:w-10 md:h-10 text-gold opacity-50" />
+            <DollarSign className="w-7 h-7 md:w-8 md:h-8 text-gold opacity-50" />
           </div>
         </Card>
       </div>
 
       {/* Quick Actions */}
       <Card title="Operações" icon={DollarSign}>
-        <div className="grid md:grid-cols-3 gap-2 md:gap-3">
+        <div className="grid md:grid-cols-3 gap-1.5 md:gap-2">
           <Button
             variant="success"
             fullWidth
@@ -271,18 +271,18 @@ export default function BankPage() {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <Card title="Informações da Conta" icon={Landmark}>
-          <div className="space-y-2">
-            <div className="flex justify-between py-1.5 border-b border-border">
-              <span className="text-text-secondary text-sm">Titular</span>
-              <span className="text-text-primary font-body text-sm">{user?.username}</span>
+          <div className="space-y-1.5">
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-secondary text-xs md:text-sm">Titular</span>
+              <span className="text-text-primary font-body text-xs md:text-sm">{user?.username}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-border">
-              <span className="text-text-secondary text-sm">Saldo Disponível</span>
-              <span className="text-success font-body text-sm">{formatCurrency(bankStatus.bank_balance)}</span>
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-secondary text-xs md:text-sm">Saldo Disponível</span>
+              <span className="text-success font-body text-xs md:text-sm">{formatCurrency(bankStatus.bank_balance)}</span>
             </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-text-secondary text-sm">Total de Transações</span>
-              <span className="text-text-primary font-body text-sm">{transactions.length}</span>
+            <div className="flex justify-between py-1">
+              <span className="text-text-secondary text-xs md:text-sm">Total de Transações</span>
+              <span className="text-text-primary font-body text-xs md:text-sm">{transactions.length}</span>
             </div>
           </div>
         </Card>
@@ -291,12 +291,12 @@ export default function BankPage() {
       {activeTab === 'transactions' && (
         <Card title="Histórico de Transações" icon={History}>
           {transactions.length === 0 ? (
-            <div className="text-center py-6">
-              <History size={40} className="mx-auto text-text-secondary opacity-50 mb-2" />
-              <p className="text-text-secondary text-sm">Sem transações ainda</p>
+            <div className="text-center py-4">
+              <History size={32} className="mx-auto text-text-secondary opacity-50 mb-1.5" />
+              <p className="text-text-secondary text-xs">Sem transações ainda</p>
             </div>
           ) : (
-            <div className="space-y-1.5 max-h-[500px] overflow-y-auto">
+            <div className="space-y-1 max-h-[500px] overflow-y-auto">
               {transactions.map((tx, index) => {
                 const config = transactionConfig[tx.transaction_type] || {
                   icon: DollarSign,
@@ -309,23 +309,23 @@ export default function BankPage() {
                 return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 md:p-3 bg-surface-highlight hover:bg-surface border border-border rounded transition-colors"
+                    className="flex items-center justify-between p-1.5 md:p-2 bg-surface-highlight hover:bg-surface border border-border rounded transition-colors"
                   >
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <div className={clsx('w-8 h-8 flex items-center justify-center rounded', config.color)}>
-                        <Icon size={16} />
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                      <div className={clsx('w-7 h-7 flex items-center justify-center rounded', config.color)}>
+                        <Icon size={14} />
                       </div>
                       <div>
-                        <p className="text-xs md:text-sm text-text-primary font-body">{config.label}</p>
+                        <p className="text-xs text-text-primary font-body">{config.label}</p>
                         <p className="text-xs text-text-secondary">{formatDate(tx.timestamp)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={clsx('font-body text-sm md:text-base', isPositive ? 'text-success' : 'text-error')}>
+                      <p className={clsx('font-body text-xs md:text-sm', isPositive ? 'text-success' : 'text-error')}>
                         {isPositive ? '+' : ''}{formatCurrency(tx.amount)}
                       </p>
                       <p className="text-xs text-text-secondary">
-                        Saldo: {formatCurrency(tx.balance_after)}
+                        {formatCurrency(tx.balance_after)}
                       </p>
                     </div>
                   </div>
@@ -342,10 +342,10 @@ export default function BankPage() {
         onClose={() => setShowDepositModal(false)}
         title="Depositar Dinheiro"
       >
-        <div className="space-y-3">
-          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+        <div className="space-y-2">
+          <div className="bg-surface-highlight p-2 rounded border border-border">
             <p className="text-xs text-text-secondary mb-0.5">Disponível na Mão</p>
-            <p className="text-lg md:text-xl text-success font-body">{formatCurrency(bankStatus.player_cash)}</p>
+            <p className="text-base md:text-lg text-success font-body">{formatCurrency(bankStatus.player_cash)}</p>
           </div>
 
           <Input
@@ -380,10 +380,10 @@ export default function BankPage() {
         onClose={() => setShowWithdrawModal(false)}
         title="Levantar Dinheiro"
       >
-        <div className="space-y-3">
-          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+        <div className="space-y-2">
+          <div className="bg-surface-highlight p-2 rounded border border-border">
             <p className="text-xs text-text-secondary mb-0.5">Disponível no Banco</p>
-            <p className="text-lg md:text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
+            <p className="text-base md:text-lg text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
           </div>
 
           <Input
@@ -422,10 +422,10 @@ export default function BankPage() {
         onClose={() => setShowTransferModal(false)}
         title="Transferir Dinheiro"
       >
-        <div className="space-y-3">
-          <div className="bg-surface-highlight p-2.5 rounded border border-border">
+        <div className="space-y-2">
+          <div className="bg-surface-highlight p-2 rounded border border-border">
             <p className="text-xs text-text-secondary mb-0.5">Disponível no Banco</p>
-            <p className="text-lg md:text-xl text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
+            <p className="text-base md:text-lg text-primary font-body">{formatCurrency(bankStatus.bank_balance)}</p>
           </div>
 
           <Input
