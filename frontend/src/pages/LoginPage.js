@@ -634,7 +634,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      const redirect = searchParams.get('redirect') || '/';
+      const redirect = searchParams.get('redirect') || '/dashboard';
       navigate(redirect);
     }
   }, [isAuthenticated, navigate, searchParams]);
