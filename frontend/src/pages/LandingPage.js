@@ -805,13 +805,19 @@ const Footer = () => {
 // PÁGINA PRINCIPAL: HomePage (Landing Page)
 // ============================================================================
 
-export default function HomePage() {
+export default function LandingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const handleLogin = () => navigate('/login');
   const handleRegister = () => navigate('/login?register=true');
-  const handlePlay = () => navigate('/login');
+  const handlePlay = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
