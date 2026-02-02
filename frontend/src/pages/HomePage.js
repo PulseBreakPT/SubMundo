@@ -160,14 +160,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl text-text-primary mb-2">
+          <h1 className="font-heading text-2xl md:text-3xl text-text-primary mb-1.5">
             Bem-vindo, <span className="text-primary">{user?.username}</span>
           </h1>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <Badge variant={playerLevel.color} size="lg">
               {playerLevel.title} • Nível {playerLevel.level}
             </Badge>
@@ -194,29 +194,29 @@ export default function HomePage() {
 
       {/* Quote of Wisdom */}
       <Card className="bg-surface/50 border-l-4 border-primary">
-        <div className="flex items-start gap-4">
-          <Skull className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
+        <div className="flex items-start gap-3">
+          <Skull className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-text-primary italic mb-2">"{randomQuote.text}"</p>
-            <p className="text-text-secondary text-sm">— {randomQuote.author}</p>
+            <p className="text-text-primary italic text-sm mb-1">"{randomQuote.text}"</p>
+            <p className="text-text-secondary text-xs">— {randomQuote.author}</p>
           </div>
         </div>
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((stat, i) => (
           <Card key={i} className="relative overflow-hidden">
             <div className={`absolute top-0 left-0 w-1 h-full bg-${stat.color}`} />
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-text-secondary uppercase mb-1">{stat.label}</p>
-                <p className="text-xl font-heading text-text-primary">{stat.value}</p>
+                <p className="text-xs text-text-secondary uppercase mb-0.5">{stat.label}</p>
+                <p className="text-lg md:text-xl font-heading text-text-primary">{stat.value}</p>
                 {stat.status && (
-                  <p className={`text-xs text-${stat.color} mt-1`}>{stat.status}</p>
+                  <p className={`text-xs text-${stat.color} mt-0.5`}>{stat.status}</p>
                 )}
               </div>
-              <stat.icon className={`w-8 h-8 text-${stat.color} opacity-50`} />
+              <stat.icon className={`w-6 h-6 md:w-7 md:h-7 text-${stat.color} opacity-50`} />
             </div>
           </Card>
         ))}
@@ -225,7 +225,7 @@ export default function HomePage() {
       {/* Level Progress */}
       {playerLevel.level < 100 && (
         <Card title="Progresso de Nível" icon={Star}>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">
                 Nível {playerLevel.level} → {playerLevel.level + 1}
@@ -250,27 +250,27 @@ export default function HomePage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="font-heading text-xl text-text-primary mb-4 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-primary" />
+        <h2 className="font-heading text-lg md:text-xl text-text-primary mb-3 flex items-center gap-2">
+          <Zap className="w-4 h-4 md:w-5 md:h-5 text-primary" />
           Acesso Rápido
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
           {quickActions.map((action, i) => (
             <button
               key={i}
               onClick={() => navigate(action.path)}
-              className="group bg-surface border border-border hover:border-primary p-4 transition-all hover:shadow-neon"
+              className="group bg-surface border border-border hover:border-primary p-3 transition-all hover:shadow-neon"
             >
-              <action.icon className={`w-8 h-8 text-${action.color} mb-2 mx-auto group-hover:scale-110 transition-transform`} />
-              <p className="font-heading text-text-primary text-sm mb-1">{action.label}</p>
-              <p className="text-text-secondary text-xs">{action.description}</p>
+              <action.icon className={`w-6 h-6 md:w-7 md:h-7 text-${action.color} mb-1.5 mx-auto group-hover:scale-110 transition-transform`} />
+              <p className="font-heading text-text-primary text-xs md:text-sm mb-0.5">{action.label}</p>
+              <p className="text-text-secondary text-xs hidden md:block">{action.description}</p>
             </button>
           ))}
         </div>
       </div>
 
       {/* Recent Activity & Tips */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4">
         {/* Heat Warning */}
         {heat > 70 && (
           <Card>
