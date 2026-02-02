@@ -167,7 +167,7 @@ export default function BankPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Notification */}
       {notification && (
         <Alert variant={notification.type}>
@@ -178,50 +178,50 @@ export default function BankPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl text-text-primary mb-2">Banco SUBMUNDO</h1>
-          <p className="text-text-secondary">Gestão financeira segura</p>
+          <h1 className="font-heading text-2xl md:text-3xl text-text-primary mb-1">Banco SUBMUNDO</h1>
+          <p className="text-text-secondary text-sm">Gestão financeira segura</p>
         </div>
-        <Landmark className="w-12 h-12 text-primary opacity-50" />
+        <Landmark className="w-10 h-10 md:w-12 md:h-12 text-primary opacity-50" />
       </div>
 
       {/* Balance Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-3 gap-3">
         <Card className="bg-gradient-to-br from-success/10 to-transparent border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-text-secondary uppercase mb-1">Dinheiro na Mão</p>
-              <p className="text-2xl font-heading text-success">{formatCurrency(bankStatus.player_cash)}</p>
+              <p className="text-xs text-text-secondary uppercase mb-0.5">Dinheiro na Mão</p>
+              <p className="text-xl md:text-2xl font-heading text-success">{formatCurrency(bankStatus.player_cash)}</p>
             </div>
-            <Wallet className="w-10 h-10 text-success opacity-50" />
+            <Wallet className="w-8 h-8 md:w-10 md:h-10 text-success opacity-50" />
           </div>
         </Card>
 
         <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-text-secondary uppercase mb-1">Dinheiro no Banco</p>
-              <p className="text-2xl font-heading text-primary">{formatCurrency(bankStatus.bank_balance)}</p>
+              <p className="text-xs text-text-secondary uppercase mb-0.5">Dinheiro no Banco</p>
+              <p className="text-xl md:text-2xl font-heading text-primary">{formatCurrency(bankStatus.bank_balance)}</p>
             </div>
-            <Landmark className="w-10 h-10 text-primary opacity-50" />
+            <Landmark className="w-8 h-8 md:w-10 md:h-10 text-primary opacity-50" />
           </div>
         </Card>
 
         <Card className="bg-gradient-to-br from-gold/10 to-transparent border-gold/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-text-secondary uppercase mb-1">Total</p>
-              <p className="text-2xl font-heading text-gold">
+              <p className="text-xs text-text-secondary uppercase mb-0.5">Total</p>
+              <p className="text-xl md:text-2xl font-heading text-gold">
                 {formatCurrency(bankStatus.player_cash + bankStatus.bank_balance)}
               </p>
             </div>
-            <DollarSign className="w-10 h-10 text-gold opacity-50" />
+            <DollarSign className="w-8 h-8 md:w-10 md:h-10 text-gold opacity-50" />
           </div>
         </Card>
       </div>
 
       {/* Quick Actions */}
       <Card title="Operações" icon={DollarSign}>
-        <div className="grid md:grid-cols-3 gap-3">
+        <div className="grid md:grid-cols-3 gap-2 md:gap-3">
           <Button
             variant="success"
             fullWidth
@@ -250,20 +250,20 @@ export default function BankPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-1 md:gap-2 border-b border-border">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={clsx(
-              'flex items-center gap-2 px-4 py-3 font-ui text-sm transition-all',
+              'flex items-center gap-1.5 px-3 py-2 font-ui text-xs md:text-sm transition-all',
               activeTab === tab.id
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-text-secondary hover:text-text-primary'
             )}
           >
-            <tab.icon size={16} />
-            {tab.label}
+            <tab.icon size={14} />
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -271,18 +271,18 @@ export default function BankPage() {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <Card title="Informações da Conta" icon={Landmark}>
-          <div className="space-y-3">
-            <div className="flex justify-between py-2 border-b border-border">
-              <span className="text-text-secondary">Titular</span>
-              <span className="text-text-primary font-body">{user?.username}</span>
+          <div className="space-y-2">
+            <div className="flex justify-between py-1.5 border-b border-border">
+              <span className="text-text-secondary text-sm">Titular</span>
+              <span className="text-text-primary font-body text-sm">{user?.username}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-border">
-              <span className="text-text-secondary">Saldo Disponível</span>
-              <span className="text-success font-body">{formatCurrency(bankStatus.bank_balance)}</span>
+            <div className="flex justify-between py-1.5 border-b border-border">
+              <span className="text-text-secondary text-sm">Saldo Disponível</span>
+              <span className="text-success font-body text-sm">{formatCurrency(bankStatus.bank_balance)}</span>
             </div>
-            <div className="flex justify-between py-2">
-              <span className="text-text-secondary">Total de Transações</span>
-              <span className="text-text-primary font-body">{transactions.length}</span>
+            <div className="flex justify-between py-1.5">
+              <span className="text-text-secondary text-sm">Total de Transações</span>
+              <span className="text-text-primary font-body text-sm">{transactions.length}</span>
             </div>
           </div>
         </Card>
@@ -291,12 +291,12 @@ export default function BankPage() {
       {activeTab === 'transactions' && (
         <Card title="Histórico de Transações" icon={History}>
           {transactions.length === 0 ? (
-            <div className="text-center py-8">
-              <History size={48} className="mx-auto text-text-secondary opacity-50 mb-3" />
-              <p className="text-text-secondary">Sem transações ainda</p>
+            <div className="text-center py-6">
+              <History size={40} className="mx-auto text-text-secondary opacity-50 mb-2" />
+              <p className="text-text-secondary text-sm">Sem transações ainda</p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-[500px] overflow-y-auto">
+            <div className="space-y-1.5 max-h-[500px] overflow-y-auto">
               {transactions.map((tx, index) => {
                 const config = transactionConfig[tx.transaction_type] || {
                   icon: DollarSign,
