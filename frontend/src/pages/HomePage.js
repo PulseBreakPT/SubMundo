@@ -370,17 +370,15 @@ const ScreenshotsSection = () => {
   return (
     <section id="screenshots" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              <span className="text-primary">SCREENSHOTS</span> DO JOGO
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Vê como é o SUBMUNDO por dentro. Interface moderna, gráficos estilizados 
-              e informação clara para dominares o jogo.
-            </p>
-          </div>
-        </FadeIn>
+        <div className="text-center mb-16">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+            <span className="text-primary">SCREENSHOTS</span> DO JOGO
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            Vê como é o SUBMUNDO por dentro. Interface moderna, gráficos estilizados 
+            e informação clara para dominares o jogo.
+          </p>
+        </div>
 
         {/* Main Screenshot Display */}
         <div className="relative mb-6">
