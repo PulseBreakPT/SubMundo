@@ -21,6 +21,8 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import ContactsPage from './pages/ContactsPage';
 import BankPage from './pages/BankPage';
+import AchievementsPage from './pages/AchievementsPage';
+import RankingsPage from './pages/RankingsPage';
 import './App.css';
 
 // Remove Emergent badge
