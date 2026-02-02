@@ -629,11 +629,11 @@ export const Card = ({
       {(title || tabs) && (
         <div className="border-b border-border">
           {title && (
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                {Icon && <Icon size={18} className={colorStyle.text} />}
+            <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2">
+                {Icon && <Icon size={16} className={colorStyle.text} />}
                 <div>
-                  <h3 className="font-heading text-sm uppercase tracking-wider text-text-primary flex items-center gap-2">
+                  <h3 className="font-heading text-xs md:text-sm uppercase tracking-wider text-text-primary flex items-center gap-1.5">
                     {title}
                     {badge && (
                       <span className={clsx(
