@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
 import { Layout, PublicLayout } from './components/Layout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
@@ -52,7 +53,7 @@ const ProtectedRoute = ({ children }) => {
   return <GameProvider>{children}</GameProvider>;
 };
 
-const PublicRoute = ({ children }) => {
+const PublicRoute = ({ children, redirectIfAuth = true }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
@@ -66,8 +67,8 @@ const PublicRoute = ({ children }) => {
     );
   }
   
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+  if (isAuthenticated && redirectIfAuth) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -76,6 +77,15 @@ const PublicRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Public Routes */}
+      <Route 
+        path="/" 
+        element={
+          <PublicRoute redirectIfAuth={false}>
+            <LandingPage />
+          </PublicRoute>
+        } 
+      />
       <Route 
         path="/login" 
         element={
@@ -84,8 +94,10 @@ const AppRoutes = () => {
           </PublicRoute>
         } 
       />
+      
+      {/* Protected Routes - Dashboard */}
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <Layout>
@@ -236,7 +248,7 @@ const AppRoutes = () => {
           </PublicLayout>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 };
