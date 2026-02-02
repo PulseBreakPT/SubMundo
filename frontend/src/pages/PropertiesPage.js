@@ -18,7 +18,7 @@ const PropertyIcon = ({ type, size = 24 }) => {
   return <Icon size={size} />;
 };
 
-const PropertyCard = ({ property, onCollect, onMaintain, onSell, loading }) => {
+const PropertyCard = ({ property, onMaintain, onSell, loading }) => {
   const [expanded, setExpanded] = useState(false);
   
   return (
@@ -40,14 +40,10 @@ const PropertyCard = ({ property, onCollect, onMaintain, onSell, loading }) => {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-mono text-success">€{property.income_per_hour}/h</p>
+            <p className="text-lg font-mono text-primary">Capacidade: {property.capacity}</p>
             <p className="text-xs text-text-secondary">Condição: {property.condition}%</p>
           </div>
         </div>
-        
-        {property.pending_income > 0 && (
-          <div className="mt-3 p-2 bg-success/10 border border-success/30 rounded flex items-center justify-between">
-            <span className="text-sm text-success flex items-center gap-1">
               <TrendingUp size={14} /> Rendimento pendente
             </span>
             <span className="font-mono text-success">€{property.pending_income.toFixed(2)}</span>
