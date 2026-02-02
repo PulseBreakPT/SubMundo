@@ -6186,8 +6186,9 @@ async def get_bank_transactions(
         "types": TRANSACTION_TYPES
     }
 
-@api_router.get("/bank/investments")
-async def get_investment_options(current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado
+# @api_router.get("/bank/investments")
+# async def get_investment_options(current_user: dict = Depends(get_current_user)):
     """Retorna opções de investimento disponíveis"""
     player = await db.players.find_one({"id": current_user["id"]})
     
@@ -6233,8 +6234,9 @@ async def get_investment_options(current_user: dict = Depends(get_current_user))
         }
     }
 
-@api_router.post("/bank/invest")
-async def create_investment(investment: BankInvestment, current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado
+# @api_router.post("/bank/invest")
+# async def create_investment(investment: BankInvestment, current_user: dict = Depends(get_current_user)):
     """Cria um novo investimento"""
     player = await db.players.find_one({"id": current_user["id"]})
     
@@ -6296,8 +6298,9 @@ async def create_investment(investment: BankInvestment, current_user: dict = Dep
         "maturity_date": maturity_date.isoformat()
     }
 
-@api_router.delete("/bank/invest/{investment_id}")
-async def cancel_investment(investment_id: str, current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado  
+# @api_router.delete("/bank/invest/{investment_id}")
+# async def cancel_investment(investment_id: str, current_user: dict = Depends(get_current_user)):
     """Cancela um investimento (com penalização se bloqueado)"""
     investment = await db.player_investments.find_one({
         "id": investment_id,
@@ -6345,8 +6348,9 @@ async def cancel_investment(investment_id: str, current_user: dict = Depends(get
         "bank_balance": new_balance
     }
 
-@api_router.get("/bank/loans")
-async def get_loan_info(current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado
+# @api_router.get("/bank/loans")
+# async def get_loan_info(current_user: dict = Depends(get_current_user)):
     """Retorna informação sobre empréstimos"""
     player = await db.players.find_one({"id": current_user["id"]})
     
@@ -6382,8 +6386,9 @@ async def get_loan_info(current_user: dict = Depends(get_current_user)):
         "can_borrow": available_credit > 0 and len(active_loans) < 3
     }
 
-@api_router.post("/bank/loan")
-async def request_loan(loan: BankLoan, current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado
+# @api_router.post("/bank/loan")
+# async def request_loan(loan: BankLoan, current_user: dict = Depends(get_current_user)):
     """Solicita um empréstimo"""
     player = await db.players.find_one({"id": current_user["id"]})
     
@@ -6668,8 +6673,9 @@ async def rob_player(target_id: str, current_user: dict = Depends(get_current_us
             "heat_gained": heat_penalty
         }
 
-@api_router.get("/bank/robbery-targets")
-async def get_robbery_targets(current_user: dict = Depends(get_current_user)):
+# DESABILITADO - Sistema simplificado
+# @api_router.get("/bank/robbery-targets")
+# async def get_robbery_targets(current_user: dict = Depends(get_current_user)):
     """Lista potenciais alvos para roubo"""
     player = await db.players.find_one({"id": current_user["id"]})
     
