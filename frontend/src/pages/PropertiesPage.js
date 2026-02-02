@@ -387,17 +387,15 @@ export default function PropertiesPage() {
           <p className="text-2xl font-mono text-primary">{properties.length}</p>
         </div>
         <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-text-secondary text-xs uppercase">Rendimento/h</p>
-          <p className="text-2xl font-mono text-success">€{totalIncome}</p>
-        </div>
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-text-secondary text-xs uppercase">Pendente</p>
-          <p className="text-2xl font-mono text-warning">€{totalPending.toFixed(2)}</p>
+          <p className="text-text-secondary text-xs uppercase">Capacidade Total</p>
+          <p className="text-2xl font-mono text-warning">{properties.reduce((sum, p) => sum + (p.capacity || 0), 0)}</p>
         </div>
         <div className="bg-surface border border-border rounded-lg p-4">
           <p className="text-text-secondary text-xs uppercase">Valor Total</p>
-          <p className="text-2xl font-mono text-text-primary">
-            €{properties.reduce((sum, p) => sum + p.purchase_price, 0)}
+          <p className="text-2xl font-mono text-gold">
+            €{properties.reduce((sum, p) => sum + p.purchase_price, 0).toLocaleString()}
+          </p>
+        </div>
           </p>
         </div>
       </div>
