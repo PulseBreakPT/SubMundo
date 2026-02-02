@@ -7,7 +7,8 @@ import { Card, ProgressBar } from '../components/ProgressBar';
 import { 
   Target, Users, Car, Building2, Shield, Zap, Star,
   ChevronRight, TrendingUp, TrendingDown, DollarSign, Flame,
-  Award, Clock, AlertTriangle, MapPin, Briefcase, Factory, Gift
+  Award, Clock, AlertTriangle, MapPin, Briefcase, Factory, Gift,
+  Lock, Unlock, Timer
 } from 'lucide-react';
 import clsx from 'clsx';
 import { LevelSystem, HeatSystem } from '../utils/gameLogic';
@@ -248,6 +249,23 @@ export default function HomePage() {
 
       {/* Recent Activity & Tips */}
       <div className="grid lg:grid-cols-2 gap-2 md:gap-3">
+        {/* Cooldowns Ativos */}
+        {gameState?.cooldowns && Object.keys(gameState.cooldowns).length > 0 && (
+          <Card title="Cooldowns Ativos" icon={Timer}>
+            <div className="space-y-1.5">
+              {Object.entries(gameState.cooldowns).map(([action, data]) => (
+                <div key={action} className="flex items-center justify-between p-1.5 bg-surface-highlight border border-border rounded">
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-warning" />
+                    <span className="text-xs text-text-primary capitalize">{action.replace('_', ' ')}</span>
+                  </div>
+                  <span className="text-xs text-warning font-mono">{data.formatted_time}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {/* Heat Warning */}
         {heat > 70 && (
           <Card>
@@ -266,7 +284,26 @@ export default function HomePage() {
         )}
 
         {/* Next Unlocks */}
-        {playerLevel.nextUnlocks && playerLevel.nextUnlocks.length > 0 && (
+        {gameState?.unlocks?.next && gameState.unlocks.next.length > 0 && (
+          <Card title="Próximos Desbloqueios" icon={Unlock}>
+            <div className="space-y-1.5">
+              {gameState.unlocks.next.map((unlock, i) => (
+                <div key={i} className="flex items-center justify-between p-1.5 bg-surface-highlight border border-border rounded">
+                  <div className="flex items-center gap-2">
+                    <Lock size={14} className="text-gold" />
+                    <span className="text-xs text-text-primary">{unlock.feature}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="gold" size="xs">Nível {unlock.level}</Badge>
+                    <span className="text-xs text-text-secondary">({unlock.levels_remaining} níveis)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+        
+        {playerLevel.nextUnlocks && playerLevel.nextUnlocks.length > 0 && !gameState?.unlocks?.next && (
           <Card title="Próximos Desbloqueios" icon={Award}>
             <div className="space-y-2">
               {playerLevel.nextUnlocks.slice(0, 3).map((unlock, i) => (
