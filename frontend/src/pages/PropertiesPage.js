@@ -292,6 +292,11 @@ export default function PropertiesPage() {
   
   // Removido - Propriedades não geram rendimento
   // const handleCollect = async (propertyId) => { ... }
+  
+  const handleMaintain = async (propertyId) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/properties/${propertyId}/maintain`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -302,7 +307,7 @@ export default function PropertiesPage() {
         fetchData();
         refreshStats();
       } else {
-        showNotif(data.detail || 'Erro ao coletar', 'error');
+        showNotif(data.detail || 'Erro ao fazer manutenção', 'error');
       }
     } catch (error) {
       showNotif('Erro de conexão', 'error');
