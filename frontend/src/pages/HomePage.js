@@ -35,18 +35,6 @@ export default function HomePage() {
 
   const playerLevel = LevelSystem.getLevel(gameState?.player?.experience || 0);
   const heatStatus = HeatSystem.getHeatStatus(gameState?.player?.heat || 0);
-  
-  // Get random wisdom quote
-  const wisdomQuotes = [
-    { text: "Amigos próximos, inimigos mais perto ainda.", author: "Provérbio do Submundo" },
-    { text: "O silêncio é mais valioso que o ouro.", author: "Código Criminal" },
-    { text: "Quem muito fala, pouco vive.", author: "Lei das Ruas" },
-    { text: "A paciência é a arma dos vencedores.", author: "Máxima dos Veteranos" },
-    { text: "Três podem guardar um segredo, se dois estiverem mortos.", author: "Sabedoria da Máfia" },
-    { text: "Não mostres as cartas antes do fim do jogo.", author: "Regra de Ouro" },
-    { text: "A vingança é um prato que se serve frio.", author: "Tradição Siciliana" }
-  ];
-  const randomQuote = wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
 
   // Safely get player data
   const player = gameState?.player || {};
@@ -191,17 +179,6 @@ export default function HomePage() {
           </Button>
         )}
       </div>
-
-      {/* Quote of Wisdom */}
-      <Card className="bg-surface/50 border-l-4 border-primary">
-        <div className="flex items-start gap-2">
-          <Skull className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-text-primary italic text-xs md:text-sm mb-0.5">"{randomQuote.text}"</p>
-            <p className="text-text-secondary text-xs">— {randomQuote.author}</p>
-          </div>
-        </div>
-      </Card>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
