@@ -212,7 +212,6 @@ const LoginForm = ({ onSubmit, loading, error }) => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [formErrors, setFormErrors] = useState({});
   const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
     const errors = {};
@@ -254,15 +253,13 @@ const LoginForm = ({ onSubmit, loading, error }) => {
       <Input
         label="Password"
         name="password"
-        type={showPassword ? 'text' : 'password'}
+        type="password"
         placeholder="••••••••"
         value={formData.password}
         onChange={handleChange}
         error={formErrors.password}
         icon={Lock}
         iconPosition="left"
-        rightIcon={showPassword ? EyeOff : Eye}
-        onRightIconClick={() => setShowPassword(!showPassword)}
         data-testid="password-input"
       />
       
@@ -330,7 +327,6 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
     username: '' 
   });
   const [formErrors, setFormErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptNewsletter, setAcceptNewsletter] = useState(false);
   const [step, setStep] = useState(1);
@@ -475,15 +471,13 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
             <Input
               label="Password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type="password"
               placeholder="••••••••"
               value={formData.password}
               onChange={handleChange}
               error={formErrors.password}
               icon={Lock}
               iconPosition="left"
-              rightIcon={showPassword ? EyeOff : Eye}
-              onRightIconClick={() => setShowPassword(!showPassword)}
               data-testid="password-input"
             />
             
