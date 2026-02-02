@@ -476,56 +476,52 @@ const TestimonialsSection = () => {
   return (
     <section id="reviews" className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              O QUE OS <span className="text-primary">JOGADORES</span> DIZEM
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Junta-te a milhares de jogadores que já descobriram o SUBMUNDO.
-            </p>
-          </div>
-        </FadeIn>
+        <div className="text-center mb-16">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+            O QUE OS <span className="text-primary">JOGADORES</span> DIZEM
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            Junta-te a milhares de jogadores que já descobriram o SUBMUNDO.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {TESTIMONIALS.map((review, i) => (
-            <FadeIn key={review.name} delay={i * 100}>
-              <div className="bg-surface border border-border p-6 h-full">
-                {/* Header */}
-                <div className="flex items-start gap-4 mb-4">
-                  {/* Avatar */}
-                  <div className="w-12 h-12 bg-primary/20 border border-primary/30 flex items-center justify-center font-bold text-primary">
-                    {review.avatar}
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="flex-1">
-                    <p className="font-display font-bold text-text-primary">{review.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
-                      <span>Level {review.level}</span>
-                      <span>•</span>
-                      <span>{review.gang}</span>
-                    </div>
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex gap-0.5">
-                    {[...Array(5)].map((_, j) => (
-                      <Star 
-                        key={j} 
-                        className={clsx(
-                          'w-4 h-4',
-                          j < review.rating ? 'text-gold fill-gold' : 'text-border'
-                        )} 
-                      />
-                    ))}
+          {TESTIMONIALS.map((review) => (
+            <div key={review.name} className="bg-surface border border-border p-6 h-full">
+              {/* Header */}
+              <div className="flex items-start gap-4 mb-4">
+                {/* Avatar */}
+                <div className="w-12 h-12 bg-primary/20 border border-primary/30 flex items-center justify-center font-bold text-primary">
+                  {review.avatar}
+                </div>
+                
+                {/* Info */}
+                <div className="flex-1">
+                  <p className="font-display font-bold text-text-primary">{review.name}</p>
+                  <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <span>Level {review.level}</span>
+                    <span>•</span>
+                    <span>{review.gang}</span>
                   </div>
                 </div>
 
-                {/* Review Text */}
-                <p className="text-text-secondary leading-relaxed">"{review.text}"</p>
+                {/* Rating */}
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, j) => (
+                    <Star 
+                      key={j} 
+                      className={clsx(
+                        'w-4 h-4',
+                        j < review.rating ? 'text-gold fill-gold' : 'text-border'
+                      )} 
+                    />
+                  ))}
+                </div>
               </div>
-            </FadeIn>
+
+              {/* Review Text */}
+              <p className="text-text-secondary leading-relaxed">"{review.text}"</p>
+            </div>
           ))}
         </div>
       </div>
