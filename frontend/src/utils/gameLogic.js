@@ -112,6 +112,41 @@ export const LevelSystem = {
 
     const tier = titles.find(t => level >= t.min && level <= t.max);
     return tier || titles[0];
+  },
+
+  /**
+   * Retorna informações completas do nível baseado no XP total
+   */
+  getLevel(totalXP) {
+    const levelData = this.calculateLevelFromXP(totalXP);
+    const titleData = this.getLevelTitle(levelData.level);
+    const bonuses = this.getLevelBonuses(levelData.level);
+    
+    // Define unlocks por nível
+    const allUnlocks = [
+      { level: 5, feature: "Lavagem de Dinheiro" },
+      { level: 10, feature: "Propriedades" },
+      { level: 15, feature: "Negócios Ilegais" },
+      { level: 20, feature: "Gangues" },
+      { level: 25, feature: "Veículos Premium" },
+      { level: 30, feature: "Guerras de Território" },
+      { level: 40, feature: "Mercado Negro" },
+      { level: 50, feature: "Investimentos Offshore" },
+      { level: 75, feature: "Império Criminal" }
+    ];
+
+    const nextUnlocks = allUnlocks.filter(u => u.level > levelData.level);
+
+    return {
+      level: levelData.level,
+      title: titleData.title,
+      color: titleData.color,
+      currentXP: levelData.currentXP,
+      nextLevelXP: levelData.xpForNextLevel,
+      progress: levelData.progress,
+      bonuses,
+      nextUnlocks: nextUnlocks.slice(0, 5) // próximos 5 unlocks
+    };
   }
 };
 
@@ -192,6 +227,22 @@ export const HeatSystem = {
       "Boa altura para missões lucrativas",
       "Aproveita enquanto o heat está baixo"
     ];
+  },
+
+  /**
+   * Retorna status completo do heat
+   */
+  getHeatStatus(heat) {
+    const dangerLevel = this.getDangerLevel(heat);
+    
+    return {
+      heat,
+      status: dangerLevel.label,
+      color: dangerLevel.color,
+      level: dangerLevel.level,
+      pulse: dangerLevel.pulse,
+      advice: this.getHeatAdvice(heat)
+    };
   }
 };
 
