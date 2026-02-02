@@ -600,49 +600,47 @@ const NewsletterSection = () => {
   return (
     <section className="py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="bg-surface border border-border p-8 sm:p-12 text-center relative overflow-hidden">
-            {/* Background Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
-            
-            <div className="relative z-10">
-              <Gift className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-text-primary mb-2">
-                RECEBE NOVIDADES & BÓNUS
-              </h2>
-              <p className="text-text-secondary mb-8 max-w-lg mx-auto">
-                Subscreve a nossa newsletter e recebe atualizações exclusivas, 
-                dicas de jogo e bónus especiais diretamente no teu email.
-              </p>
+        <div className="bg-surface border border-border p-8 sm:p-12 text-center relative overflow-hidden">
+          {/* Background Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
+          
+          <div className="relative z-10">
+            <Gift className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+              RECEBE NOVIDADES & BÓNUS
+            </h2>
+            <p className="text-text-secondary mb-8 max-w-lg mx-auto">
+              Subscreve a nossa newsletter e recebe atualizações exclusivas, 
+              dicas de jogo e bónus especiais diretamente no teu email.
+            </p>
 
-              {submitted ? (
-                <div className="flex items-center justify-center gap-2 text-success">
-                  <Check className="w-5 h-5" />
-                  <span>Obrigado! Confirma o teu email.</span>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="O teu email..."
-                    className="flex-1 bg-background border border-border px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-primary focus:outline-none"
-                    required
-                  />
-                  <Button type="submit" variant="primary" className="whitespace-nowrap">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Subscrever
-                  </Button>
-                </form>
-              )}
+            {submitted ? (
+              <div className="flex items-center justify-center gap-2 text-success">
+                <Check className="w-5 h-5" />
+                <span>Obrigado! Confirma o teu email.</span>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="O teu email..."
+                  className="flex-1 bg-background border border-border px-4 py-3 text-text-primary placeholder-text-secondary/50 focus:border-primary focus:outline-none"
+                  required
+                />
+                <Button type="submit" variant="primary" className="whitespace-nowrap">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Subscrever
+                </Button>
+              </form>
+            )}
 
-              <p className="text-xs text-text-secondary/60 mt-4">
-                Sem spam. Podes cancelar a qualquer momento.
-              </p>
-            </div>
+            <p className="text-xs text-text-secondary/60 mt-4">
+              Sem spam. Podes cancelar a qualquer momento.
+            </p>
           </div>
-        </FadeIn>
+        </div>
       </div>
     </section>
   );
