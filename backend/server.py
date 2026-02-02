@@ -3551,12 +3551,38 @@ async def get_game_state(current_user: dict = Depends(get_current_user)):
     neighborhoods = await db.neighborhoods.find({}, {"_id": 0}).to_list(100)
     global_heat = sum(n.get("heat_level", 0) for n in neighborhoods) // max(len(neighborhoods), 1)
     
+    # Calcular nível do jogador
+    experience = player.get("experience", 0)
+    level = 1
+    xp_needed = 100
+    while experience >= xp_needed and level < 100:
+        level += 1
+        xp_needed = int(xp_needed * 1.15)
+    
+    # Verificar cooldowns ativos
+    active_cooldowns = {}
+    for action in COOLDOWNS.keys():
+        can_use, remaining = check_cooldown(player, action)
+        if not can_use:
+            active_cooldowns[action] = {
+                "remaining_seconds": remaining,
+                "formatted_time": format_cooldown_time(remaining)
+            }
+    
+    # Próximos desbloqueios
+    next_unlocks = get_next_unlocks(level, limit=5)
+    
     return {
         "player": player,
         "active_mission": active_mission,
         "gang": gang,
         "global_heat": global_heat,
-        "server_time": datetime.now(timezone.utc).isoformat()
+        "server_time": datetime.now(timezone.utc).isoformat(),
+        "cooldowns": active_cooldowns,
+        "unlocks": {
+            "next": next_unlocks,
+            "player_level": level
+        }
     }
 
 @api_router.get("/game/full-state")
