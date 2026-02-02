@@ -48,6 +48,15 @@ export default function HomePage() {
   ];
   const randomQuote = wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
 
+  // Safely get player data
+  const player = gameState?.player || {};
+  const cleanMoney = player.clean_money || 0;
+  const dirtyMoney = player.dirty_money || 0;
+  const reputation = player.reputation || 0;
+  const heat = player.heat || 0;
+  const experience = player.experience || 0;
+  const dailyRewardClaimed = player.daily_reward_claimed || false;
+
   const quickActions = [
     { 
       icon: Target, 
@@ -111,32 +120,44 @@ export default function HomePage() {
     {
       icon: DollarSign,
       label: 'Dinheiro Limpo',
-      value: `€${(gameState?.player?.clean_money || 0).toLocaleString()}`,
+      value: `€${cleanMoney.toLocaleString()}`,
       color: 'success',
       trend: null
     },
     {
       icon: DollarSign,
       label: 'Dinheiro Sujo',
-      value: `€${(gameState?.player?.dirty_money || 0).toLocaleString()}`,
+      value: `€${dirtyMoney.toLocaleString()}`,
       color: 'warning',
       trend: null
     },
     {
       icon: Award,
       label: 'Reputação',
-      value: (gameState?.player?.reputation || 0).toLocaleString(),
+      value: reputation.toLocaleString(),
       color: 'primary',
       trend: 'up'
     },
     {
       icon: Flame,
       label: 'Heat',
-      value: `${gameState?.player?.heat || 0}`,
+      value: `${heat}`,
       color: heatStatus.color,
       status: heatStatus.status
     }
   ];
+
+  // Show loading while fetching initial data
+  if (!gameState) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-border border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">A carregar dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -158,7 +179,7 @@ export default function HomePage() {
         </div>
 
         {/* Daily Reward */}
-        {!gameState?.player?.daily_reward_claimed && (
+        {!dailyRewardClaimed && (
           <Button
             variant="primary"
             size="lg"
@@ -210,18 +231,18 @@ export default function HomePage() {
                 Nível {playerLevel.level} → {playerLevel.level + 1}
               </span>
               <span className="text-primary font-mono">
-                {gameState?.player?.experience || 0} / {playerLevel.nextLevelXP} XP
+                {experience} / {playerLevel.nextLevelXP} XP
               </span>
             </div>
             <ProgressBar
-              value={gameState?.player?.experience || 0}
+              value={experience}
               max={playerLevel.nextLevelXP}
               color="primary"
               showLabel={false}
               height="h-3"
             />
             <p className="text-xs text-text-secondary">
-              {playerLevel.nextLevelXP - (gameState?.player?.experience || 0)} XP para o próximo nível
+              {playerLevel.nextLevelXP - experience} XP para o próximo nível
             </p>
           </div>
         </Card>
@@ -251,7 +272,7 @@ export default function HomePage() {
       {/* Recent Activity & Tips */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Heat Warning */}
-        {(gameState?.player?.heat || 0) > 70 && (
+        {heat > 70 && (
           <Card>
             <Alert variant="error">
               <div className="flex items-start gap-3">
