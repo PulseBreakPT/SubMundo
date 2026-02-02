@@ -295,10 +295,8 @@ export default function PropertiesPage() {
     }
   };
   
-  const handleCollect = async (propertyId) => {
-    setActionLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}/collect`, {
+  // Removido - Propriedades não geram rendimento
+  // const handleCollect = async (propertyId) => { ... }
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -432,7 +430,7 @@ export default function PropertiesPage() {
           <Building size={48} className="mx-auto text-text-secondary mb-4" />
           <h3 className="font-heading text-lg text-text-primary mb-2">Sem Propriedades</h3>
           <p className="text-text-secondary text-sm mb-4">
-            Compra a tua primeira propriedade para começar a gerar rendimento passivo.
+            Compra a tua primeira propriedade para armazenamento e status.
           </p>
           <button
             onClick={() => setShowBuyModal(true)}
@@ -447,7 +445,6 @@ export default function PropertiesPage() {
             <PropertyCard
               key={property.id}
               property={property}
-              onCollect={handleCollect}
               onMaintain={handleMaintain}
               onSell={handleSell}
               loading={actionLoading}
