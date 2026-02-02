@@ -22,6 +22,7 @@ export default function HomePage() {
 
   useEffect(() => {
     refreshGameState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClaimDaily = async () => {
