@@ -319,44 +319,40 @@ const FeaturesSection = () => {
   return (
     <section id="features" className="py-20 bg-surface/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              FEATURES DO <span className="text-primary">JOGO</span>
-            </h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Descobre tudo o que podes fazer no SUBMUNDO. Cada feature foi desenhada 
-              para te proporcionar horas de gameplay estratégico e envolvente.
-            </p>
-          </div>
-        </FadeIn>
+        <div className="text-center mb-16">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-text-primary mb-4">
+            FEATURES DO <span className="text-primary">JOGO</span>
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            Descobre tudo o que podes fazer no SUBMUNDO. Cada feature foi desenhada 
+            para te proporcionar horas de gameplay estratégico e envolvente.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {GAME_FEATURES.map((feature, i) => (
-            <FadeIn key={feature.title} delay={i * 100}>
-              <div className="group relative bg-surface border border-border p-6 hover:border-primary/50 transition-all duration-300 h-full">
-                {/* Accent Line */}
-                <div className={`absolute top-0 left-0 w-1 h-full bg-${feature.color}`} />
-                
-                {/* Icon */}
-                <div className={`w-12 h-12 bg-${feature.color}/10 border border-${feature.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-6 h-6 text-${feature.color}`} />
-                </div>
-
-                {/* Content */}
-                <h3 className="font-display text-xl font-bold text-text-primary mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-text-secondary text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-
-                {/* Hover Effect */}
-                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ChevronRight className="w-5 h-5 text-primary" />
-                </div>
+          {GAME_FEATURES.map((feature) => (
+            <div key={feature.title} className="group relative bg-surface border border-border p-6 hover:border-primary/50 transition-all duration-300 h-full">
+              {/* Accent Line */}
+              <div className={`absolute top-0 left-0 w-1 h-full bg-${feature.color}`} />
+              
+              {/* Icon */}
+              <div className={`w-12 h-12 bg-${feature.color}/10 border border-${feature.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <feature.icon className={`w-6 h-6 text-${feature.color}`} />
               </div>
-            </FadeIn>
+
+              {/* Content */}
+              <h3 className="font-display text-xl font-bold text-text-primary mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-text-secondary text-sm leading-relaxed">
+                {feature.description}
+              </p>
+
+              {/* Hover Effect */}
+              <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ChevronRight className="w-5 h-5 text-primary" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
