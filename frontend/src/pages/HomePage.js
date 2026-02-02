@@ -657,30 +657,28 @@ const CTASection = ({ onPlay }) => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <FadeIn>
-          <Skull className="w-16 h-16 text-primary mx-auto mb-6" />
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-4">
-            PRONTO PARA <span className="text-primary text-glow">DOMINAR</span>?
-          </h2>
-          <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
-            O submundo espera por ti. Cria a tua conta gratuita agora e começa 
-            a construir o teu império criminoso hoje mesmo.
-          </p>
-          
-          <Button 
-            variant="primary" 
-            size="lg" 
-            onClick={onPlay}
-            className="text-lg px-8 py-4 animate-pulse-red"
-          >
-            <Gamepad2 className="mr-2" />
-            Começar a Jogar - É Grátis!
-          </Button>
+        <Skull className="w-16 h-16 text-primary mx-auto mb-6" />
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-4">
+          PRONTO PARA <span className="text-primary text-glow">DOMINAR</span>?
+        </h2>
+        <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+          O submundo espera por ti. Cria a tua conta gratuita agora e começa 
+          a construir o teu império criminoso hoje mesmo.
+        </p>
+        
+        <Button 
+          variant="primary" 
+          size="lg" 
+          onClick={onPlay}
+          className="text-lg px-8 py-4"
+        >
+          <Gamepad2 className="mr-2" />
+          Começar a Jogar - É Grátis!
+        </Button>
 
-          <p className="text-sm text-text-secondary/60 mt-6">
-            Não é necessário cartão de crédito • Registo em 30 segundos
-          </p>
-        </FadeIn>
+        <p className="text-sm text-text-secondary/60 mt-6">
+          Não é necessário cartão de crédito • Registo em 30 segundos
+        </p>
       </div>
     </section>
   );
