@@ -15,12 +15,12 @@ import { LevelSystem, HeatSystem } from '../utils/gameLogic';
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { gameState, refreshGameState, claimDailyReward } = useGame();
+  const { gameState, fetchFullGameState, claimDailyReward } = useGame();
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [rewardClaimed, setRewardClaimed] = useState(false);
 
   useEffect(() => {
-    refreshGameState();
+    fetchFullGameState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -29,7 +29,7 @@ export default function HomePage() {
     if (result.success) {
       setRewardClaimed(true);
       setShowRewardModal(true);
-      setTimeout(() => refreshGameState(), 1000);
+      setTimeout(() => fetchFullGameState(), 1000);
     }
   };
 
