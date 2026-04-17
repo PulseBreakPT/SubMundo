@@ -8,9 +8,9 @@ export default function ProtectedRoute({ children, requireCharacter = false }) {
     return (
       <div className="min-h-screen flex items-center justify-center" data-testid="loading-screen">
         <div className="text-center">
-          <p className="font-display text-2xl grad-text-amber flicker">ESTABLISHING LINK</p>
+          <p className="font-display text-2xl grad-text-amber flicker">A ESTABELECER LIGAÇÃO</p>
           <p className="mt-3 text-xs tracking-[0.3em] text-[#8A8A8A]">
-            <span className="blink">◆</span> DECRYPTING SIGNAL
+            <span className="blink">◆</span> A DESCIFRAR SINAL
           </p>
         </div>
       </div>

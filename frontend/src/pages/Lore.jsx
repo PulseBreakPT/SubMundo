@@ -68,38 +68,38 @@ export default function Lore() {
   return (
     <div className="min-h-screen" data-testid="lore-page">
       <HUD character={character} />
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-8 py-8">
-        <div className="mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <main className="max-w-[1200px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6">
           <div>
-            <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-3 flex items-center gap-2">
-              <InfinityIcon className="w-3 h-3" /> INFINITE CODEX — FRAGMENTS NEVER RUN OUT
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3 flex items-center gap-2">
+              <InfinityIcon className="w-3 h-3" /> CÓDEX INFINITO
             </p>
-            <h1 className="font-display text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
-              Every name leaves
+            <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
+              Cada nome deixa
               <br />
-              <span className="grad-text-amber">a paper trail.</span>
+              <span className="grad-text-amber">um rasto de papel.</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-sm text-[#8A8A8A] leading-relaxed">
-              The galaxy writes faster than anyone can read. Each fragment is a confession, a transmission, a prophecy — excavated from the static of {unlocked.toLocaleString()} catalogued entries.
+            <p className="mt-3 sm:mt-4 max-w-2xl text-xs sm:text-sm text-[#8A8A8A] leading-relaxed">
+              A galáxia escreve mais depressa do que alguém consegue ler. {unlocked.toLocaleString()} entradas catalogadas.
             </p>
           </div>
 
-          <div className="panel p-5 hud-corners min-w-[280px]">
-            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ EXCAVATION</p>
-            <p className="text-[0.65rem] text-[#8A8A8A] mt-1 mb-3">Spend 20 CR. Unearth one new fragment. Forever.</p>
+          <div className="panel p-4 sm:p-5 hud-corners w-full md:min-w-[280px] md:w-auto">
+            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ ESCAVAÇÃO</p>
+            <p className="text-[0.6rem] sm:text-[0.65rem] text-[#8A8A8A] mt-1 mb-2 sm:mb-3">Gasta 20 CR. Desenterra um novo fragmento. Para sempre.</p>
             <button onClick={excavate} disabled={digging || !character || (character?.credits || 0) < 20} className="btn-brutal w-full" data-testid="excavate-btn">
               <Pickaxe className="w-4 h-4" />
-              {digging ? "DIGGING…" : "EXCAVATE (20 CR)"}
+              {digging ? "A ESCAVAR…" : "ESCAVAR (20 CR)"}
             </button>
           </div>
         </div>
 
         {/* Feed */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {fragments.map((f, i) => (
             <article
               key={f.id}
-              className={`panel p-6 hud-corners glitch-in relative overflow-hidden`}
+              className={`panel p-4 sm:p-6 hud-corners glitch-in relative overflow-hidden`}
               style={{ animationDelay: `${(i % 6) * 80}ms` }}
               data-testid={`lore-${f.id}`}
             >
@@ -130,10 +130,10 @@ export default function Lore() {
           ))}
 
           <div ref={sentinelRef} className="h-10 flex items-center justify-center">
-            {loading && <p className="text-[0.6rem] tracking-[0.3em] text-[#F5A623] flicker">EXCAVATING DEEPER…</p>}
+            {loading && <p className="text-[0.6rem] tracking-[0.3em] text-[#F5A623] flicker">A ESCAVAR MAIS FUNDO…</p>}
             {!hasMore && !loading && (
               <p className="text-[0.6rem] tracking-[0.3em] text-[#8A8A8A] text-center">
-                ◆ END OF KNOWN STATIC — EXCAVATE TO UNEARTH MORE
+                ◆ FIM DA ESTÁTICA CONHECIDA — ESCAVA PARA ENCONTRAR MAIS
               </p>
             )}
           </div>

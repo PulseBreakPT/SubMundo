@@ -46,7 +46,7 @@ export default function CharacterForge() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="font-display text-2xl grad-text-amber flicker">FORGING DISCIPLINE</p>
+        <p className="font-display text-2xl grad-text-amber flicker">A FORJAR DISCIPLINA</p>
       </div>
     );
   }
@@ -57,15 +57,15 @@ export default function CharacterForge() {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-10 sm:py-16">
         <div className="glitch-in mb-12">
           <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-4">
-            ◆ INITIATION PROTOCOL — {user?.callsign?.toUpperCase()}
+            ◆ PROTOCOLO DE INICIAÇÃO — {user?.callsign?.toUpperCase()}
           </p>
           <h1 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[0.95]">
-            Choose the silence
+            Escolhe o silêncio
             <br />
-            <span className="grad-text-amber">you leave behind.</span>
+            <span className="grad-text-amber">que deixas para trás.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-sm text-[#8A8A8A] leading-relaxed">
-            Three disciplines survived the collapse. Each one ends lives in a different language. Pick yours. It is permanent — the galaxy does not forgive second drafts.
+            Três disciplinas sobreviveram ao colapso. Cada uma acaba vidas numa linguagem diferente. Escolhe a tua. É permanente — a galáxia não perdoa segundas versões.
           </p>
         </div>
 
@@ -95,9 +95,9 @@ export default function CharacterForge() {
                   <span className="text-3xl" style={{ color: c.accent }}>{c.sigil}</span>
                 </div>
                 <div className="mt-4 flex gap-4 text-[0.6rem] tracking-[0.15em] text-[#8A8A8A]">
-                  <span>HP <strong className="text-[#F4F0EB] font-mono">{c.base_hp}</strong></span>
+                  <span>VIDA <strong className="text-[#F4F0EB] font-mono">{c.base_hp}</strong></span>
                   <span>EN <strong className="text-[#F4F0EB] font-mono">{c.base_energy}</strong></span>
-                  <span>ATK <strong className="text-[#F4F0EB] font-mono">{c.base_attack}</strong></span>
+                  <span>ATQ <strong className="text-[#F4F0EB] font-mono">{c.base_attack}</strong></span>
                   <span>DEF <strong className="text-[#F4F0EB] font-mono">{c.base_defense}</strong></span>
                 </div>
               </button>
@@ -110,7 +110,7 @@ export default function CharacterForge() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[0.6rem] tracking-[0.4em] font-bold mb-2" style={{ color: selected.accent }}>
-                    ◆ DOSSIER // {selected.role}
+                    ◆ DOSSIÊ // {selected.role}
                   </p>
                   <h2 className="font-display text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
                     {selected.name}
@@ -129,10 +129,10 @@ export default function CharacterForge() {
               {/* Stats */}
               <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { icon: Heart, label: "VITALS", val: selected.base_hp, color: "#D11124" },
-                  { icon: Zap, label: "CHARGE", val: selected.base_energy, color: "#F5A623" },
-                  { icon: Sword, label: "STRIKE", val: selected.base_attack, color: "#F4F0EB" },
-                  { icon: Shield, label: "GUARD", val: selected.base_defense, color: "#8A8A8A" },
+                  { icon: Heart, label: "VIDA", val: selected.base_hp, color: "#D11124" },
+                  { icon: Zap, label: "CARGA", val: selected.base_energy, color: "#F5A623" },
+                  { icon: Sword, label: "GOLPE", val: selected.base_attack, color: "#F4F0EB" },
+                  { icon: Shield, label: "GUARDA", val: selected.base_defense, color: "#8A8A8A" },
                 ].map((s) => (
                   <div key={s.label} className="border border-[rgba(244,240,235,0.1)] p-4">
                     <s.icon className="w-4 h-4 mb-2" style={{ color: s.color }} />
@@ -144,7 +144,7 @@ export default function CharacterForge() {
 
               {/* Skills */}
               <div className="mt-10">
-                <p className="text-[0.6rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ SKILL ARRAY</p>
+                <p className="text-[0.6rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ ARSENAL DE PERÍCIAS</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {selected.skills.map((s) => (
                     <div key={s.id} className="border border-[rgba(209,17,36,0.2)] p-4 hover:border-[#F5A623]/50 transition" data-testid={`skill-preview-${s.id}`}>
@@ -169,7 +169,7 @@ export default function CharacterForge() {
                   className="btn-brutal"
                   data-testid="confirm-class-btn"
                 >
-                  {submitting ? "SIGNING…" : "SEAL THIS EXILE"} <ArrowRight className="w-4 h-4" />
+                  {submitting ? "A SELAR…" : "SELAR ESTE EXÍLIO"} <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>

@@ -4,9 +4,9 @@ import HUD from "@/components/HUD";
 import { Lock, Zap, Sparkles, Shield, Sword, CheckCircle2 } from "lucide-react";
 
 const BRANCH_META = {
-  IRON:  { color: "#F4F0EB", accent: "#D11124", icon: Shield, tagline: "The wall refuses." },
-  VOID:  { color: "#F5A623", accent: "#F5A623", icon: Sparkles, tagline: "Where the zero-line sings." },
-  BLOOD: { color: "#D11124", accent: "#D11124", icon: Sword, tagline: "What the knife remembers." },
+  IRON:  { color: "#F4F0EB", accent: "#D11124", icon: Shield, tagline: "O muro recusa." },
+  VOID:  { color: "#F5A623", accent: "#F5A623", icon: Sparkles, tagline: "Onde a linha zero canta." },
+  BLOOD: { color: "#D11124", accent: "#D11124", icon: Sword, tagline: "O que a faca se lembra." },
 };
 
 export default function Talents() {
@@ -34,7 +34,7 @@ export default function Talents() {
     finally { setBusy(false); }
   };
 
-  if (!character || !tree.length) return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">LOADING NEURAL ARRAY</p></div>;
+  if (!character || !tree.length) return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">A CARREGAR REDE NEURAL</p></div>;
 
   const owned = new Set(character.talents_owned || []);
   const canTake = (t) => !owned.has(t.id) && character.talent_points > 0 && (!t.prereq || owned.has(t.prereq));
@@ -43,40 +43,42 @@ export default function Talents() {
   return (
     <div className="min-h-screen" data-testid="talents-page">
       <HUD character={character} />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8">
-        <div className="mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
+        <div className="mb-5 sm:mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6">
           <div>
-            <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-3">◆ NEURAL INVESTMENT</p>
-            <h1 className="font-display text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
-              Invest in the <span className="grad-text-red">shape</span>
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">◆ INVESTIMENTO NEURAL</p>
+            <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
+              Investe na <span className="grad-text-red">forma</span>
               <br />
-              <span className="grad-text-amber">you become.</span>
+              <span className="grad-text-amber">que te tornas.</span>
             </h1>
-            <p className="mt-4 max-w-2xl text-sm text-[#8A8A8A] leading-relaxed">
-              Every level grants one TALENT POINT. Each node rewires your operative. Choose carefully — the galaxy has no refund counter.
+            <p className="mt-3 sm:mt-4 max-w-2xl text-xs sm:text-sm text-[#8A8A8A] leading-relaxed">
+              Cada nível dá um PONTO DE TALENTO. Cada nó reprograma o teu operativo. Escolhe com cuidado — a galáxia não devolve dinheiro.
             </p>
           </div>
-          <div className="panel p-5 hud-corners min-w-[240px] text-center">
-            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">AVAILABLE POINTS</p>
-            <p className="font-display text-6xl font-black grad-text-amber mt-1" data-testid="talent-points-count">
+          <div className="panel p-3 sm:p-5 hud-corners min-w-0 sm:min-w-[240px] text-center flex sm:block items-center justify-between gap-3">
+            <div>
+              <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">PONTOS DISPONÍVEIS</p>
+              <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.2em] text-[#8A8A8A] mt-1 sm:mt-0 sm:block hidden">INVESTE OU GUARDA</p>
+            </div>
+            <p className="font-display text-4xl sm:text-6xl font-black grad-text-amber sm:mt-1" data-testid="talent-points-count">
               {character.talent_points || 0}
             </p>
-            <p className="text-[0.6rem] tracking-[0.2em] text-[#8A8A8A] mt-1">INVEST OR HOARD</p>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-3 sm:gap-6">
           {branches.map((branch, bi) => {
             const nodes = tree.filter((t) => t.branch === branch).sort((a, b) => a.tier - b.tier);
             const meta = BRANCH_META[branch];
             const Icon = meta.icon;
             return (
-              <div key={branch} className={`panel hud-corners p-6 glitch-in delay-${bi + 1}`} data-testid={`branch-${branch.toLowerCase()}`}>
+              <div key={branch} className={`panel hud-corners p-4 sm:p-6 glitch-in delay-${bi + 1}`} data-testid={`branch-${branch.toLowerCase()}`}>
                 <div className="flex items-center justify-between mb-2 pb-4 border-b border-[rgba(244,240,235,0.1)]">
                   <div className="flex items-center gap-3">
                     <Icon className="w-5 h-5" style={{ color: meta.accent }} />
                     <div>
-                      <p className="text-[0.55rem] tracking-[0.4em] font-bold" style={{ color: meta.accent }}>BRANCH // {branch}</p>
+                      <p className="text-[0.55rem] tracking-[0.4em] font-bold" style={{ color: meta.accent }}>RAMO // {branch}</p>
                       <p className="text-[0.65rem] tracking-[0.15em] text-[#8A8A8A] italic uppercase">{meta.tagline}</p>
                     </div>
                   </div>
@@ -117,7 +119,7 @@ export default function Talents() {
                             <span className="text-[0.55rem] tracking-[0.2em] font-mono" style={{ color: meta.accent }}>T{t.tier}</span>
                           </div>
                           <p className="text-[0.7rem] text-[#8A8A8A] mt-1">{t.desc}</p>
-                          {isOwned && <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold mt-2">◆ ACQUIRED</p>}
+                          {isOwned && <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold mt-2">◆ ADQUIRIDO</p>}
                         </button>
                       </div>
                     );

@@ -40,7 +40,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center px-4 py-12" data-testid="auth-page">
+    <div className="min-h-screen relative flex items-center justify-center px-3 sm:px-4 py-8 sm:py-12" data-testid="auth-page">
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#D1112422,transparent_60%),radial-gradient(ellipse_at_bottom,#F5A62322,transparent_60%)]" />
       <div className="absolute inset-0 scanlines" />
@@ -54,25 +54,25 @@ export default function Auth() {
       </div>
 
       <div className="relative z-10 w-full max-w-md glitch-in">
-        <div className="panel panel-amber hud-corners p-8 sm:p-10">
+        <div className="panel panel-amber hud-corners p-5 sm:p-10">
           <p className="text-[0.6rem] tracking-[0.5em] text-[#F5A623] font-bold mb-4">
-            ◆ SECURE CHANNEL — {mode === "register" ? "NEW EXILE" : "RESUME SIGNAL"}
+            ◆ CANAL SEGURO — {mode === "register" ? "NOVO EXILADO" : "RETOMAR SINAL"}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-tight text-[#F4F0EB] mb-2">
-            {mode === "register" ? "Sign your " : "Return to "}
-            <span className="grad-text-red">{mode === "register" ? "name" : "exile"}</span>
+            {mode === "register" ? "Assina o teu " : "Volta ao teu "}
+            <span className="grad-text-red">{mode === "register" ? "nome" : "exílio"}</span>
           </h1>
           <p className="text-xs text-[#8A8A8A] mb-8 leading-relaxed">
             {mode === "register"
-              ? "The Directorate requires an identity. Pick wisely — it survives the collapse."
-              : "Enter your cipher. The galaxy still remembers you."}
+              ? "O Directorate exige uma identidade. Escolhe bem — sobrevive ao colapso."
+              : "Introduz a tua cifra. A galáxia ainda se lembra de ti."}
           </p>
 
           <form onSubmit={submit} className="space-y-2">
             {mode === "register" && (
               <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
                 <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
-                  CALLSIGN
+                  ALCUNHA
                 </label>
                 <input
                   type="text"
@@ -82,14 +82,14 @@ export default function Auth() {
                   minLength={2}
                   maxLength={24}
                   className="input-brutal !border-none"
-                  placeholder="Enter identifier"
+                  placeholder="Inserir identificador"
                   data-testid="auth-callsign-input"
                 />
               </div>
             )}
             <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
               <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
-                TRANSMISSION EMAIL
+                EMAIL DE TRANSMISSÃO
               </label>
               <input
                 type="email"
@@ -97,13 +97,13 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="input-brutal !border-none"
-                placeholder="anchor@frequency"
+                placeholder="ancora@frequencia"
                 data-testid="auth-email-input"
               />
             </div>
             <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
               <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
-                CIPHER KEY
+                CHAVE CIFRA
               </label>
               <input
                 type="password"
@@ -133,23 +133,23 @@ export default function Auth() {
               className="btn-brutal w-full mt-6"
               data-testid="auth-submit-btn"
             >
-              {loading ? "CONNECTING…" : mode === "register" ? "ENLIST" : "AUTHENTICATE"}
+              {loading ? "A LIGAR…" : mode === "register" ? "ALISTAR" : "AUTENTICAR"}
               <ArrowRight className="w-3 h-3" />
             </button>
           </form>
 
-          <div className="mt-8 divider-slash">{mode === "register" ? "EXISTING EXILE" : "NEW TO THE PROTOCOL"}</div>
+          <div className="mt-8 divider-slash">{mode === "register" ? "EXILADO EXISTENTE" : "NOVO NO PROTOCOLO"}</div>
 
           <button
             onClick={() => { setMode(mode === "register" ? "login" : "register"); setErr(""); }}
             className="btn-ghost w-full mt-4"
             data-testid="auth-switch-btn"
           >
-            {mode === "register" ? "Return to Exile" : "Sign Your Name"}
+            {mode === "register" ? "Voltar ao Exílio" : "Assinar o Teu Nome"}
           </button>
         </div>
         <p className="mt-4 text-center text-[0.55rem] tracking-[0.3em] text-[#8A8A8A] uppercase">
-          ◆ Your progress is cloud-sealed to this signal
+          ◆ O teu progresso fica selado a este sinal
         </p>
       </div>
     </div>

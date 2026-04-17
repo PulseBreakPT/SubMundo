@@ -30,7 +30,7 @@ export default function Codex() {
   }, []);
 
   if (!character || !classData) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">LOADING CODEX</p></div>;
+    return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">A CARREGAR CÓDEX</p></div>;
   }
 
   const completed = missions.filter((m) => m.completed).length;
@@ -39,32 +39,32 @@ export default function Codex() {
   return (
     <div className="min-h-screen" data-testid="codex-page">
       <HUD character={character} />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8">
-        <div className="mb-10 glitch-in">
-          <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-3">◆ CODEX // OPERATIVE DOSSIER</p>
-          <h1 className="font-display text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-10 glitch-in">
+          <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">◆ CÓDEX // FICHA DE OPERATIVO</p>
+          <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
             <span className="grad-text-amber">{character.callsign}</span>
           </h1>
-          <p className="text-xs tracking-[0.3em] text-[#8A8A8A] uppercase mt-2">
-            {classData.name} // {classData.codename} // LVL {character.level}
+          <p className="text-[0.6rem] sm:text-xs tracking-[0.25em] sm:tracking-[0.3em] text-[#8A8A8A] uppercase mt-1.5 sm:mt-2">
+            {classData.name} // {classData.codename} // NÍV {character.level}
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid lg:grid-cols-12 gap-3 sm:gap-6">
           {/* Stats */}
-          <div className="lg:col-span-4 panel hud-corners p-6 glitch-in">
-            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ VITALS</p>
+          <div className="lg:col-span-4 panel hud-corners p-4 sm:p-6 glitch-in">
+            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ VIDA</p>
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold flex items-center gap-2"><Heart className="w-3 h-3" />HP</span>
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold flex items-center gap-2"><Heart className="w-3 h-3" />VIDA</span>
                   <span className="font-mono text-[#F4F0EB]">{character.hp}/{character.max_hp}</span>
                 </div>
                 <div className="bar-track"><div className="bar-fill-hp" style={{ width: `${(character.hp / character.max_hp) * 100}%` }} /><div className="bar-segments" /></div>
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold flex items-center gap-2"><Zap className="w-3 h-3" />CHARGE</span>
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold flex items-center gap-2"><Zap className="w-3 h-3" />CARGA</span>
                   <span className="font-mono text-[#F4F0EB]">{character.energy}/{character.max_energy}</span>
                 </div>
                 <div className="bar-track"><div className="bar-fill-energy" style={{ width: `${(character.energy / character.max_energy) * 100}%` }} /><div className="bar-segments" /></div>
@@ -81,7 +81,7 @@ export default function Codex() {
             <div className="mt-8 grid grid-cols-2 gap-3">
               <div className="border border-[rgba(244,240,235,0.1)] p-3 text-center">
                 <Sword className="w-4 h-4 text-[#F4F0EB] mx-auto mb-1" />
-                <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">ATK</p>
+                <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">ATQ</p>
                 <p className="font-display text-xl font-black text-[#F4F0EB]">{character.attack}</p>
               </div>
               <div className="border border-[rgba(244,240,235,0.1)] p-3 text-center">
@@ -93,8 +93,8 @@ export default function Codex() {
           </div>
 
           {/* Skills */}
-          <div className="lg:col-span-8 panel hud-corners p-6 glitch-in delay-1">
-            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ SKILL ARRAY // {classData.name}</p>
+          <div className="lg:col-span-8 panel hud-corners p-4 sm:p-6 glitch-in delay-1">
+            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4">◆ PERÍCIAS // {classData.name}</p>
             <div className="grid sm:grid-cols-2 gap-3">
               {classData.skills.map((s) => (
                 <div key={s.id} className="border border-[rgba(209,17,36,0.25)] p-4 hover:border-[#F5A623]/50 transition">
@@ -110,11 +110,11 @@ export default function Codex() {
           </div>
 
           {/* Inventory */}
-          <div className="lg:col-span-6 panel hud-corners p-6 glitch-in delay-2">
+          <div className="lg:col-span-6 panel hud-corners p-4 sm:p-6 glitch-in delay-2">
             <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4 flex items-center gap-2">
-              <Package className="w-3 h-3" /> INVENTORY
+              <Package className="w-3 h-3" /> INVENTÁRIO
             </p>
-            {character.inventory?.length === 0 && <p className="text-xs text-[#8A8A8A]">NO ITEMS LOGGED</p>}
+            {character.inventory?.length === 0 && <p className="text-xs text-[#8A8A8A]">SEM ITEMS</p>}
             <div className="space-y-2" data-testid="inventory-list">
               {character.inventory.map((entry) => {
                 const it = items[entry.item_id];
@@ -133,13 +133,13 @@ export default function Codex() {
           </div>
 
           {/* Progress */}
-          <div className="lg:col-span-6 panel hud-corners p-6 glitch-in delay-3">
+          <div className="lg:col-span-6 panel hud-corners p-4 sm:p-6 glitch-in delay-3">
             <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-4 flex items-center gap-2">
-              <Trophy className="w-3 h-3" /> CAMPAIGN LEDGER
+              <Trophy className="w-3 h-3" /> REGISTO DE CAMPANHA
             </p>
             <div className="flex items-baseline gap-3 mb-4">
               <p className="font-display text-5xl font-black grad-text-amber">{completed}</p>
-              <p className="text-[0.6rem] tracking-[0.3em] text-[#8A8A8A] uppercase">of {missions.length} names<br />unwritten</p>
+              <p className="text-[0.6rem] tracking-[0.3em] text-[#8A8A8A] uppercase">de {missions.length} nomes<br />desescritos</p>
             </div>
             <div className="space-y-1.5">
               {missions.map((m) => (
@@ -148,7 +148,7 @@ export default function Codex() {
                     {String(m.index).padStart(2, "0")} // {m.name}
                   </span>
                   <span className="text-[0.55rem] tracking-[0.2em] text-[#8A8A8A]">
-                    {m.completed ? "DONE" : m.locked ? `LVL ${m.min_level}` : "READY"}
+                    {m.completed ? "FEITO" : m.locked ? `NÍV ${m.min_level}` : "PRONTO"}
                   </span>
                 </div>
               ))}

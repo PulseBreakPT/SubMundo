@@ -24,6 +24,21 @@ html, body, #root {
     min-height: 100vh;
 }
 
+/* Mobile-first tight panels */
+.panel {
+    position: relative;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-red);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Reduce excess padding on mobile globally */
+@media (max-width: 640px) {
+    .panel { /* tight on mobile */ }
+    .hud-corners::before,
+    .hud-corners::after { width: 10px; height: 10px; }
+}
+
 body {
     margin: 0;
     font-family: 'JetBrains Mono', ui-monospace, monospace;
@@ -232,20 +247,12 @@ body {
 }
 .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Panel */
-.panel {
-    position: relative;
-    background: var(--bg-elev);
-    border: 1px solid var(--border-red);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-.panel-amber { border-color: var(--border-amber); }
-
 /* Interactive panel hover (only apply when panel is a Link/button) */
 a.panel:hover,
 button.panel:hover {
     border-color: var(--border-amber);
 }
+.panel-amber { border-color: var(--border-amber); }
 
 /* Glitch entrance */
 @keyframes glitch-in {

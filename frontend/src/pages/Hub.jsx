@@ -53,7 +53,7 @@ export default function Hub() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">LOADING STAR-CHART</p></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">A CARREGAR CARTA ESTELAR</p></div>;
 
   const tierColor = (t) => t >= 4 ? "#D11124" : t >= 3 ? "#F5A623" : "#F4F0EB";
 
@@ -61,62 +61,62 @@ export default function Hub() {
     <div className="min-h-screen" data-testid="hub-page">
       <HUD character={character} />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 relative">
-        <div className="mb-10 glitch-in flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8 relative">
+        <div className="mb-6 sm:mb-10 glitch-in flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
           <div>
-            <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-3">
-              ◆ STAR-CHART // ACTIVE EXILE
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">
+              ◆ CARTA ESTELAR // EXÍLIO ATIVO
             </p>
-            <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
-              Eight names.
+            <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
+              Oito nomes.
               <br />
-              <span className="grad-text-red">Choose one</span> to unwrite.
+              <span className="grad-text-red">Escolhe um</span> para desescrever.
             </h1>
           </div>
-          <button onClick={rest} disabled={resting || (character.hp === character.max_hp && character.energy === character.max_energy)} className="btn-ghost" data-testid="rest-btn">
+          <button onClick={rest} disabled={resting || (character.hp === character.max_hp && character.energy === character.max_energy)} className="btn-ghost self-start sm:self-auto" data-testid="rest-btn">
             <Moon className="w-4 h-4" />
-            {resting ? "RESTING…" : "REST & RECOVER"}
+            {resting ? "A DESCANSAR…" : "DESCANSAR"}
           </button>
         </div>
 
         {/* Quick-nav system cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-          <Link to="/talents" className="panel p-4 hover:!border-[#F5A623]/60 transition group relative" data-testid="quick-talents">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ NEURAL</p>
-                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Talent Grid</p>
-                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{character.talent_points || 0} POINT{character.talent_points !== 1 ? "S" : ""} AVAILABLE</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-8">
+          <Link to="/talents" className="panel p-3 sm:p-4 hover:!border-[#F5A623]/60 transition group relative" data-testid="quick-talents">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.35em] sm:tracking-[0.4em] text-[#F5A623] font-bold truncate">◆ NEURAL</p>
+                <p className="font-display text-xs sm:text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Talentos</p>
+                <p className="text-[0.55rem] sm:text-[0.6rem] text-[#8A8A8A] mt-0.5 truncate">{character.talent_points || 0} PT{(character.talent_points||0)!==1?"S":""}</p>
               </div>
-              <Star className="w-5 h-5 text-[#F5A623] group-hover:scale-110 transition" />
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-[#F5A623] group-hover:scale-110 transition shrink-0" />
               {character.talent_points > 0 && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
               )}
             </div>
           </Link>
-          <Link to="/armory" className="panel p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-armory">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold">◆ SALVAGE</p>
-                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Armory</p>
-                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{(character.equipment_stash || []).length} ITEM{(character.equipment_stash||[]).length!==1?"S":""}</p>
+          <Link to="/armory" className="panel p-3 sm:p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-armory">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.35em] sm:tracking-[0.4em] text-[#D11124] font-bold truncate">◆ ARMAS</p>
+                <p className="font-display text-xs sm:text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Arsenal</p>
+                <p className="text-[0.55rem] sm:text-[0.6rem] text-[#8A8A8A] mt-0.5 truncate">{(character.equipment_stash || []).length} ITEM{(character.equipment_stash||[]).length!==1?"S":""}</p>
               </div>
-              <Package2 className="w-5 h-5 text-[#D11124] group-hover:scale-110 transition" />
+              <Package2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#D11124] group-hover:scale-110 transition shrink-0" />
             </div>
           </Link>
-          <Link to="/lore" className="panel p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-lore">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[0.55rem] tracking-[0.4em] text-[#F4F0EB] font-bold">◆ INFINITE</p>
-                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Codex / Lore</p>
-                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{character.lore_unlocked || 3} FRAGMENTS</p>
+          <Link to="/lore" className="panel p-3 sm:p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-lore">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.35em] sm:tracking-[0.4em] text-[#F4F0EB] font-bold truncate">◆ INFINITO</p>
+                <p className="font-display text-xs sm:text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Crónicas</p>
+                <p className="text-[0.55rem] sm:text-[0.6rem] text-[#8A8A8A] mt-0.5 truncate">{character.lore_unlocked || 3} FRAG</p>
               </div>
-              <BookOpen className="w-5 h-5 text-[#F4F0EB] group-hover:scale-110 transition" />
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#F4F0EB] group-hover:scale-110 transition shrink-0" />
             </div>
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid lg:grid-cols-12 gap-4 sm:gap-6">
           {/* Mission list */}
           <div className="lg:col-span-5 space-y-2">
             {missions.map((m, i) => (
@@ -124,26 +124,26 @@ export default function Hub() {
                 key={m.id}
                 onClick={() => setSelected(m)}
                 disabled={m.locked}
-                className={`w-full text-left p-4 panel transition-all relative glitch-in
+                className={`w-full text-left p-3 sm:p-4 panel transition-all relative glitch-in
                   ${selected?.id === m.id ? "!border-[#F5A623] bg-[rgba(245,166,35,0.05)]" : ""}
                   ${m.locked ? "opacity-40 cursor-not-allowed" : "hover:!border-[rgba(245,166,35,0.4)]"}`}
                 style={{ animationDelay: `${i * 60}ms` }}
                 data-testid={`mission-row-${m.id}`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 text-center">
-                    <p className="text-[0.6rem] tracking-[0.25em] text-[#8A8A8A]">MSN</p>
-                    <p className="font-display text-2xl font-black" style={{ color: tierColor(m.tier) }}>
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="w-8 sm:w-10 text-center shrink-0">
+                    <p className="text-[0.5rem] sm:text-[0.6rem] tracking-[0.25em] text-[#8A8A8A]">MSN</p>
+                    <p className="font-display text-xl sm:text-2xl font-black leading-tight" style={{ color: tierColor(m.tier) }}>
                       {String(m.index).padStart(2, "0")}
                     </p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] truncate">{m.name}</p>
-                    <p className="text-[0.65rem] tracking-[0.15em] text-[#8A8A8A] mt-0.5 uppercase truncate">{m.location}</p>
-                    <div className="mt-2 flex gap-3 text-[0.55rem] tracking-[0.2em] text-[#8A8A8A]">
-                      <span>TIER <strong className="font-mono" style={{ color: tierColor(m.tier) }}>{m.tier}</strong></span>
-                      <span>LVL <strong className="text-[#F4F0EB] font-mono">{m.min_level}+</strong></span>
-                      <span>REW <strong className="text-[#F5A623] font-mono">{m.xp_reward}XP</strong></span>
+                    <p className="font-display text-xs sm:text-sm font-black uppercase tracking-tight text-[#F4F0EB] truncate">{m.name}</p>
+                    <p className="text-[0.55rem] sm:text-[0.65rem] tracking-[0.15em] text-[#8A8A8A] mt-0.5 uppercase truncate">{m.location}</p>
+                    <div className="mt-1.5 sm:mt-2 flex gap-2 sm:gap-3 text-[0.5rem] sm:text-[0.55rem] tracking-[0.2em] text-[#8A8A8A]">
+                      <span>NÍV <strong className="font-mono" style={{ color: tierColor(m.tier) }}>{m.tier}</strong></span>
+                      <span>REQ <strong className="text-[#F4F0EB] font-mono">{m.min_level}+</strong></span>
+                      <span>XP <strong className="text-[#F5A623] font-mono">{m.xp_reward}</strong></span>
                     </div>
                   </div>
                   <div className="shrink-0">
@@ -163,28 +163,28 @@ export default function Hub() {
                 style={{ backgroundImage: `url(${WORLD_BG})`, backgroundSize: "cover", backgroundPosition: "center" }}
               />
               <div className="absolute inset-0 bg-gradient-to-br from-[#050505]/85 to-[#050505]/95" />
-              <div className="relative panel panel-amber hud-corners p-6 sm:p-10" data-testid="mission-detail">
-                <p className="text-[0.6rem] tracking-[0.4em] font-bold mb-3" style={{ color: tierColor(selected.tier) }}>
-                  ◆ BRIEFING // MSN-{String(selected.index).padStart(2, "0")} // TIER {selected.tier}
+              <div className="relative panel panel-amber hud-corners p-4 sm:p-10" data-testid="mission-detail">
+                <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.3em] sm:tracking-[0.4em] font-bold mb-2 sm:mb-3" style={{ color: tierColor(selected.tier) }}>
+                  ◆ RELATÓRIO // MSN-{String(selected.index).padStart(2, "0")} // NÍV {selected.tier}
                 </p>
-                <h2 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-tighter text-[#F4F0EB] mb-2">
+                <h2 className="font-display text-2xl sm:text-4xl font-black uppercase tracking-tighter text-[#F4F0EB] mb-1 sm:mb-2">
                   {selected.name}
                 </h2>
-                <p className="text-xs tracking-[0.2em] text-[#8A8A8A] uppercase mb-8">{selected.location}</p>
+                <p className="text-[0.6rem] sm:text-xs tracking-[0.2em] text-[#8A8A8A] uppercase mb-5 sm:mb-8 truncate">{selected.location}</p>
 
                 <p className="text-sm leading-relaxed text-[#F4F0EB]/90 border-l-2 border-[#D11124] pl-4 italic">
                   "{selected.briefing}"
                 </p>
 
                 <div className="mt-8">
-                  <p className="text-[0.6rem] tracking-[0.4em] text-[#D11124] font-bold mb-4">◆ HOSTILE MANIFEST</p>
+                  <p className="text-[0.6rem] tracking-[0.4em] text-[#D11124] font-bold mb-4">◆ HOSTIS DETETADOS</p>
                   <div className="flex flex-wrap gap-3">
                     {selected.enemies_detail.map((e) => (
                       <div key={e.id} className="border border-[rgba(209,17,36,0.3)] px-4 py-3 flex items-center gap-3">
                         <Skull className="w-4 h-4 text-[#D11124]" />
                         <div>
                           <p className="font-display text-sm font-black uppercase text-[#F4F0EB]">{e.name}</p>
-                          <p className="text-[0.6rem] tracking-[0.2em] text-[#8A8A8A]">HP {e.hp} // ATK {e.attack}</p>
+                          <p className="text-[0.6rem] tracking-[0.2em] text-[#8A8A8A]">VIDA {e.hp} // ATQ {e.attack}</p>
                         </div>
                       </div>
                     ))}
@@ -194,11 +194,11 @@ export default function Hub() {
                 <div className="mt-10 flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[rgba(244,240,235,0.1)]">
                   <div className="flex gap-6 text-xs">
                     <div>
-                      <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">XP REWARD</p>
+                      <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">XP</p>
                       <p className="font-display text-xl font-black text-[#F5A623]">+{selected.xp_reward}</p>
                     </div>
                     <div>
-                      <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">CREDITS</p>
+                      <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">CRÉDITOS</p>
                       <p className="font-display text-xl font-black text-[#F4F0EB]">+{selected.credit_reward}</p>
                     </div>
                   </div>
@@ -210,10 +210,10 @@ export default function Hub() {
                     data-testid="deploy-mission-btn"
                   >
                     {selected.locked
-                      ? `LOCKED // LVL ${selected.min_level}`
+                      ? `BLOQUEADO // NÍV ${selected.min_level}`
                       : selected.completed
-                      ? "REDEPLOY"
-                      : "DEPLOY"}
+                      ? "REATACAR"
+                      : "ATACAR"}
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
