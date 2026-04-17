@@ -41,7 +41,7 @@ export default function Codex() {
       <HUD character={character} />
       <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
         <div className="mb-6 sm:mb-10 glitch-in">
-          <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">◆ CÓDEX // FICHA DE OPERATIVO</p>
+          <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-2 sm:mb-3">◆ CÓDEX // FICHA DE OPERATIVO</p>
           <h1 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
             <span className="grad-text-amber">{character.callsign}</span>
           </h1>
@@ -57,7 +57,7 @@ export default function Codex() {
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold flex items-center gap-2"><Heart className="w-3 h-3" />VIDA</span>
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold flex items-center gap-2"><Heart className="w-3 h-3" />VIDA</span>
                   <span className="font-mono text-[#F4F0EB]">{character.hp}/{character.max_hp}</span>
                 </div>
                 <div className="bar-track"><div className="bar-fill-hp" style={{ width: `${(character.hp / character.max_hp) * 100}%` }} /><div className="bar-segments" /></div>
@@ -156,7 +156,7 @@ export default function Codex() {
           </div>
         </div>
 
-        {err && <p className="mt-4 text-xs text-[#D11124]">{err}</p>}
+        {err && <p className="mt-4 text-xs text-[#E31230]">{err}</p>}
       </main>
     </div>
   );

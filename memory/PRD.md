@@ -1,80 +1,78 @@
 # AETHER//EXILE — Product Requirements Document
 
-## Original Problem Statement
-"Cria um jogo RPG futuristico com uma personalidade única nunca antes vista, cores preto branco e vermelho e gold âmbar, gradientes"
+## Declaração original do problema
+"Cria um jogo RPG futurista com uma personalidade única nunca antes vista, cores preto, branco e vermelho e gold âmbar, gradientes."
 
-Iteration 2: "Gostei, adiciona lógica, QI, investimento e lore Infinito ao design e a todo os sistemas do jogo."
+## Idioma
+Todo o conteúdo visível (UI, lore, logs, mensagens de erro, dados do jogo) é **Português de Portugal (PT-PT)**.
 
-## Concept
-Turn-based RPG — "Occult Cyber-Brutalism" aesthetic. Fusion world of cyberpunk + space sci-fi + post-apocalyptic. Pre-written narrative across 8 missions. Signature palette: #050505 bg, #D11124 red, #F5A623 gold amber, #F4F0EB bone, with strong gradients. Fonts: Unbounded (display) + JetBrains Mono (body).
+## Temática & Design
+- Estilo "Occult Cyber-Brutalism": turn-based RPG cyberpunk / pós-apocalipse / sci-fi
+- Paleta: **Preto `#050505` + Branco `#F4F0EB` + Vermelho DOMINANTE `#E31230/#FF1E3C/#7A0A15` + Âmbar `#F5A623` como acento**
+- Atualmente tema está **vermelho-dominante**: HUD corners, bordas de painel, hovers, HP bar e gradientes `grad-text-amber` foram reconvertidos para espectro vermelho. Âmbar fica reservado a barras de energia/XP e pontos de talento.
+- Tipografia: Unbounded (display) + JetBrains Mono
+- Efeitos: scanlines, grain, glitch-in, flicker, HUD corners com glow vermelho
 
-## Architecture
-- **Backend**: FastAPI + MongoDB + JWT httpOnly cookies
-- **Frontend**: React 19 + React Router 7 + Tailwind + custom CSS
-- **Auth**: custom email/password (bcrypt, brute-force lockout)
+## Stack
+- Backend: FastAPI + MongoDB (Motor) + JWT/bcrypt
+- Frontend: React + Tailwind + Shadcn UI + Lucide React
+- Autenticação interna (email/password + callsign), sem 3rd party
 
-## Core Systems (Implemented 2026-04-17)
-1. **Auth** — register/login/logout/me with httpOnly cookies (samesite=none).
-2. **Character forge** — 3 classes (Revenant/Null-Seer/Hollow-Blade), each with element, stats, 4 skills.
-3. **Hub** — world-map UI showing 8 missions with tier/level gating, rest action.
-4. **Combat** — turn-based with attack/skill/defend/item, HP/Energy/Shield bars.
-5. **Codex** — operative dossier, inventory, campaign progress.
+## Conteúdo (estático, definido em `/app/backend/game_data.py`)
+- **3 classes** (REVENANT / NULL-SEER / HOLLOW-BLADE) com 4 skills + ultimate
+- **4 origens** de personagem com bónus stat
+- **8 missões** de campanha progressiva
+- **8 inimigos** com rotações e enrage patterns
+- **5 status effects** (Hemorragia, Queimadura, Choque, Marcado, Congelado)
+- **5 terrenos** de missão com modificadores
+- **15 talentos** em 3 ramos (FERRO / VAZIO / SANGUE)
+- **4 facções** com sistema de reputação (0→300)
+- **Equipamento aleatório** (arma/armadura/relíquia) por tier 1-5
+- **Lore procedural** (nomes, lugares, verbos, artefactos, profecias → fragmentos únicos)
+- **Mercado + Artesanato** com 5 materiais
+- **5 zonas** de exploração com eventos ramificados
+- **3 missões secundárias** com dialogs ramificados
+- **Tarefas diárias + 19 conquistas**
+- **Arena + sistema de ascensão** (em expansão)
 
-## Deep Systems (added 2026-04-17 — iteration 2)
-### LÓGICA (logic & depth)
-- **Status effects**: bleed (stack ×3), burn (HP+ATK debuff), shock (30% skip), marked (+25% dmg taken), frozen (ATK halved).
-- **Elemental system**: kinetic/void/psi/amber/rust with rock-paper-scissors weakness (+30% dmg).
-- **Skill elements**: each skill rolls with a specific element + optional applied status.
+## Módulos UI (páginas)
+- Landing (hero + ticker + feature cards)
+- Auth (login/register)
+- CharacterForge (seleção de classe)
+- Hub (missões + atalhos)
+- Combat (turn-based com intent telegraphs, status effects, elemental weakness)
+- Talents (árvore de 3 ramos)
+- Armory (equipment stash + equip/unequip)
+- Lore (fragmentos procedurais)
+- Codex (perfil + histórico)
 
-### QI (strategic AI)
-- **Enemy intent telegraph**: next ability visible on enemy card one turn ahead.
-- **Ability rotations**: every enemy cycles a handcrafted move set (strike/rupture/void_howl/scream/knit/brace/unmake/…).
-- **Reactive math**: shock skip, burn ATK debuff, frozen multiplier — AI punishes passive play.
+## Changelog (Feb 2026 — continuidade)
+- ✅ Tradução PT-PT completa e verificada (Ago: game_data.py reescrito, server.py error details + logs de combate traduzidos, HUD tooltips, Combat ELEMENT_LABEL, branches FERRO/VAZIO/SANGUE nos talents)
+- ✅ Tema vermelho-dominante implementado (CSS vars, HUD corners, hovers, HP bar, grad-text-amber redefinido, panel-amber → panel-red, shadcn vars, todas as refs `#D11124` migradas para `#E31230`)
+- ✅ Sessões de combate legacy na DB purgadas para refletir novas strings
+- ✅ Smoke test: Landing, Hub, Talents, Combat — todos em PT-PT + visuais vermelho-dominantes
 
-### INVESTIMENTO (build depth)
-- **Talent tree**: 3 branches (IRON/VOID/BLOOD) × 5 tiers = 15 nodes, prereq cascade. 1 point per level.
-- **Equipment**: 3 slots (weapon/armor/relic). Procedurally rolled drops on mission victory (tier scales with mission; first-clear bonus). Full equip/unequip API with live stat recompute.
-- **Bonus stacking**: talents + equipment contribute crit%, element dmg%, lifesteal%, reflect%, wounded dmg%, heal bonus%, energy regen.
+## Roadmap (P1 — próximas tarefas)
+- Decidir sobre `/app/backend/game_ext.py` (integrar as expansões ou remover)
+- Expansão RPG profunda: sobrevivência/stamina, facções ativas, quests secundárias com UI, crafting UI, mercado dinâmico, arena com ondas, ascensões/prestígio
+- Persistência robusta de save/load (já em Mongo, falta stress test)
 
-### LORE INFINITO (infinite codex)
-- **Procedural generator** (server-side, deterministic per user) — 10+ templates × dozens of names/places/artifacts/events = effectively unlimited fragments.
-- **Infinite scroll** on /lore page.
-- **Excavation**: spend 20 credits to unlock 1 more fragment permanently. Free unlocks on mission victory (1 normal, +2 bonus on first-clear).
+## Roadmap (P2 — backlog)
+- Leaderboards sazonais
+- AI narrador dinâmico (via Emergent LLM key)
+- Storage para avatares custom (object storage)
+- Animações de combate mais ricas
 
-## Routes
-- `/`               — Landing
-- `/auth`           — Login/Register
-- `/forge`          — Class selection (first-time)
-- `/hub`            — Mission select + quick-nav to new systems
-- `/combat/:id`     — Combat arena
-- `/talents`        — Neural investment tree
-- `/armory`         — Equipment slots + stash
-- `/lore`           — Infinite codex
-- `/codex`          — Operative dossier
-
-## Backend Endpoints (summary)
-- /api/auth/{register,login,logout,me}
-- /api/game/{classes,missions,items,meta,character,character/rest,character/reset}
-- /api/game/talents/allocate
-- /api/game/equipment/{equip,unequip}
-- /api/game/lore (GET paginated), /api/game/lore/excavate (POST)
-- /api/game/combat/{start,action,current}
-
-## Backlog (P1)
-- Skill trees specific to each class (passives unlocked per class)
-- Infinite Arena mode (endless scaling encounters)
-- Consumable purchase shop (spend credits)
-- Boss phase transitions / multi-stage encounters
-- Sound design + music
-
-## Backlog (P2)
-- Multiplayer PvP turn-based
-- Lore fragment bookmarking/tagging
-- Daily rotating challenge mission
-- NPC relationship system
-
-## Next Action Items
-- (Optional) Add class-specific passive tree
-- (Optional) Add Arena endless mode
-- (Optional) Credit shop for consumables
-EOF
+## Arquitetura
+```
+/app/
+├── backend/
+│   ├── server.py        # API + auth + combat logic (PT-PT error details)
+│   ├── game_data.py     # Conteúdo estático TODO em PT-PT
+│   └── game_ext.py      # Órfão (aborted expansion) — decidir
+└── frontend/src/
+    ├── pages/           # 9 páginas, todas em PT-PT
+    ├── components/HUD.jsx  # Nav + bars (tooltips PT)
+    ├── context/AuthContext.jsx
+    └── index.css        # Tema vermelho-dominante
+```

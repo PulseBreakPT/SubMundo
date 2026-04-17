@@ -33,7 +33,7 @@ export default function Auth() {
         nav(u.has_character ? "/hub" : "/forge");
       }
     } catch (e) {
-      setErr(e.message || "Transmission failed");
+      setErr(e.message || "Transmissão falhou");
     } finally {
       setLoading(false);
     }
@@ -42,13 +42,13 @@ export default function Auth() {
   return (
     <div className="min-h-screen relative flex items-center justify-center px-3 sm:px-4 py-8 sm:py-12" data-testid="auth-page">
       {/* Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#D1112422,transparent_60%),radial-gradient(ellipse_at_bottom,#F5A62322,transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#E3123022,transparent_60%),radial-gradient(ellipse_at_bottom,#F5A62322,transparent_60%)]" />
       <div className="absolute inset-0 scanlines" />
       <div className="absolute top-6 left-6 z-10">
         <Link to="/" className="flex items-center gap-3 group" data-testid="auth-home-link">
-          <span className="text-[#D11124] text-2xl font-black group-hover:text-[#F5A623] transition">◈</span>
+          <span className="text-[#E31230] text-2xl font-black group-hover:text-[#F5A623] transition">◈</span>
           <p className="font-display text-xs font-black tracking-[0.3em] text-[#F4F0EB]">
-            AETHER<span className="text-[#D11124]">//</span>EXILE
+            AETHER<span className="text-[#E31230]">//</span>EXILE
           </p>
         </Link>
       </div>
@@ -71,7 +71,7 @@ export default function Auth() {
           <form onSubmit={submit} className="space-y-2">
             {mode === "register" && (
               <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
-                <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
+                <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold">
                   ALCUNHA
                 </label>
                 <input
@@ -88,7 +88,7 @@ export default function Auth() {
               </div>
             )}
             <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
-              <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
+              <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold">
                 EMAIL DE TRANSMISSÃO
               </label>
               <input
@@ -102,7 +102,7 @@ export default function Auth() {
               />
             </div>
             <div className="border border-[rgba(244,240,235,0.1)] focus-within:border-[#F5A623]">
-              <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">
+              <label className="block px-4 pt-3 text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold">
                 CHAVE CIFRA
               </label>
               <input
@@ -119,10 +119,10 @@ export default function Auth() {
 
             {err && (
               <div
-                className="mt-4 p-3 border border-[#D11124] bg-[rgba(209,17,36,0.08)] flex items-start gap-2 text-xs text-[#F4F0EB]"
+                className="mt-4 p-3 border border-[#E31230] bg-[rgba(209,17,36,0.08)] flex items-start gap-2 text-xs text-[#F4F0EB]"
                 data-testid="auth-error"
               >
-                <AlertTriangle className="w-4 h-4 text-[#D11124] shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 text-[#E31230] shrink-0 mt-0.5" />
                 <span>{err}</span>
               </div>
             )}

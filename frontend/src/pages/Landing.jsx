@@ -31,7 +31,7 @@ export default function Landing() {
 
       <div className="relative z-20 border-b border-[rgba(209,17,36,0.25)] bg-[rgba(5,5,5,0.6)] backdrop-blur-sm" data-testid="landing-ticker">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-12 py-2 flex items-center gap-3 overflow-hidden">
-          <span className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold shrink-0 flicker">◆ FEED AO VIVO</span>
+          <span className="text-[0.55rem] tracking-[0.4em] text-[#E31230] font-bold shrink-0 flicker">◆ FEED AO VIVO</span>
           <span className="text-[0.6rem] sm:text-xs tracking-[0.1em] text-[#F4F0EB]/85 font-mono truncate" key={tickerIdx}>
             ▸ {TICKERS[tickerIdx]}
           </span>
@@ -40,10 +40,10 @@ export default function Landing() {
 
       <nav className="relative z-10 px-4 sm:px-12 py-4 sm:py-6 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0" data-testid="landing-brand">
-          <span className="text-[#D11124] text-2xl sm:text-3xl font-black shrink-0">◈</span>
+          <span className="text-[#E31230] text-2xl sm:text-3xl font-black shrink-0">◈</span>
           <div className="min-w-0">
             <p className="font-display text-xs sm:text-base font-black tracking-[0.2em] sm:tracking-[0.25em] text-[#F4F0EB] truncate">
-              AETHER<span className="text-[#D11124]">//</span>EXILE
+              AETHER<span className="text-[#E31230]">//</span>EXILE
             </p>
             <p className="hidden sm:block text-[0.55rem] tracking-[0.35em] text-[#8A8A8A] uppercase">
               Protocolo de Combate por Turnos
@@ -63,7 +63,7 @@ export default function Landing() {
       <main className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-12 pt-8 sm:pt-24 pb-12 sm:pb-24">
         <div className="grid lg:grid-cols-12 gap-6 sm:gap-10 items-start">
           <div className="lg:col-span-8 glitch-in">
-            <p className="text-[0.6rem] sm:text-[0.7rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-4 sm:mb-6 uppercase">
+            <p className="text-[0.6rem] sm:text-[0.7rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-4 sm:mb-6 uppercase">
               ◆ Transmissão 001 // Restrita
             </p>
             <h1 className="font-display text-4xl sm:text-6xl lg:text-8xl font-black uppercase leading-[0.9] tracking-tighter text-[#F4F0EB]">
@@ -71,7 +71,7 @@ export default function Landing() {
               <br />
               <span className="grad-text-red">reinos</span>
               <br />
-              <span className="text-[#F5A623]">ardem devagar.</span>
+              <span className="text-[#FF1E3C]">ardem devagar.</span>
             </h1>
             <p className="mt-6 sm:mt-10 max-w-2xl text-xs sm:text-base leading-relaxed text-[#8A8A8A]">
               <span className="text-[#F4F0EB]">AETHER//EXILE</span> é um RPG por turnos ambientado nas ruínas de três futuros falhados — um colapso cyberpunk que nunca acabou, um império espacial que apodreceu em órbita, e um pós-apocalipse que ainda se escreve. És o último mercenário com sinal e pulso. Escolhe o teu exílio. Ataca primeiro. Ataca por último.
@@ -90,7 +90,7 @@ export default function Landing() {
             <div className="panel p-4 sm:p-6 hud-corners relative">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.3em] text-[#F5A623] font-bold">◆ DOSSIÊ</p>
-                <span className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.3em] text-[#D11124] flicker">● AO VIVO</span>
+                <span className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.3em] text-[#E31230] flicker">● AO VIVO</span>
               </div>
               <dl className="space-y-3 sm:space-y-4 font-mono text-xs">
                 <div className="flex justify-between border-b border-[rgba(244,240,235,0.08)] pb-2 sm:pb-3">
@@ -107,7 +107,7 @@ export default function Landing() {
                 </div>
                 <div className="flex justify-between border-b border-[rgba(244,240,235,0.08)] pb-2 sm:pb-3">
                   <dt className="text-[#8A8A8A] tracking-[0.15em] uppercase">Hostis</dt>
-                  <dd className="text-[#D11124]">08 Variantes</dd>
+                  <dd className="text-[#E31230]">08 Variantes</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-[#8A8A8A] tracking-[0.15em] uppercase">Save</dt>
@@ -128,7 +128,7 @@ export default function Landing() {
             { icon: Crosshair, label: "CAMPANHA", title: "Oito Nomes Para Desescrever", copy: "Do Evangelho de Ferrugem ao Desfeito — oito missões, uma descida lenta. A última é tua." },
           ].map((f, i) => (
             <div key={f.label} className={`panel p-4 sm:p-8 hud-corners glitch-in delay-${i + 1}`} data-testid={`feature-card-${i}`}>
-              <f.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#D11124] mb-3 sm:mb-6" />
+              <f.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#E31230] mb-3 sm:mb-6" />
               <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-2">{f.label}</p>
               <h3 className="font-display text-lg sm:text-2xl font-black uppercase tracking-tight text-[#F4F0EB] mb-2 sm:mb-4">{f.title}</h3>
               <p className="text-[0.7rem] sm:text-xs leading-relaxed text-[#8A8A8A]">{f.copy}</p>
@@ -141,7 +141,7 @@ export default function Landing() {
           <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] text-[#F5A623] mb-3 sm:mb-4">◆ EXCERTO — FRAGMENTO DE CÓDEX 17</p>
           <p className="font-display text-lg sm:text-3xl lg:text-4xl leading-snug text-[#F4F0EB] max-w-4xl">
             "Dizem que a galáxia já <span className="grad-text-amber">respirou</span>. Foi antes
-            da <span className="text-[#D11124]">Linha Zero</span>. Antes dos reinos se ajoelharem. Antes de pores
+            da <span className="text-[#E31230]">Linha Zero</span>. Antes dos reinos se ajoelharem. Antes de pores
             a máscara."
           </p>
           <p className="mt-4 sm:mt-6 text-[0.6rem] sm:text-xs tracking-[0.25em] text-[#8A8A8A] uppercase">— Feiticeira Âmbar // Última Transmissão</p>
@@ -151,7 +151,7 @@ export default function Landing() {
       <footer className="relative z-10 border-t border-[rgba(209,17,36,0.2)] mt-6 sm:mt-12">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-12 py-4 sm:py-6 flex flex-wrap justify-between items-center gap-2 text-[0.55rem] sm:text-[0.6rem] tracking-[0.3em] text-[#8A8A8A] uppercase">
           <span>◈ AETHER//EXILE — © Protocolo Occult Cyber-Brutalism</span>
-          <span className="text-[#D11124] flicker">SINAL ESTÁVEL</span>
+          <span className="text-[#E31230] flicker">SINAL ESTÁVEL</span>
         </div>
       </footer>
     </div>

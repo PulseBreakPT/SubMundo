@@ -7,15 +7,18 @@ import { Sword, Shield, Sparkles, Package, Trophy, Skull, ArrowRight, X, Eye, Za
 const COMBAT_BG = "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/b124b26f41f06a69f7b3cf45a8b09de14ad44e1504627a8f1cb7e229483be2ec.png";
 
 const STATUS_VIZ = {
-  bleed:  { sigil: "✚", color: "#D11124", label: "BLEED" },
-  burn:   { sigil: "✸", color: "#F5A623", label: "BURN" },
-  shock:  { sigil: "⟁", color: "#F4F0EB", label: "SHOCK" },
-  marked: { sigil: "⊕", color: "#D11124", label: "MARKED" },
-  frozen: { sigil: "❄", color: "#F4F0EB", label: "FROZEN" },
+  bleed:  { sigil: "✚", color: "#E31230", label: "HEMORRAGIA" },
+  burn:   { sigil: "✸", color: "#F5A623", label: "QUEIMADURA" },
+  shock:  { sigil: "⟁", color: "#F4F0EB", label: "CHOQUE" },
+  marked: { sigil: "⊕", color: "#E31230", label: "MARCADO" },
+  frozen: { sigil: "❄", color: "#F4F0EB", label: "CONGELADO" },
 };
 
 const ELEMENT_COLOR = {
-  kinetic: "#F4F0EB", void: "#D11124", psi: "#F5A623", amber: "#F5A623", rust: "#A80D1D",
+  kinetic: "#F4F0EB", void: "#E31230", psi: "#F5A623", amber: "#F5A623", rust: "#A80D1D",
+};
+const ELEMENT_LABEL = {
+  kinetic: "CINÉTICO", void: "VAZIO", psi: "PSI", amber: "ÂMBAR", rust: "FERRUGEM",
 };
 const WEAKNESS_MAP = {
   kinetic: ["rust"], void: ["amber"], psi: ["kinetic"], amber: ["void"], rust: ["psi"],
@@ -121,7 +124,7 @@ export default function Combat() {
           {/* Mission header */}
           <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
             <div className="min-w-0">
-              <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.3em] sm:tracking-[0.4em] text-[#D11124] font-bold">◆ EM COMBATE</p>
+              <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.3em] sm:tracking-[0.4em] text-[#E31230] font-bold">◆ EM COMBATE</p>
               <h2 className="font-display text-base sm:text-2xl font-black uppercase tracking-tight text-[#F4F0EB] truncate">
                 {mission?.name}
               </h2>
@@ -153,7 +156,7 @@ export default function Combat() {
               {/* HP */}
               <div className="mt-6">
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">VIDA</span>
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold">VIDA</span>
                   <span className="font-mono text-[#F4F0EB]" data-testid="combat-player-hp">{character.hp}/{character.max_hp}</span>
                 </div>
                 <div className="bar-track">
@@ -213,7 +216,7 @@ export default function Combat() {
                   className="inline-block px-2 py-1 text-[0.6rem] tracking-[0.2em] font-mono font-bold uppercase border"
                   style={{ color: ELEMENT_COLOR[classData.element], borderColor: ELEMENT_COLOR[classData.element] + "77" }}
                 >
-                  {classData.element} // FORTE VS {(WEAKNESS_MAP[classData.element] || []).join(", ").toUpperCase() || "—"}
+                  {ELEMENT_LABEL[classData.element] || classData.element} // FORTE VS {(WEAKNESS_MAP[classData.element] || []).map(e => ELEMENT_LABEL[e] || e).join(", ") || "—"}
                 </span>
               </div>
             </div>
@@ -224,12 +227,12 @@ export default function Combat() {
                 {session.enemies.map((e, i) => (
                   <div
                     key={i}
-                    className={`panel p-3 sm:p-5 transition-all ${e.alive ? "!border-[#D11124]" : "opacity-40 grayscale"} ${e === activeEnemy ? "pulse-alert" : ""}`}
+                    className={`panel p-3 sm:p-5 transition-all ${e.alive ? "!border-[#E31230]" : "opacity-40 grayscale"} ${e === activeEnemy ? "pulse-alert" : ""}`}
                     data-testid={`combat-enemy-${i}`}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <Skull className="w-5 h-5 text-[#D11124]" />
+                        <Skull className="w-5 h-5 text-[#E31230]" />
                         <div>
                           <p className="font-display text-lg font-black uppercase text-[#F4F0EB]">
                             {e.name}
@@ -240,13 +243,13 @@ export default function Combat() {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="text-3xl text-[#D11124]">{e.sigil || "⌖"}</span>
+                        <span className="text-3xl text-[#E31230]">{e.sigil || "⌖"}</span>
                         {e.element && (
                           <span
                             className="px-1.5 py-0.5 text-[0.5rem] tracking-[0.2em] font-mono font-bold uppercase border"
                             style={{ color: ELEMENT_COLOR[e.element], borderColor: ELEMENT_COLOR[e.element] + "77" }}
                           >
-                            {e.element}
+                            {ELEMENT_LABEL[e.element] || e.element}
                           </span>
                         )}
                       </div>
@@ -274,7 +277,7 @@ export default function Combat() {
                           <p className="text-[0.65rem] text-[#8A8A8A] italic">
                             {e.next_intent.telegraph}
                             {e.next_intent.kind === "damage" && (
-                              <span className="ml-1 text-[#D11124] font-mono not-italic">~{e.next_intent.power} {e.next_intent.element?.toUpperCase()}</span>
+                              <span className="ml-1 text-[#E31230] font-mono not-italic">~{e.next_intent.power} {ELEMENT_LABEL[e.next_intent.element] || e.next_intent.element?.toUpperCase()}</span>
                             )}
                           </p>
                         </div>
@@ -297,7 +300,7 @@ export default function Combat() {
 
             {/* RIGHT: Actions */}
             <div className="lg:col-span-3 panel hud-corners p-4 sm:p-5 relative">
-              <p className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold mb-4">◆ COMANDO</p>
+              <p className="text-[0.55rem] tracking-[0.4em] text-[#E31230] font-bold mb-4">◆ COMANDO</p>
 
               {status === "active" && !panel && (
                 <div className="space-y-2" data-testid="action-panel">
@@ -320,7 +323,7 @@ export default function Combat() {
                 <div className="space-y-2" data-testid="skill-panel">
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">ESCOLHE PERÍCIA</p>
-                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#D11124]" data-testid="close-skill-panel"><X className="w-4 h-4" /></button>
+                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#E31230]" data-testid="close-skill-panel"><X className="w-4 h-4" /></button>
                   </div>
                   {classData.skills.map((s) => (
                     <button
@@ -344,7 +347,7 @@ export default function Combat() {
                 <div className="space-y-2" data-testid="item-panel">
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">ESCOLHE ITEM</p>
-                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#D11124]" data-testid="close-item-panel"><X className="w-4 h-4" /></button>
+                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#E31230]" data-testid="close-item-panel"><X className="w-4 h-4" /></button>
                   </div>
                   {character.inventory.length === 0 && (
                     <p className="text-xs text-[#8A8A8A]">INVENTÁRIO VAZIO</p>
@@ -384,7 +387,7 @@ export default function Combat() {
 
               {status === "defeat" && (
                 <div className="space-y-4" data-testid="defeat-panel">
-                  <Skull className="w-10 h-10 text-[#D11124]" />
+                  <Skull className="w-10 h-10 text-[#E31230]" />
                   <p className="font-display text-3xl font-black uppercase grad-text-red">DERROTA</p>
                   <p className="text-xs text-[#8A8A8A] leading-relaxed">A estática levou-te. Descansa, recompõe-te. A galáxia ainda espera.</p>
                   <button
@@ -396,7 +399,7 @@ export default function Combat() {
                 </div>
               )}
 
-              {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="combat-error">{err}</p>}
+              {err && <p className="mt-4 text-xs text-[#E31230]" data-testid="combat-error">{err}</p>}
 
               {/* Tactical readout — fills empty space below commands */}
               {status === "active" && activeEnemy && (
@@ -410,7 +413,7 @@ export default function Combat() {
                     <div className="flex justify-between items-center">
                       <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Elemento</dt>
                       <dd style={{ color: ELEMENT_COLOR[activeEnemy.element] }}>
-                        {activeEnemy.element?.toUpperCase()}
+                        {ELEMENT_LABEL[activeEnemy.element] || activeEnemy.element?.toUpperCase()}
                       </dd>
                     </div>
                     <div className="flex justify-between items-center">
@@ -424,7 +427,7 @@ export default function Combat() {
                     <div className="flex justify-between items-center">
                       <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Fraco a</dt>
                       <dd style={{ color: ELEMENT_COLOR[Object.keys(WEAKNESS_MAP).find(k => (WEAKNESS_MAP[k] || []).includes(activeEnemy.element)) || "kinetic"] }}>
-                        {Object.keys(WEAKNESS_MAP).find(k => (WEAKNESS_MAP[k] || []).includes(activeEnemy.element))?.toUpperCase() || "—"}
+                        {ELEMENT_LABEL[Object.keys(WEAKNESS_MAP).find(k => (WEAKNESS_MAP[k] || []).includes(activeEnemy.element))] || "—"}
                       </dd>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-[rgba(244,240,235,0.05)]">
@@ -432,8 +435,8 @@ export default function Combat() {
                       <dd className="text-[#F5A623] font-bold">{String(session.turn).padStart(2, "0")}</dd>
                     </div>
                     {character.hp <= character.max_hp * 0.4 && (
-                      <div className="mt-3 p-2 border border-[#D11124]/50 bg-[rgba(209,17,36,0.08)]">
-                        <p className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">◆ AVISO — VIDA BAIXA</p>
+                      <div className="mt-3 p-2 border border-[#E31230]/50 bg-[rgba(209,17,36,0.08)]">
+                        <p className="text-[0.55rem] tracking-[0.3em] text-[#E31230] font-bold">◆ AVISO — VIDA BAIXA</p>
                         <p className="text-[0.65rem] text-[#8A8A8A] mt-1">Considera ITEM ou perícia de cura.</p>
                       </div>
                     )}

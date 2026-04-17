@@ -4,9 +4,9 @@ import HUD from "@/components/HUD";
 import { Lock, Zap, Sparkles, Shield, Sword, CheckCircle2 } from "lucide-react";
 
 const BRANCH_META = {
-  IRON:  { color: "#F4F0EB", accent: "#D11124", icon: Shield, tagline: "O muro recusa." },
-  VOID:  { color: "#F5A623", accent: "#F5A623", icon: Sparkles, tagline: "Onde a linha zero canta." },
-  BLOOD: { color: "#D11124", accent: "#D11124", icon: Sword, tagline: "O que a faca se lembra." },
+  IRON:  { label: "FERRO", color: "#F4F0EB", accent: "#E31230", icon: Shield, tagline: "O muro recusa." },
+  VOID:  { label: "VAZIO", color: "#F5A623", accent: "#F5A623", icon: Sparkles, tagline: "Onde a linha zero canta." },
+  BLOOD: { label: "SANGUE", color: "#E31230", accent: "#E31230", icon: Sword, tagline: "O que a faca se lembra." },
 };
 
 export default function Talents() {
@@ -46,7 +46,7 @@ export default function Talents() {
       <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
         <div className="mb-5 sm:mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6">
           <div>
-            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">◆ INVESTIMENTO NEURAL</p>
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-2 sm:mb-3">◆ INVESTIMENTO NEURAL</p>
             <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
               Investe na <span className="grad-text-red">forma</span>
               <br />
@@ -78,7 +78,7 @@ export default function Talents() {
                   <div className="flex items-center gap-3">
                     <Icon className="w-5 h-5" style={{ color: meta.accent }} />
                     <div>
-                      <p className="text-[0.55rem] tracking-[0.4em] font-bold" style={{ color: meta.accent }}>RAMO // {branch}</p>
+                      <p className="text-[0.55rem] tracking-[0.4em] font-bold" style={{ color: meta.accent }}>RAMO // {meta.label}</p>
                       <p className="text-[0.65rem] tracking-[0.15em] text-[#8A8A8A] italic uppercase">{meta.tagline}</p>
                     </div>
                   </div>
@@ -130,7 +130,7 @@ export default function Talents() {
           })}
         </div>
 
-        {err && <p className="mt-6 text-xs text-[#D11124]" data-testid="talents-error">{err}</p>}
+        {err && <p className="mt-6 text-xs text-[#E31230]" data-testid="talents-error">{err}</p>}
       </main>
     </div>
   );

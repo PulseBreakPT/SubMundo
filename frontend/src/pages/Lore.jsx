@@ -4,9 +4,9 @@ import HUD from "@/components/HUD";
 import { BookOpen, Pickaxe, Infinity as InfinityIcon } from "lucide-react";
 
 const TAG_COLOR = {
-  exile: "#D11124", collapse: "#F5A623", rust: "#A80D1D", amber: "#F5A623",
+  exile: "#E31230", collapse: "#F5A623", rust: "#A80D1D", amber: "#F5A623",
   "zero-line": "#F4F0EB", directorate: "#F4F0EB", witch: "#F5A623",
-  prince: "#D11124", static: "#F4F0EB", naming: "#D11124",
+  prince: "#E31230", static: "#F4F0EB", naming: "#E31230",
 };
 
 export default function Lore() {
@@ -71,7 +71,7 @@ export default function Lore() {
       <main className="max-w-[1200px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
         <div className="mb-6 sm:mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6">
           <div>
-            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3 flex items-center gap-2">
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-2 sm:mb-3 flex items-center gap-2">
               <InfinityIcon className="w-3 h-3" /> CÓDEX INFINITO
             </p>
             <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
@@ -103,16 +103,16 @@ export default function Lore() {
               style={{ animationDelay: `${(i % 6) * 80}ms` }}
               data-testid={`lore-${f.id}`}
             >
-              <div className="absolute top-0 left-0 w-1 h-full" style={{ background: i % 3 === 0 ? "#D11124" : i % 3 === 1 ? "#F5A623" : "#F4F0EB" }} />
+              <div className="absolute top-0 left-0 w-1 h-full" style={{ background: i % 3 === 0 ? "#E31230" : i % 3 === 1 ? "#F5A623" : "#F4F0EB" }} />
               <div className="flex items-start justify-between gap-4 mb-3 pl-2">
                 <div>
                   <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ {f.kind} // {f.id}</p>
                   <h3 className="font-display text-xl sm:text-2xl font-black uppercase tracking-tight text-[#F4F0EB] mt-1">{f.subject}</h3>
                   <p className="text-[0.65rem] tracking-[0.2em] text-[#8A8A8A] uppercase">{f.place} // {f.era}</p>
                 </div>
-                <BookOpen className="w-4 h-4 text-[#D11124] shrink-0" />
+                <BookOpen className="w-4 h-4 text-[#E31230] shrink-0" />
               </div>
-              <p className="text-sm leading-relaxed text-[#F4F0EB]/90 italic border-l-2 border-[#D11124] pl-4 pr-2 py-1 ml-2">
+              <p className="text-sm leading-relaxed text-[#F4F0EB]/90 italic border-l-2 border-[#E31230] pl-4 pr-2 py-1 ml-2">
                 "{f.body}"
               </p>
               <div className="mt-4 flex flex-wrap gap-2 pl-2">
@@ -139,7 +139,7 @@ export default function Lore() {
           </div>
         </div>
 
-        {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="lore-error">{err}</p>}
+        {err && <p className="mt-4 text-xs text-[#E31230]" data-testid="lore-error">{err}</p>}
       </main>
     </div>
   );

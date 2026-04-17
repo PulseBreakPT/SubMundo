@@ -4,7 +4,7 @@ import HUD from "@/components/HUD";
 import { Sword, Shield, Gem, X, Check } from "lucide-react";
 
 const SLOT_META = {
-  weapon: { icon: Sword, name: "ARMA",  color: "#D11124" },
+  weapon: { icon: Sword, name: "ARMA",  color: "#E31230" },
   armor:  { icon: Shield, name: "ARMADURA",   color: "#F4F0EB" },
   relic:  { icon: Gem,    name: "RELÍQUIA",   color: "#F5A623" },
 };
@@ -67,7 +67,7 @@ export default function Armory() {
       <HUD character={character} />
       <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8">
         <div className="mb-6 sm:mb-10 glitch-in">
-          <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">◆ ARSENAL // MANIFESTO DE SALVAGEM</p>
+          <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-2 sm:mb-3">◆ ARSENAL // MANIFESTO DE SALVAGEM</p>
           <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
             Cada nome que tiras
             <br />
@@ -90,7 +90,7 @@ export default function Armory() {
                     <p className="text-[0.55rem] tracking-[0.4em] font-bold" style={{ color: sm.color }}>SLOT {sm.name}</p>
                   </div>
                   {item && (
-                    <button onClick={() => unequip(slot)} disabled={busy} className="text-[#8A8A8A] hover:text-[#D11124]" data-testid={`unequip-${slot}`}>
+                    <button onClick={() => unequip(slot)} disabled={busy} className="text-[#8A8A8A] hover:text-[#E31230]" data-testid={`unequip-${slot}`}>
                       <X className="w-4 h-4" />
                     </button>
                   )}
@@ -150,7 +150,7 @@ export default function Armory() {
           </div>
         </div>
 
-        {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="armory-error">{err}</p>}
+        {err && <p className="mt-4 text-xs text-[#E31230]" data-testid="armory-error">{err}</p>}
       </main>
     </div>
   );

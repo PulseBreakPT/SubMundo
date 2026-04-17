@@ -73,16 +73,16 @@ async def get_current_user(request: Request) -> dict:
     if not token:
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "): token = auth[7:]
-    if not token: raise HTTPException(status_code=401, detail="Not authenticated")
+    if not token: raise HTTPException(status_code=401, detail="Não autenticado")
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access": raise HTTPException(status_code=401, detail="Invalid token type")
+        if payload.get("type") != "access": raise HTTPException(status_code=401, detail="Tipo de token inválido")
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-        if not user: raise HTTPException(status_code=401, detail="User not found")
+        if not user: raise HTTPException(status_code=401, detail="Utilizador não encontrado")
         user["id"] = str(user["_id"]); user.pop("_id", None); user.pop("password_hash", None)
         return user
-    except jwt.ExpiredSignatureError: raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError: raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.ExpiredSignatureError: raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError: raise HTTPException(status_code=401, detail="Token inválido")
 
 
 # ============== MODELS ==============
@@ -121,7 +121,7 @@ class UnequipIn(BaseModel):
 async def register(body: RegisterIn, response: Response):
     email = body.email.lower().strip()
     if await db.users.find_one({"email": email}):
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email já registado")
     doc = {"email": email, "password_hash": hash_password(body.password), "callsign": body.callsign.strip(),
            "role": "player", "created_at": datetime.now(timezone.utc).isoformat()}
     res = await db.users.insert_one(doc)
@@ -138,7 +138,7 @@ async def login(body: LoginIn, request: Request, response: Response):
     if lock and lock.get("locked_until"):
         locked_until = datetime.fromisoformat(lock["locked_until"])
         if locked_until > datetime.now(timezone.utc):
-            raise HTTPException(status_code=429, detail="Too many attempts. Try again later.")
+            raise HTTPException(status_code=429, detail="Demasiadas tentativas. Tenta novamente mais tarde.")
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["password_hash"]):
         attempts = (lock.get("count", 0) if lock else 0) + 1
@@ -146,7 +146,7 @@ async def login(body: LoginIn, request: Request, response: Response):
         if attempts >= FAILED_ATTEMPT_LIMIT:
             update["locked_until"] = (datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)).isoformat()
         await db.login_attempts.update_one({"identifier": key}, {"$set": update}, upsert=True)
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
     await db.login_attempts.delete_one({"identifier": key})
     uid = str(user["_id"])
     set_auth_cookies(response, create_access_token(uid, email), create_refresh_token(uid))
@@ -168,7 +168,7 @@ async def me(user: dict = Depends(get_current_user)):
 # ============== CHARACTER ==============
 def build_character(user_id: str, callsign: str, class_id: str) -> dict:
     cls = get_class(class_id)
-    if not cls: raise HTTPException(status_code=400, detail="Unknown class")
+    if not cls: raise HTTPException(status_code=400, detail="Classe desconhecida")
     return {
         "user_id": user_id, "callsign": callsign, "class_id": class_id,
         "level": 1, "xp": 0, "xp_next": xp_for_level(1),
@@ -238,8 +238,8 @@ def recompute_effective(char: dict) -> dict:
 @api.post("/game/character")
 async def create_character(body: CharacterCreateIn, user: dict = Depends(get_current_user)):
     if await db.characters.find_one({"user_id": user["id"]}):
-        raise HTTPException(status_code=400, detail="Character already exists")
-    char = build_character(user["id"], user.get("callsign", "UNKNOWN"), body.class_id)
+        raise HTTPException(status_code=400, detail="Personagem já existe")
+    char = build_character(user["id"], user.get("callsign", "DESCONHECIDO"), body.class_id)
     char = recompute_effective(char)
     await db.characters.insert_one(dict(char))
     char.pop("_id", None)
@@ -248,14 +248,14 @@ async def create_character(body: CharacterCreateIn, user: dict = Depends(get_cur
 @api.get("/game/character")
 async def get_character(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     char = recompute_effective(char)
     return char
 
 @api.post("/game/character/rest")
 async def rest(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     char = recompute_effective(char)
     char["hp"] = char["max_hp"]; char["energy"] = char["max_energy"]
     await db.characters.update_one({"user_id": user["id"]}, {"$set": {"hp": char["hp"], "energy": char["energy"]}})
@@ -298,15 +298,15 @@ async def meta():
 @api.post("/game/talents/allocate")
 async def allocate_talent(body: TalentAllocateIn, user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     talent = get_talent(body.talent_id)
-    if not talent: raise HTTPException(status_code=400, detail="Unknown talent")
+    if not talent: raise HTTPException(status_code=400, detail="Talento desconhecido")
     owned = char.get("talents_owned", [])
-    if body.talent_id in owned: raise HTTPException(status_code=400, detail="Already unlocked")
+    if body.talent_id in owned: raise HTTPException(status_code=400, detail="Já desbloqueado")
     if talent.get("prereq") and talent["prereq"] not in owned:
-        raise HTTPException(status_code=400, detail=f"Requires prior tier: {talent['prereq']}")
+        raise HTTPException(status_code=400, detail=f"Requer nível anterior: {talent['prereq']}")
     if char.get("talent_points", 0) <= 0:
-        raise HTTPException(status_code=400, detail="No talent points remaining")
+        raise HTTPException(status_code=400, detail="Sem pontos de talento disponíveis")
 
     owned.append(body.talent_id)
     char["talents_owned"] = owned
@@ -326,9 +326,9 @@ async def allocate_talent(body: TalentAllocateIn, user: dict = Depends(get_curre
 @api.post("/game/equipment/equip")
 async def equip(body: EquipIn, user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     eq = next((e for e in char.get("equipment_stash", []) if e["item_id"] == body.item_id), None)
-    if not eq: raise HTTPException(status_code=400, detail="Item not in stash")
+    if not eq: raise HTTPException(status_code=400, detail="Item não está no stash")
     char.setdefault("equipped", {"weapon": None, "armor": None, "relic": None})
     char["equipped"][eq["slot"]] = eq["item_id"]
     char = recompute_effective(char)
@@ -343,10 +343,10 @@ async def equip(body: EquipIn, user: dict = Depends(get_current_user)):
 @api.post("/game/equipment/unequip")
 async def unequip(body: UnequipIn, user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     char.setdefault("equipped", {"weapon": None, "armor": None, "relic": None})
     if body.slot not in char["equipped"]:
-        raise HTTPException(status_code=400, detail="Invalid slot")
+        raise HTTPException(status_code=400, detail="Slot inválido")
     char["equipped"][body.slot] = None
     char = recompute_effective(char)
     await db.characters.update_one({"user_id": user["id"]}, {"$set": {
@@ -377,10 +377,10 @@ async def lore(offset: int = 0, limit: int = 12, user: dict = Depends(get_curren
 async def excavate_lore(user: dict = Depends(get_current_user)):
     """Spend 20 credits to dig up a new lore fragment."""
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     COST = 20
     if char.get("credits", 0) < COST:
-        raise HTTPException(status_code=400, detail="Insufficient credits (20 required)")
+        raise HTTPException(status_code=400, detail="Créditos insuficientes (20 necessários)")
     new_unlocked = char.get("lore_unlocked", 3) + 1
     new_credits = char["credits"] - COST
     await db.characters.update_one({"user_id": user["id"]}, {"$set": {
@@ -454,7 +454,7 @@ def first_alive(enemies: list) -> Optional[int]:
 
 
 def tick_status_on(target: dict, max_hp_key: str = "max_hp") -> list[str]:
-    """Apply status effects for one turn. Returns log lines. Mutates target."""
+    """Aplica os efeitos de estado durante uma ronda. Devolve linhas de log. Muta o alvo."""
     lines = []
     statuses = target.get("statuses", [])
     new_statuses = []
@@ -463,11 +463,11 @@ def tick_status_on(target: dict, max_hp_key: str = "max_hp") -> list[str]:
         if sid == "bleed":
             dmg = max(1, int(target[max_hp_key] * 0.08 * s.get("stacks", 1)))
             target["hp"] = max(0, target["hp"] - dmg)
-            lines.append(f"▸ BLEED → {target.get('name', 'YOU')} loses {dmg}")
+            lines.append(f"▸ HEMORRAGIA → {target.get('name', 'TU')} perde {dmg}")
         elif sid == "burn":
             dmg = max(1, int(target[max_hp_key] * 0.06))
             target["hp"] = max(0, target["hp"] - dmg)
-            lines.append(f"▸ BURN → {target.get('name', 'YOU')} loses {dmg}")
+            lines.append(f"▸ QUEIMADURA → {target.get('name', 'TU')} perde {dmg}")
         s["dur"] -= 1
         if s["dur"] > 0:
             new_statuses.append(s)
@@ -496,14 +496,14 @@ def has_status(target: dict, sid: str) -> bool:
 @api.post("/game/combat/start")
 async def combat_start(body: MissionStartIn, user: dict = Depends(get_current_user)):
     mission = get_mission(body.mission_id)
-    if not mission: raise HTTPException(status_code=404, detail="Mission not found")
+    if not mission: raise HTTPException(status_code=404, detail="Missão não encontrada")
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     char = recompute_effective(char)
     if char["level"] < mission["min_level"]:
-        raise HTTPException(status_code=400, detail=f"Requires level {mission['min_level']}")
+        raise HTTPException(status_code=400, detail=f"Requer nível {mission['min_level']}")
     if char["hp"] <= 0:
-        raise HTTPException(status_code=400, detail="You are down. Rest first.")
+        raise HTTPException(status_code=400, detail="Estás caído. Descansa primeiro.")
 
     enemies_state = []
     for eid in mission["enemies"]:
@@ -519,7 +519,7 @@ async def combat_start(body: MissionStartIn, user: dict = Depends(get_current_us
         "user_id": user["id"], "mission_id": mission["id"],
         "enemies": enemies_state, "player_shield": 0, "player_statuses": [],
         "turn": 1,
-        "log": [f"▸ TRANSMISSION OPEN — {mission['name']}", f"▸ {mission['briefing']}"],
+        "log": [f"▸ TRANSMISSÃO ABERTA — {mission['name']}", f"▸ {mission['briefing']}"],
         "status": "active", "mode": "campaign",
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -534,9 +534,9 @@ async def combat_start(body: MissionStartIn, user: dict = Depends(get_current_us
 @api.post("/game/combat/action")
 async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_user)):
     session = await db.combat_sessions.find_one({"user_id": user["id"], "status": "active"})
-    if not session: raise HTTPException(status_code=400, detail="No active combat")
+    if not session: raise HTTPException(status_code=400, detail="Sem combate ativo")
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char: raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
     char = recompute_effective(char)
     bonus = char["bonus"]
 
@@ -546,14 +546,14 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
     player_statuses = session.get("player_statuses", [])
 
     # === STATUS TICK: PLAYER ===
-    player_proxy = {"hp": char["hp"], "max_hp": char["max_hp"], "name": "YOU", "statuses": player_statuses}
+    player_proxy = {"hp": char["hp"], "max_hp": char["max_hp"], "name": "TU", "statuses": player_statuses}
     log.extend(tick_status_on(player_proxy))
     char["hp"] = player_proxy["hp"]
     player_statuses = player_proxy["statuses"]
 
     if char["hp"] <= 0:
         session["status"] = "defeat"
-        log.append("▸ DEFEAT — bled out to the static")
+        log.append("▸ DERROTA — sangrou-se na estática")
         session["player_statuses"] = player_statuses
         await _persist(user["id"], char, session, log, shield, enemies)
         char.pop("_id", None); char.pop("bonus", None)
@@ -561,7 +561,7 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         return {"session": session, "character": char}
 
     target_idx = first_alive(enemies)
-    if target_idx is None: raise HTTPException(status_code=400, detail="No enemies left")
+    if target_idx is None: raise HTTPException(status_code=400, detail="Sem inimigos restantes")
 
     cls = get_class(char["class_id"])
     player_element = cls["element"]
@@ -585,14 +585,14 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         tag = ""
         if crit: tag += " CRIT"
         if weak: tag += " WEAK"
-        log.append(f"▸ YOU HIT {target['name']} — {dmg}{tag}")
+        log.append(f"▸ ACERTASTE {target['name']} — {dmg}{tag}")
         if status_id:
             add_status(target, status_id, status_dur, stacks=1 + bonus.get("bleed_bonus", 0) if status_id == "bleed" else 1)
-            log.append(f"▸ {target['name']} AFFLICTED // {STATUS[status_id]['name']}")
+            log.append(f"▸ {target['name']} AFLITO // {STATUS[status_id]['name']}")
         if lifesteal:
             heal = max(1, int(dmg * lifesteal / 100))
             char["hp"] = min(char["max_hp"], char["hp"] + heal)
-            log.append(f"▸ LIFE-SIPHON +{heal}")
+            log.append(f"▸ ROUBO-VIDA +{heal}")
         return dmg
 
     if body.action == "attack":
@@ -601,60 +601,60 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
     elif body.action == "defend":
         gained = 20 + char["defense"]
         shield += gained
-        log.append(f"▸ YOU BRACE — +{gained} SHIELD")
+        log.append(f"▸ FIRMASTE-TE — +{gained} ESCUDO")
 
     elif body.action == "skill":
         skill = next((s for s in cls["skills"] if s["id"] == body.skill_id), None)
-        if not skill: raise HTTPException(status_code=400, detail="Unknown skill")
-        if char["energy"] < skill["cost"]: raise HTTPException(status_code=400, detail="Not enough energy")
+        if not skill: raise HTTPException(status_code=400, detail="Perícia desconhecida")
+        if char["energy"] < skill["cost"]: raise HTTPException(status_code=400, detail="Energia insuficiente")
         char["energy"] -= skill["cost"]
         if skill["type"] == "damage":
             deal_dmg(enemies[target_idx], skill["power"], player_element, status_id=skill.get("status"), elem_override=skill["element"])
         elif skill["type"] == "shield":
             gained = skill["power"]
             shield += gained
-            log.append(f"▸ {skill['name']} — +{gained} SHIELD")
+            log.append(f"▸ {skill['name']} — +{gained} ESCUDO")
         elif skill["type"] == "heal":
             heal_amt = int(skill["power"] * (1 + heal_bonus / 100))
             healed = min(heal_amt, char["max_hp"] - char["hp"])
             char["hp"] += healed
-            log.append(f"▸ {skill['name']} — +{healed} HP RESTORED")
+            log.append(f"▸ {skill['name']} — +{healed} VIDA RESTAURADA")
 
     elif body.action == "item":
         inv = char.get("inventory", [])
         entry = next((i for i in inv if i["item_id"] == body.item_id and i["qty"] > 0), None)
-        if not entry: raise HTTPException(status_code=400, detail="Item not available")
+        if not entry: raise HTTPException(status_code=400, detail="Item indisponível")
         item = ITEMS.get(body.item_id)
-        if not item: raise HTTPException(status_code=400, detail="Unknown item")
+        if not item: raise HTTPException(status_code=400, detail="Item desconhecido")
         entry["qty"] -= 1
         if item["type"] == "heal":
             healed = min(item["power"], char["max_hp"] - char["hp"])
             char["hp"] += healed
-            log.append(f"▸ {item['name']} USED — +{healed} HP")
+            log.append(f"▸ {item['name']} USADO — +{healed} VIDA")
         elif item["type"] == "energy":
             restored = min(item["power"], char["max_energy"] - char["energy"])
             char["energy"] += restored
-            log.append(f"▸ {item['name']} USED — +{restored} EN")
+            log.append(f"▸ {item['name']} USADO — +{restored} EN")
         elif item["type"] == "damage":
             dmg, crit, weak = calc_damage_v2(item["power"], char["attack"], enemies[target_idx]["defense"],
                                              "kinetic", enemies[target_idx].get("element", "kinetic"),
                                              crit_bonus, elem_bonus, wound_bonus, wounded,
                                              marked=has_status(enemies[target_idx], "marked"))
             enemies[target_idx]["hp"] = max(0, enemies[target_idx]["hp"] - dmg)
-            log.append(f"▸ {item['name']} DETONATED — {dmg}{' WEAK' if weak else ''}{' CRIT' if crit else ''}")
+            log.append(f"▸ {item['name']} DETONADO — {dmg}{' FRACO' if weak else ''}{' CRIT' if crit else ''}")
         elif item["type"] == "cleanse":
             if player_statuses:
-                log.append(f"▸ {item['name']} USED — statuses purged")
+                log.append(f"▸ {item['name']} USADO — estados purgados")
             player_statuses = []
         char["inventory"] = [i for i in inv if i["qty"] > 0]
     else:
-        raise HTTPException(status_code=400, detail="Unknown action")
+        raise HTTPException(status_code=400, detail="Ação desconhecida")
 
     # Resolve enemy deaths
     for e in enemies:
         if e["alive"] and e["hp"] <= 0:
             e["alive"] = False
-            log.append(f"▸ {e['name']} FALLS")
+            log.append(f"▸ {e['name']} CAI")
 
     victory = all(not e["alive"] for e in enemies)
 
@@ -677,13 +677,13 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         seed = f"{user['id']}:{mission['id']}:{session['turn']}:{random.randint(0,999999)}"
         eq = roll_equipment(drop_tier, seed=seed)
         char.setdefault("equipment_stash", []).append(eq)
-        log.append(f"▸ SALVAGE ACQUIRED // {eq['name']} [T{eq['tier']} {eq['slot'].upper()}]")
+        log.append(f"▸ SALVADO ADQUIRIDO // {eq['name']} [N{eq['tier']} {eq['slot'].upper()}]")
         # Unlock lore fragments
         unlocks = 1 + (2 if first_clear else 0)
         char["lore_unlocked"] = char.get("lore_unlocked", 3) + unlocks
-        log.append(f"▸ LORE UNLOCKED — {unlocks} FRAGMENT{'S' if unlocks != 1 else ''}")
+        log.append(f"▸ LORE DESBLOQUEADO — {unlocks} FRAGMENTO{'S' if unlocks != 1 else ''}")
         apply_level_ups(char)
-        log.append(f"▸ VICTORY — +{total_xp + xp_reward} XP / +{credit_reward} CR")
+        log.append(f"▸ VITÓRIA — +{total_xp + xp_reward} XP / +{credit_reward} CR")
         if mission: log.append(f"▸ {mission['epilogue']}")
     else:
         # === ENEMY TURN ===
@@ -696,11 +696,11 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
             e["statuses"] = proxy["statuses"]
             if e["hp"] <= 0:
                 e["alive"] = False
-                log.append(f"▸ {e['name']} FALLS")
+                log.append(f"▸ {e['name']} CAI")
                 continue
             # shock skip
             if has_status(e, "shock") and random.random() < 0.3:
-                log.append(f"▸ {e['name']} // SHOCKED — skips action")
+                log.append(f"▸ {e['name']} // CHOCADO — salta ação")
                 e["rotation_idx"] = (e.get("rotation_idx", 0) + 1) % len(ENEMIES[e["id"]]["rotation"])
                 continue
             intent = pick_intent(e)
@@ -723,31 +723,31 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
                 if crit: tag += " CRIT"
                 if weak: tag += " WEAK"
                 if absorbed > 0:
-                    log.append(f"▸ {e['name']} // {intent['name']} — {dmg}{tag} (shield {absorbed})")
+                    log.append(f"▸ {e['name']} // {intent['name']} — {dmg}{tag} (escudo {absorbed})")
                 else:
                     log.append(f"▸ {e['name']} // {intent['name']} — {dmg}{tag}")
                 # Reflect
                 if bonus.get("reflect_pct", 0) and dmg > 0:
                     ref = max(1, int(dmg * bonus["reflect_pct"] / 100))
                     e["hp"] = max(0, e["hp"] - ref)
-                    log.append(f"▸ REBUKE → {e['name']} takes {ref}")
+                    log.append(f"▸ REPREENSÃO → {e['name']} recebe {ref}")
                     if e["hp"] <= 0:
                         e["alive"] = False
-                        log.append(f"▸ {e['name']} FALLS")
+                        log.append(f"▸ {e['name']} CAI")
                 # Apply status
                 if intent.get("status") and remaining > 0:
                     pproxy = {"statuses": player_statuses}
                     add_status(pproxy, intent["status"], 3)
                     player_statuses = pproxy["statuses"]
-                    log.append(f"▸ YOU AFFLICTED // {STATUS[intent['status']]['name']}")
+                    log.append(f"▸ FOSTE AFLITO // {STATUS[intent['status']]['name']}")
             elif intent["kind"] == "heal":
                 heal = min(intent["power"], e["max_hp"] - e["hp"])
                 e["hp"] += heal
-                log.append(f"▸ {e['name']} // {intent['name']} — +{heal} HP")
+                log.append(f"▸ {e['name']} // {intent['name']} — +{heal} VIDA")
             elif intent["kind"] == "shield":
                 # enemy temporarily buffs defense — simulate with one-turn flag
                 e["defense"] = min(e["defense"] + intent["power"] // 3, e["defense"] + 10)
-                log.append(f"▸ {e['name']} // {intent['name']} — defense rises")
+                log.append(f"▸ {e['name']} // {intent['name']} — defesa sobe")
 
             e["rotation_idx"] = (e.get("rotation_idx", 0) + 1) % len(ENEMIES[e["id"]]["rotation"])
             if char["hp"] <= 0: break
@@ -755,7 +755,7 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         shield = max(0, int(shield * 0.65))
         if char["hp"] <= 0:
             session["status"] = "defeat"
-            log.append("▸ DEFEAT — you fall into the static")
+            log.append("▸ DERROTA — cais na estática")
 
     # Energy regen (talent)
     if bonus.get("energy_regen", 0) and session["status"] == "active":

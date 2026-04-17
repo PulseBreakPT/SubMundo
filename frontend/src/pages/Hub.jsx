@@ -55,7 +55,7 @@ export default function Hub() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">A CARREGAR CARTA ESTELAR</p></div>;
 
-  const tierColor = (t) => t >= 4 ? "#D11124" : t >= 3 ? "#F5A623" : "#F4F0EB";
+  const tierColor = (t) => t >= 4 ? "#E31230" : t >= 3 ? "#F5A623" : "#F4F0EB";
 
   return (
     <div className="min-h-screen" data-testid="hub-page">
@@ -64,7 +64,7 @@ export default function Hub() {
       <main className="max-w-[1400px] mx-auto px-3 sm:px-8 py-4 sm:py-8 relative">
         <div className="mb-6 sm:mb-10 glitch-in flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
           <div>
-            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#D11124] font-bold mb-2 sm:mb-3">
+            <p className="text-[0.55rem] sm:text-[0.6rem] tracking-[0.4em] sm:tracking-[0.5em] text-[#E31230] font-bold mb-2 sm:mb-3">
               ◆ CARTA ESTELAR // EXÍLIO ATIVO
             </p>
             <h1 className="font-display text-2xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[1]">
@@ -97,11 +97,11 @@ export default function Hub() {
           <Link to="/armory" className="panel p-3 sm:p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-armory">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.35em] sm:tracking-[0.4em] text-[#D11124] font-bold truncate">◆ ARMAS</p>
+                <p className="text-[0.5rem] sm:text-[0.55rem] tracking-[0.35em] sm:tracking-[0.4em] text-[#E31230] font-bold truncate">◆ ARMAS</p>
                 <p className="font-display text-xs sm:text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Arsenal</p>
                 <p className="text-[0.55rem] sm:text-[0.6rem] text-[#8A8A8A] mt-0.5 truncate">{(character.equipment_stash || []).length} ITEM{(character.equipment_stash||[]).length!==1?"S":""}</p>
               </div>
-              <Package2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#D11124] group-hover:scale-110 transition shrink-0" />
+              <Package2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#E31230] group-hover:scale-110 transition shrink-0" />
             </div>
           </Link>
           <Link to="/lore" className="panel p-3 sm:p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-lore">
@@ -172,16 +172,16 @@ export default function Hub() {
                 </h2>
                 <p className="text-[0.6rem] sm:text-xs tracking-[0.2em] text-[#8A8A8A] uppercase mb-5 sm:mb-8 truncate">{selected.location}</p>
 
-                <p className="text-sm leading-relaxed text-[#F4F0EB]/90 border-l-2 border-[#D11124] pl-4 italic">
+                <p className="text-sm leading-relaxed text-[#F4F0EB]/90 border-l-2 border-[#E31230] pl-4 italic">
                   "{selected.briefing}"
                 </p>
 
                 <div className="mt-8">
-                  <p className="text-[0.6rem] tracking-[0.4em] text-[#D11124] font-bold mb-4">◆ HOSTIS DETETADOS</p>
+                  <p className="text-[0.6rem] tracking-[0.4em] text-[#E31230] font-bold mb-4">◆ HOSTIS DETETADOS</p>
                   <div className="flex flex-wrap gap-3">
                     {selected.enemies_detail.map((e) => (
                       <div key={e.id} className="border border-[rgba(209,17,36,0.3)] px-4 py-3 flex items-center gap-3">
-                        <Skull className="w-4 h-4 text-[#D11124]" />
+                        <Skull className="w-4 h-4 text-[#E31230]" />
                         <div>
                           <p className="font-display text-sm font-black uppercase text-[#F4F0EB]">{e.name}</p>
                           <p className="text-[0.6rem] tracking-[0.2em] text-[#8A8A8A]">VIDA {e.hp} // ATQ {e.attack}</p>
@@ -218,7 +218,7 @@ export default function Hub() {
                   </button>
                 </div>
 
-                {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="hub-error">{err}</p>}
+                {err && <p className="mt-4 text-xs text-[#E31230]" data-testid="hub-error">{err}</p>}
               </div>
             </div>
           )}

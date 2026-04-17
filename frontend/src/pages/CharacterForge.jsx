@@ -56,7 +56,7 @@ export default function CharacterForge() {
       <HUD minimal />
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-10 sm:py-16">
         <div className="glitch-in mb-12">
-          <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-4">
+          <p className="text-[0.6rem] tracking-[0.5em] text-[#E31230] font-bold mb-4">
             ◆ PROTOCOLO DE INICIAÇÃO — {user?.callsign?.toUpperCase()}
           </p>
           <h1 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tighter text-[#F4F0EB] leading-[0.95]">
@@ -129,7 +129,7 @@ export default function CharacterForge() {
               {/* Stats */}
               <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { icon: Heart, label: "VIDA", val: selected.base_hp, color: "#D11124" },
+                  { icon: Heart, label: "VIDA", val: selected.base_hp, color: "#E31230" },
                   { icon: Zap, label: "CARGA", val: selected.base_energy, color: "#F5A623" },
                   { icon: Sword, label: "GOLPE", val: selected.base_attack, color: "#F4F0EB" },
                   { icon: Shield, label: "GUARDA", val: selected.base_defense, color: "#8A8A8A" },
@@ -159,7 +159,7 @@ export default function CharacterForge() {
               </div>
 
               {err && (
-                <p className="mt-6 text-xs text-[#D11124]" data-testid="forge-error">{err}</p>
+                <p className="mt-6 text-xs text-[#E31230]" data-testid="forge-error">{err}</p>
               )}
 
               <div className="mt-10 flex justify-end">

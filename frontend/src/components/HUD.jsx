@@ -39,10 +39,10 @@ export default function HUD({ character, minimal = false }) {
     >
       <div className="max-w-[1400px] mx-auto px-3 sm:px-8 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-6">
         <Link to="/hub" className="flex items-center gap-2 sm:gap-3 group shrink-0" data-testid="hud-logo">
-          <span className="text-[#D11124] text-xl sm:text-2xl font-black">◈</span>
+          <span className="text-[#E31230] text-xl sm:text-2xl font-black">◈</span>
           <div className="min-w-0">
             <p className="font-display text-[0.65rem] sm:text-base font-black tracking-[0.18em] sm:tracking-[0.2em] text-[#F4F0EB] group-hover:text-[#F5A623] transition-colors">
-              AETHER<span className="text-[#D11124]">//</span>EXILE
+              AETHER<span className="text-[#E31230]">//</span>EXILE
             </p>
             <p className="hidden sm:block text-[0.55rem] tracking-[0.3em] text-[#8A8A8A] uppercase">
               Protocolo de Exílio v7.13
@@ -54,7 +54,7 @@ export default function HUD({ character, minimal = false }) {
           <div className="hidden md:flex flex-1 items-center gap-8">
             <div className="flex-1 max-w-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[0.55rem] tracking-[0.25em] text-[#D11124] font-bold">VIDA</span>
+                <span className="text-[0.55rem] tracking-[0.25em] text-[#E31230] font-bold">VIDA</span>
                 <span className="text-xs font-mono text-[#F4F0EB]" data-testid="hud-hp-text">
                   {character.hp}/{character.max_hp}
                 </span>
@@ -102,13 +102,13 @@ export default function HUD({ character, minimal = false }) {
           {!minimal && (
             <>
               {navItem("/hub", Map, "nav-hub", "Hub")}
-              {navItem("/talents", Star, "nav-talents", "Talents",
+              {navItem("/talents", Star, "nav-talents", "Talentos",
                 character?.talent_points > 0
                   ? <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
                   : null)}
-              {navItem("/armory", Package2, "nav-armory", "Armory")}
+              {navItem("/armory", Package2, "nav-armory", "Armaria")}
               {navItem("/lore", BookOpen, "nav-lore", "Lore")}
-              {navItem("/codex", User2, "nav-codex", "Codex")}
+              {navItem("/codex", User2, "nav-codex", "Códex")}
             </>
           )}
           <div className="hidden sm:block text-right px-3 border-l border-[rgba(244,240,235,0.1)] ml-2">
@@ -117,7 +117,7 @@ export default function HUD({ character, minimal = false }) {
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 hover:bg-[rgba(209,17,36,0.15)] text-[#8A8A8A] hover:text-[#D11124] transition-colors"
+            className="p-2 hover:bg-[rgba(209,17,36,0.15)] text-[#8A8A8A] hover:text-[#E31230] transition-colors"
             data-testid="logout-btn"
             title="Desconectar"
           >
