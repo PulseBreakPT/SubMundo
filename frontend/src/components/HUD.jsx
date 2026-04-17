@@ -1,10 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LogOut, Swords, User2, Map, Home, Star, Package2, BookOpen } from "lucide-react";
 
 export default function HUD({ character, minimal = false }) {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+  const loc = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -14,6 +15,22 @@ export default function HUD({ character, minimal = false }) {
   const hpPct = character ? Math.max(0, (character.hp / character.max_hp) * 100) : 0;
   const enPct = character ? Math.max(0, (character.energy / character.max_energy) * 100) : 0;
   const xpPct = character ? Math.max(0, (character.xp / character.xp_next) * 100) : 0;
+
+  const navItem = (to, Icon, testId, title, badge) => {
+    const active = loc.pathname.startsWith(to);
+    return (
+      <Link
+        to={to}
+        className={`relative p-2 transition-colors ${active ? "bg-[rgba(245,166,35,0.12)] text-[#F5A623]" : "text-[#8A8A8A] hover:bg-[rgba(245,166,35,0.08)] hover:text-[#F5A623]"}`}
+        data-testid={testId}
+        title={title}
+      >
+        <Icon className="w-4 h-4" />
+        {active && <span className="absolute left-1/2 -translate-x-1/2 bottom-0 w-6 h-[2px] bg-[#F5A623]" />}
+        {badge}
+      </Link>
+    );
+  };
 
   return (
     <header
@@ -69,11 +86,11 @@ export default function HUD({ character, minimal = false }) {
               <p className="font-display text-2xl font-black text-[#F5A623]" data-testid="hud-level">{character.level}</p>
             </div>
             <div className="w-20">
-              <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A] mb-1">XP</p>
-              <div className="bar-track !h-[8px]">
-                <div className="bar-fill-xp" style={{ width: `${xpPct}%` }} />
+                <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A] mb-1">XP</p>
+                <div className="bar-track-xp">
+                  <div className="bar-fill-xp" style={{ width: `${xpPct}%` }} />
+                </div>
               </div>
-            </div>
             <div className="text-right">
               <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">CR</p>
               <p className="font-mono text-sm font-bold text-[#F4F0EB]" data-testid="hud-credits">{character.credits || 0}</p>
@@ -84,24 +101,14 @@ export default function HUD({ character, minimal = false }) {
         <nav className="flex items-center gap-1">
           {!minimal && (
             <>
-              <Link to="/hub" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-hub" title="Hub">
-                <Map className="w-4 h-4" />
-              </Link>
-              <Link to="/talents" className="relative p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-talents" title="Talents">
-                <Star className="w-4 h-4" />
-                {character?.talent_points > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
-                )}
-              </Link>
-              <Link to="/armory" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-armory" title="Armory">
-                <Package2 className="w-4 h-4" />
-              </Link>
-              <Link to="/lore" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-lore" title="Lore">
-                <BookOpen className="w-4 h-4" />
-              </Link>
-              <Link to="/codex" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-codex" title="Codex">
-                <User2 className="w-4 h-4" />
-              </Link>
+              {navItem("/hub", Map, "nav-hub", "Hub")}
+              {navItem("/talents", Star, "nav-talents", "Talents",
+                character?.talent_points > 0
+                  ? <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
+                  : null)}
+              {navItem("/armory", Package2, "nav-armory", "Armory")}
+              {navItem("/lore", BookOpen, "nav-lore", "Lore")}
+              {navItem("/codex", User2, "nav-codex", "Codex")}
             </>
           )}
           <div className="hidden sm:block text-right px-3 border-l border-[rgba(244,240,235,0.1)] ml-2">

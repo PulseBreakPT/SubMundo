@@ -74,7 +74,7 @@ export default function Codex() {
                   <span className="text-[0.55rem] tracking-[0.3em] text-[#F4F0EB] font-bold">XP</span>
                   <span className="font-mono text-[#F4F0EB]">{character.xp}/{character.xp_next}</span>
                 </div>
-                <div className="bar-track !h-[10px]"><div className="bar-fill-xp" style={{ width: `${xpPct}%` }} /></div>
+                <div className="bar-track-xp"><div className="bar-fill-xp" style={{ width: `${xpPct}%` }} /></div>
               </div>
             </div>
 

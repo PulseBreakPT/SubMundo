@@ -102,7 +102,12 @@ export default function Armory() {
                     <div className="mt-4 flex flex-wrap gap-3">{renderStats(item.stats)}</div>
                   </>
                 ) : (
-                  <p className="text-[0.7rem] text-[#8A8A8A] italic">— empty socket —</p>
+                  <div className="py-4 relative" style={{
+                    backgroundImage: "repeating-linear-gradient(45deg, rgba(244,240,235,0.03) 0, rgba(244,240,235,0.03) 8px, transparent 8px, transparent 16px)"
+                  }}>
+                    <p className="font-display text-sm font-black uppercase tracking-tight text-[#8A8A8A] italic">— Empty Socket —</p>
+                    <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]/60 mt-2 uppercase">Equip from stash below</p>
+                  </div>
                 )}
               </div>
             );

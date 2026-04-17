@@ -397,6 +397,49 @@ export default function Combat() {
               )}
 
               {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="combat-error">{err}</p>}
+
+              {/* Tactical readout — fills empty space below commands */}
+              {status === "active" && activeEnemy && (
+                <div className="mt-6 pt-5 border-t border-[rgba(244,240,235,0.08)]" data-testid="tactical-readout">
+                  <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-3">◆ TACTICAL READOUT</p>
+                  <dl className="space-y-2 text-[0.65rem] font-mono">
+                    <div className="flex justify-between items-center">
+                      <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Target</dt>
+                      <dd className="text-[#F4F0EB]">{activeEnemy.name}</dd>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Element</dt>
+                      <dd style={{ color: ELEMENT_COLOR[activeEnemy.element] }}>
+                        {activeEnemy.element?.toUpperCase()}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Your Affinity</dt>
+                      <dd
+                        className={(WEAKNESS_MAP[classData.element] || []).includes(activeEnemy.element) ? "text-[#F5A623] font-bold" : "text-[#F4F0EB]"}
+                      >
+                        {(WEAKNESS_MAP[classData.element] || []).includes(activeEnemy.element) ? "◈ WEAK → +30%" : "◇ NEUTRAL"}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Enemy Weak vs</dt>
+                      <dd style={{ color: ELEMENT_COLOR[Object.keys(WEAKNESS_MAP).find(k => (WEAKNESS_MAP[k] || []).includes(activeEnemy.element)) || "kinetic"] }}>
+                        {Object.keys(WEAKNESS_MAP).find(k => (WEAKNESS_MAP[k] || []).includes(activeEnemy.element))?.toUpperCase() || "—"}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-[rgba(244,240,235,0.05)]">
+                      <dt className="text-[#8A8A8A] tracking-[0.2em] uppercase">Turn</dt>
+                      <dd className="text-[#F5A623] font-bold">{String(session.turn).padStart(2, "0")}</dd>
+                    </div>
+                    {character.hp <= character.max_hp * 0.4 && (
+                      <div className="mt-3 p-2 border border-[#D11124]/50 bg-[rgba(209,17,36,0.08)]">
+                        <p className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">◆ WARNING — LOW HP</p>
+                        <p className="text-[0.65rem] text-[#8A8A8A] mt-1">Consider ITEM or HEAL skill.</p>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+              )}
             </div>
           </div>
         </main>

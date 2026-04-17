@@ -1,9 +1,28 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Zap, Swords, Crosshair } from "lucide-react";
 
 const HERO_BG = "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/db91c3fc26d526268a90cb6d9562063f0f0163a107c5a462c66d4840eca5874e.png";
 
+const TICKERS = [
+  "AMBER LINE signal detected over KARNAK-7. Do not respond.",
+  "THE UNMADE has gained another name. It is not yours. Yet.",
+  "A contract arrived this morning. It was signed by you. Dated yesterday.",
+  "THE RED WINTER returns in 47 days. Stock caches accordingly.",
+  "NINE-WOUNDS has been spotted at the Lantern Ward. No body recovered.",
+  "The galaxy is not dying. It is being written over.",
+  "GOLD-LINE interference across orbital belts. Tinted optics advised.",
+  "THE NAMELESS CURATE is accepting confessions. Nobody is returning.",
+  "Directive 44-C: any exile who hears their own name in dreams must report.",
+  "Arena wave record broken again. You were not even there.",
+];
+
 export default function Landing() {
+  const [tickerIdx, setTickerIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTickerIdx((i) => (i + 1) % TICKERS.length), 4500);
+    return () => clearInterval(t);
+  }, []);
   return (
     <div className="min-h-screen relative overflow-hidden" data-testid="landing-page">
       {/* Background */}
@@ -17,6 +36,16 @@ export default function Landing() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-[#050505]/80 to-[#050505]" />
       <div className="absolute inset-0 scanlines" />
+
+      {/* Ticker bar */}
+      <div className="relative z-20 border-b border-[rgba(209,17,36,0.25)] bg-[rgba(5,5,5,0.6)] backdrop-blur-sm" data-testid="landing-ticker">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-12 py-2 flex items-center gap-3 overflow-hidden">
+          <span className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold shrink-0 flicker">◆ LIVE FEED</span>
+          <span className="text-[0.6rem] sm:text-xs tracking-[0.1em] text-[#F4F0EB]/85 font-mono truncate" key={tickerIdx}>
+            ▸ {TICKERS[tickerIdx]}
+          </span>
+        </div>
+      </div>
 
       {/* Top nav */}
       <nav className="relative z-10 px-6 sm:px-12 py-6 flex items-center justify-between">
