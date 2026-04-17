@@ -1,0 +1,92 @@
+{
+  "project_name": "Futuristic RPG - Occult Cyber-Brutalism",
+  "theme": "dark",
+  "archetype": "Electric & Neon meets Swiss High-Contrast (Occult Cyber-Brutalism)",
+  "colors": {
+    "background": "#050505",
+    "surface": "#0A0A0A",
+    "surface_glass": "rgba(10, 10, 10, 0.75)",
+    "primary": "#D11124",
+    "primary_hover": "#A80D1D",
+    "secondary": "#F5A623",
+    "secondary_hover": "#D98E1C",
+    "text_primary": "#F4F0EB",
+    "text_secondary": "#8A8A8A",
+    "border": "rgba(209, 17, 36, 0.3)",
+    "border_highlight": "rgba(245, 166, 35, 0.6)",
+    "gradient_health": "linear-gradient(90deg, #D11124 0%, #7A0A15 100%)",
+    "gradient_energy": "linear-gradient(90deg, #F5A623 0%, #B87A14 100%)"
+  },
+  "typography": {
+    "heading_font": "Unbounded",
+    "body_font": "JetBrains Mono",
+    "mono_font": "JetBrains Mono",
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl tracking-tighter uppercase font-black text-[#F4F0EB]",
+      "h2": "text-3xl sm:text-4xl tracking-tight uppercase font-bold text-[#F4F0EB]",
+      "h3": "text-xl sm:text-2xl tracking-tight uppercase font-medium text-[#F5A623]",
+      "body": "text-sm sm:text-base leading-relaxed text-[#8A8A8A] font-mono",
+      "label": "text-xs tracking-[0.2em] uppercase text-[#D11124] font-bold",
+      "stats": "text-lg font-black text-[#F5A623] font-mono"
+    }
+  },
+  "spacing_and_layout": {
+    "global": "Generous spacing. Use p-6, p-8, p-12. Avoid cramped UI.",
+    "bento_grid": "Grid layout using wide gaps (gap-8) and asymmetrical column spanning. Avoid perfect symmetry to create tension.",
+    "container_padding": "Generous padding inside bordered containers (p-6 to p-8) to avoid text collision with borders.",
+    "hud_style": "Use absolute positioning for decorative corner brackets and terminal-like indicators. Clip paths for slanted container edges where appropriate.",
+    "corners": "Strictly sharp corners. Use 'rounded-none' for all elements to enforce brutalism."
+  },
+  "surfaces_and_borders": {
+    "cards": "Flat solid #0A0A0A backgrounds with 1px #D11124/30 borders. No soft shadows. Use inner glow or drop-shadows with sharp offsets if needed.",
+    "glassmorphism": "Used only for HUD overlays: backdrop-blur-xl bg-[#050505]/80 with a 1px border of red/20 or amber/20.",
+    "retro_futurism": "Terminal warfare look: Deep black backgrounds with neon amber or red borders, scanline background patterns, and subtle text shadows for a glowing effect.",
+    "buttons": "Brutalist buttons: sharp edges, bright blood-red or amber backgrounds for primary actions, high contrast #F4F0EB text. Hover effect: sharp transform offset (-translate-y-1, translate-x-1) with a solid shadow."
+  },
+  "animations": {
+    "hover_states": "Hard transitions, no soft fading. Instant text color change and border color shifts.",
+    "entrance": "Staggered 'glitch-in' or opacity/transform sweeps for panels opening.",
+    "active": "Subtle pulsing glow (opacity changes) for active HP/Energy bars to mimic life signs."
+  },
+  "components": {
+    "buttons": "Use HTML/Tailwind buttons with 'rounded-none', 1px borders, uppercase mono text. Include geometric decorators (e.g., small squares or slash lines in the button).",
+    "inputs": "Shadcn heavily customized: transparent background, bottom border only or sharp 1px full border, #F5A623 focus ring.",
+    "panels": "Data screens (inventory, stats) use strict 'Control Room' grids with dense mono-spaced data tables.",
+    "bars": "HP/Energy bars use bold gradient fills with dark #050505 track backgrounds and segmented vertical overlay lines to look like mechanical gauges.",
+    "dialogs": "Story panels should look like secure encrypted transmissions. Use typing effects for text reveal."
+  },
+  "media": {
+    "hero_bg": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/db91c3fc26d526268a90cb6d9562063f0f0163a107c5a462c66d4840eca5874e.png",
+      "description": "Abstract background texture blending deep black void with glowing amber gold and blood red circuitry patterns, glitch art style."
+    },
+    "combat_bg": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/b124b26f41f06a69f7b3cf45a8b09de14ad44e1504627a8f1cb7e229483be2ec.png",
+      "description": "Turn-based combat arena background, desolate futuristic wasteland under a dying red sun."
+    },
+    "world_map": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/ca4cf90dd20cc4c5be9bbcc335e43ab34440f29e65983082fb4f70b15bf75521.png",
+      "description": "Dark sci-fi planetary map HUD background, deep space black with glowing gold and red cartography lines."
+    },
+    "character_portrait": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/d472f2aaa840feac5bcff2ebb9ccea36e5e3c10c8a26b0f094f7ccce51d5c158.png",
+      "description": "Cinematic 3D render of a futuristic cybernetic character in a dark dystopian space station."
+    },
+    "ruins_reference": {
+      "url": "https://images.unsplash.com/photo-1774278509384-87c3a3dcfd1a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwxfHxwb3N0JTIwYXBvY2FseXB0aWMlMjB3YXN0ZWxhbmQlMjByZWQlMjBza3l8ZW58MHx8fHwxNzc2NDI1NzU2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Dramatic sunset with fiery red clouds over trees, serving as atmospheric lighting reference."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Build a custom Layout container using strict dark theme (bg-[#050505]). Do NOT use standard light mode elements anywhere.",
+    "Implement the following screens: 1) Login/Register HUD, 2) Character Creation/Selection, 3) World Map / Mission Hub, 4) Turn-based Combat Arena, 5) Stats & Inventory Panels.",
+    "For all UI elements, enforce sharp geometry. Use 'rounded-none'. Avoid soft shadows; use solid block shadows or CSS glows (drop-shadow).",
+    "Integrate 'glitch' or scanline CSS effects on header backgrounds or critical alert states to emphasize the cyberpunk/post-apocalyptic theme.",
+    "All text content is pre-written (no AI narrative needed), but style story panels like secure military or occult transmissions.",
+    "In the Combat Arena, use 'combat_bg' as a full-screen background with a vignette or dark overlay to ensure UI legibility. Position action buttons (Attack, Skill, Defend, Item) in an asymmetric, dense control-room layout.",
+    "Ensure ALL interactive elements and key information displays include descriptive `data-testid` attributes (e.g., `data-testid='login-button'`, `data-testid='health-bar'`).",
+    "Use 'JetBrains Mono' for all numeric values, stats, action logs, and small labels. Use 'Unbounded' for major screen titles and critical alerts.",
+    "Add 'lucide-react' for HUD icons, keeping them sharp and monochromatic (white, red, or amber).",
+    "Install Google Fonts in index.html or global CSS: @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap');"
+  ]
+}
