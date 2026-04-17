@@ -1,0 +1,146 @@
+import { useEffect, useState, useRef, useCallback } from "react";
+import { api, formatApiError } from "@/lib/api";
+import HUD from "@/components/HUD";
+import { BookOpen, Pickaxe, Infinity as InfinityIcon } from "lucide-react";
+
+const TAG_COLOR = {
+  exile: "#D11124", collapse: "#F5A623", rust: "#A80D1D", amber: "#F5A623",
+  "zero-line": "#F4F0EB", directorate: "#F4F0EB", witch: "#F5A623",
+  prince: "#D11124", static: "#F4F0EB", naming: "#D11124",
+};
+
+export default function Lore() {
+  const [character, setCharacter] = useState(null);
+  const [fragments, setFragments] = useState([]);
+  const [offset, setOffset] = useState(0);
+  const [unlocked, setUnlocked] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [digging, setDigging] = useState(false);
+  const [err, setErr] = useState("");
+  const sentinelRef = useRef(null);
+
+  const loadPage = useCallback(async (from = 0) => {
+    if (loading) return;
+    setLoading(true); setErr("");
+    try {
+      const { data } = await api.get(`/game/lore?offset=${from}&limit=6`);
+      setFragments((prev) => from === 0 ? data.items : [...prev, ...data.items]);
+      setOffset(from + data.items.length);
+      setUnlocked(data.unlocked);
+      setHasMore(data.has_more);
+    } catch (e) { setErr(formatApiError(e.response?.data?.detail)); }
+    finally { setLoading(false); }
+  }, [loading]);
+
+  const loadChar = async () => {
+    try {
+      const { data } = await api.get("/game/character");
+      setCharacter(data);
+    } catch (_) {}
+  };
+
+  useEffect(() => { loadChar(); loadPage(0); }, []);
+
+  // Infinite scroll
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !loading) loadPage(offset);
+    }, { threshold: 0.1 });
+    obs.observe(sentinelRef.current);
+    return () => obs.disconnect();
+  }, [offset, hasMore, loading, loadPage]);
+
+  const excavate = async () => {
+    setDigging(true); setErr("");
+    try {
+      const { data } = await api.post("/game/lore/excavate");
+      setFragments((prev) => [...prev, data.fragment]);
+      setUnlocked(data.unlocked);
+      setHasMore(false);
+      // refresh character for credits
+      loadChar();
+    } catch (e) { setErr(formatApiError(e.response?.data?.detail)); }
+    finally { setDigging(false); }
+  };
+
+  return (
+    <div className="min-h-screen" data-testid="lore-page">
+      <HUD character={character} />
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-8 py-8">
+        <div className="mb-10 glitch-in flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <p className="text-[0.6rem] tracking-[0.5em] text-[#D11124] font-bold mb-3 flex items-center gap-2">
+              <InfinityIcon className="w-3 h-3" /> INFINITE CODEX — FRAGMENTS NEVER RUN OUT
+            </p>
+            <h1 className="font-display text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#F4F0EB]">
+              Every name leaves
+              <br />
+              <span className="grad-text-amber">a paper trail.</span>
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm text-[#8A8A8A] leading-relaxed">
+              The galaxy writes faster than anyone can read. Each fragment is a confession, a transmission, a prophecy — excavated from the static of {unlocked.toLocaleString()} catalogued entries.
+            </p>
+          </div>
+
+          <div className="panel p-5 hud-corners min-w-[280px]">
+            <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ EXCAVATION</p>
+            <p className="text-[0.65rem] text-[#8A8A8A] mt-1 mb-3">Spend 20 CR. Unearth one new fragment. Forever.</p>
+            <button onClick={excavate} disabled={digging || !character || (character?.credits || 0) < 20} className="btn-brutal w-full" data-testid="excavate-btn">
+              <Pickaxe className="w-4 h-4" />
+              {digging ? "DIGGING…" : "EXCAVATE (20 CR)"}
+            </button>
+          </div>
+        </div>
+
+        {/* Feed */}
+        <div className="space-y-4">
+          {fragments.map((f, i) => (
+            <article
+              key={f.id}
+              className={`panel p-6 hud-corners glitch-in relative overflow-hidden`}
+              style={{ animationDelay: `${(i % 6) * 80}ms` }}
+              data-testid={`lore-${f.id}`}
+            >
+              <div className="absolute top-0 left-0 w-1 h-full" style={{ background: i % 3 === 0 ? "#D11124" : i % 3 === 1 ? "#F5A623" : "#F4F0EB" }} />
+              <div className="flex items-start justify-between gap-4 mb-3 pl-2">
+                <div>
+                  <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ {f.kind} // {f.id}</p>
+                  <h3 className="font-display text-xl sm:text-2xl font-black uppercase tracking-tight text-[#F4F0EB] mt-1">{f.subject}</h3>
+                  <p className="text-[0.65rem] tracking-[0.2em] text-[#8A8A8A] uppercase">{f.place} // {f.era}</p>
+                </div>
+                <BookOpen className="w-4 h-4 text-[#D11124] shrink-0" />
+              </div>
+              <p className="text-sm leading-relaxed text-[#F4F0EB]/90 italic border-l-2 border-[#D11124] pl-4 pr-2 py-1 ml-2">
+                "{f.body}"
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 pl-2">
+                {f.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="text-[0.55rem] tracking-[0.3em] font-bold px-2 py-1 border uppercase"
+                    style={{ color: TAG_COLOR[t] || "#8A8A8A", borderColor: (TAG_COLOR[t] || "#8A8A8A") + "55" }}
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+
+          <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+            {loading && <p className="text-[0.6rem] tracking-[0.3em] text-[#F5A623] flicker">EXCAVATING DEEPER…</p>}
+            {!hasMore && !loading && (
+              <p className="text-[0.6rem] tracking-[0.3em] text-[#8A8A8A] text-center">
+                ◆ END OF KNOWN STATIC — EXCAVATE TO UNEARTH MORE
+              </p>
+            )}
+          </div>
+        </div>
+
+        {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="lore-error">{err}</p>}
+      </main>
+    </div>
+  );
+}

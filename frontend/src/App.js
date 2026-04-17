@@ -8,6 +8,9 @@ import CharacterForge from "@/pages/CharacterForge";
 import Hub from "@/pages/Hub";
 import Combat from "@/pages/Combat";
 import Codex from "@/pages/Codex";
+import Talents from "@/pages/Talents";
+import Armory from "@/pages/Armory";
+import Lore from "@/pages/Lore";
 
 function LandingOrHub() {
   const { user } = useAuth();
@@ -34,6 +37,9 @@ function App() {
             <Route path="/hub" element={<ProtectedRoute requireCharacter><Hub /></ProtectedRoute>} />
             <Route path="/combat/:missionId" element={<ProtectedRoute requireCharacter><Combat /></ProtectedRoute>} />
             <Route path="/codex" element={<ProtectedRoute requireCharacter><Codex /></ProtectedRoute>} />
+            <Route path="/talents" element={<ProtectedRoute requireCharacter><Talents /></ProtectedRoute>} />
+            <Route path="/armory" element={<ProtectedRoute requireCharacter><Armory /></ProtectedRoute>} />
+            <Route path="/lore" element={<ProtectedRoute requireCharacter><Lore /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

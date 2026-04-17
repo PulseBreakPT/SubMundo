@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, Swords, User2, Map, Home } from "lucide-react";
+import { LogOut, Swords, User2, Map, Home, Star, Package2, BookOpen } from "lucide-react";
 
 export default function HUD({ character, minimal = false }) {
   const { user, logout } = useAuth();
@@ -86,6 +86,18 @@ export default function HUD({ character, minimal = false }) {
             <>
               <Link to="/hub" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-hub" title="Hub">
                 <Map className="w-4 h-4" />
+              </Link>
+              <Link to="/talents" className="relative p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-talents" title="Talents">
+                <Star className="w-4 h-4" />
+                {character?.talent_points > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
+                )}
+              </Link>
+              <Link to="/armory" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-armory" title="Armory">
+                <Package2 className="w-4 h-4" />
+              </Link>
+              <Link to="/lore" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-lore" title="Lore">
+                <BookOpen className="w-4 h-4" />
               </Link>
               <Link to="/codex" className="p-2 hover:bg-[rgba(245,166,35,0.1)] text-[#8A8A8A] hover:text-[#F5A623] transition-colors" data-testid="nav-codex" title="Codex">
                 <User2 className="w-4 h-4" />

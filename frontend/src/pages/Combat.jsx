@@ -2,9 +2,39 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, formatApiError } from "@/lib/api";
 import HUD from "@/components/HUD";
-import { Sword, Shield, Sparkles, Package, Trophy, Skull, ArrowRight, X } from "lucide-react";
+import { Sword, Shield, Sparkles, Package, Trophy, Skull, ArrowRight, X, Eye, Zap } from "lucide-react";
 
 const COMBAT_BG = "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/b124b26f41f06a69f7b3cf45a8b09de14ad44e1504627a8f1cb7e229483be2ec.png";
+
+const STATUS_VIZ = {
+  bleed:  { sigil: "✚", color: "#D11124", label: "BLEED" },
+  burn:   { sigil: "✸", color: "#F5A623", label: "BURN" },
+  shock:  { sigil: "⟁", color: "#F4F0EB", label: "SHOCK" },
+  marked: { sigil: "⊕", color: "#D11124", label: "MARKED" },
+  frozen: { sigil: "❄", color: "#F4F0EB", label: "FROZEN" },
+};
+
+const ELEMENT_COLOR = {
+  kinetic: "#F4F0EB", void: "#D11124", psi: "#F5A623", amber: "#F5A623", rust: "#A80D1D",
+};
+const WEAKNESS_MAP = {
+  kinetic: ["rust"], void: ["amber"], psi: ["kinetic"], amber: ["void"], rust: ["psi"],
+};
+const StatusBadge = ({ s }) => {
+  const v = STATUS_VIZ[s.id] || { sigil: "●", color: "#8A8A8A", label: s.id.toUpperCase() };
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 border text-[0.55rem] tracking-[0.15em] font-mono font-bold"
+      style={{ color: v.color, borderColor: v.color + "77" }}
+      title={`${v.label} — ${s.dur}t`}
+    >
+      <span>{v.sigil}</span>
+      <span>{v.label}</span>
+      {s.stacks && s.stacks > 1 && <span className="opacity-70">×{s.stacks}</span>}
+      <span className="opacity-70">{s.dur}t</span>
+    </span>
+  );
+};
 
 export default function Combat() {
   const { missionId } = useParams();
@@ -165,6 +195,27 @@ export default function Combat() {
                   <p className="font-display text-lg font-black text-[#F4F0EB]">{character.defense}</p>
                 </div>
               </div>
+
+              {/* Player statuses */}
+              {session.player_statuses?.length > 0 && (
+                <div className="mt-4" data-testid="player-statuses">
+                  <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold mb-2">◆ AFFLICTIONS</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {session.player_statuses.map((s, i) => <StatusBadge key={i} s={s} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* Element affinity */}
+              <div className="mt-4 pt-4 border-t border-[rgba(244,240,235,0.08)]">
+                <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A] font-bold mb-1">AFFINITY</p>
+                <span
+                  className="inline-block px-2 py-1 text-[0.6rem] tracking-[0.2em] font-mono font-bold uppercase border"
+                  style={{ color: ELEMENT_COLOR[classData.element], borderColor: ELEMENT_COLOR[classData.element] + "77" }}
+                >
+                  {classData.element} // STRONG VS {(WEAKNESS_MAP[classData.element] || []).join(", ").toUpperCase() || "—"}
+                </span>
+              </div>
             </div>
 
             {/* CENTER: Enemies + Log */}
@@ -188,15 +239,47 @@ export default function Combat() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-3xl text-[#D11124]">{e.sigil || "⌖"}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-3xl text-[#D11124]">{e.sigil || "⌖"}</span>
+                        {e.element && (
+                          <span
+                            className="px-1.5 py-0.5 text-[0.5rem] tracking-[0.2em] font-mono font-bold uppercase border"
+                            style={{ color: ELEMENT_COLOR[e.element], borderColor: ELEMENT_COLOR[e.element] + "77" }}
+                          >
+                            {e.element}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="bar-track">
                       <div className="bar-fill-hp" style={{ width: e.alive ? `${(e.hp / e.max_hp) * 100}%` : "0%" }} />
                       <div className="bar-segments" />
                     </div>
-                    <p className="mt-1 text-[0.6rem] tracking-[0.25em] text-[#8A8A8A] font-mono text-right" data-testid={`combat-enemy-${i}-hp`}>
-                      {e.hp}/{e.max_hp} {!e.alive && "// NEUTRALIZED"}
-                    </p>
+                    <div className="mt-1 flex items-center justify-between">
+                      <div className="flex flex-wrap gap-1">
+                        {(e.statuses || []).map((s, si) => <StatusBadge key={si} s={s} />)}
+                      </div>
+                      <p className="text-[0.6rem] tracking-[0.25em] text-[#8A8A8A] font-mono" data-testid={`combat-enemy-${i}-hp`}>
+                        {e.hp}/{e.max_hp} {!e.alive && "// NEUTRALIZED"}
+                      </p>
+                    </div>
+                    {/* Intent telegraph */}
+                    {e.alive && e.next_intent && (
+                      <div className="mt-3 pt-3 border-t border-[rgba(209,17,36,0.2)] flex items-start gap-2" data-testid={`combat-enemy-${i}-intent`}>
+                        <Eye className="w-3 h-3 text-[#F5A623] mt-0.5 shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">
+                            NEXT // {e.next_intent.name}
+                          </p>
+                          <p className="text-[0.65rem] text-[#8A8A8A] italic">
+                            {e.next_intent.telegraph}
+                            {e.next_intent.kind === "damage" && (
+                              <span className="ml-1 text-[#D11124] font-mono not-italic">~{e.next_intent.power} {e.next_intent.element?.toUpperCase()}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

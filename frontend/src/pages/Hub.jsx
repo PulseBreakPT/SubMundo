@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api, formatApiError } from "@/lib/api";
 import HUD from "@/components/HUD";
-import { Lock, CheckCircle2, ArrowRight, Skull, Moon } from "lucide-react";
+import { Lock, CheckCircle2, ArrowRight, Skull, Moon, Star, Package2, BookOpen } from "lucide-react";
 
 const WORLD_BG = "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/ca4cf90dd20cc4c5be9bbcc335e43ab34440f29e65983082fb4f70b15bf75521.png";
 
@@ -77,6 +77,43 @@ export default function Hub() {
             <Moon className="w-4 h-4" />
             {resting ? "RESTING…" : "REST & RECOVER"}
           </button>
+        </div>
+
+        {/* Quick-nav system cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+          <Link to="/talents" className="panel p-4 hover:!border-[#F5A623]/60 transition group relative" data-testid="quick-talents">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold">◆ NEURAL</p>
+                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Talent Grid</p>
+                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{character.talent_points || 0} POINT{character.talent_points !== 1 ? "S" : ""} AVAILABLE</p>
+              </div>
+              <Star className="w-5 h-5 text-[#F5A623] group-hover:scale-110 transition" />
+              {character.talent_points > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-[#F5A623] rounded-full pulse-alert" />
+              )}
+            </div>
+          </Link>
+          <Link to="/armory" className="panel p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-armory">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold">◆ SALVAGE</p>
+                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Armory</p>
+                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{(character.equipment_stash || []).length} ITEM{(character.equipment_stash||[]).length!==1?"S":""}</p>
+              </div>
+              <Package2 className="w-5 h-5 text-[#D11124] group-hover:scale-110 transition" />
+            </div>
+          </Link>
+          <Link to="/lore" className="panel p-4 hover:!border-[#F5A623]/60 transition group" data-testid="quick-lore">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[0.55rem] tracking-[0.4em] text-[#F4F0EB] font-bold">◆ INFINITE</p>
+                <p className="font-display text-sm font-black uppercase tracking-tight text-[#F4F0EB] mt-1">Codex / Lore</p>
+                <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{character.lore_unlocked || 3} FRAGMENTS</p>
+              </div>
+              <BookOpen className="w-5 h-5 text-[#F4F0EB] group-hover:scale-110 transition" />
+            </div>
+          </Link>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-6">

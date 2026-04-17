@@ -3,7 +3,6 @@ load_dotenv()
 
 import os
 import logging
-import secrets
 import random
 import bcrypt
 import jwt
@@ -19,10 +18,12 @@ from bson import ObjectId
 
 from game_data import (
     CLASSES, ENEMIES, MISSIONS, ITEMS, STARTER_INVENTORY,
+    ABILITIES, STATUS, WEAKNESS, ELEMENT_COLOR, ELEMENT_SIGIL,
+    TALENTS, get_talent,
+    roll_equipment, generate_lore_fragment,
     xp_for_level, get_class, get_enemy, get_mission
 )
 
-# ============== CONFIG ==============
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ db = client[os.environ['DB_NAME']]
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ["JWT_SECRET"]
-ACCESS_EXPIRE_MIN = 60 * 24  # 1 day for game sessions
+ACCESS_EXPIRE_MIN = 60 * 24
 REFRESH_EXPIRE_DAYS = 30
 FAILED_ATTEMPT_LIMIT = 5
 LOCKOUT_MINUTES = 15
@@ -45,63 +46,43 @@ api = APIRouter(prefix="/api")
 def hash_password(pw: str) -> str:
     return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-
 def verify_password(pw: str, hashed: str) -> bool:
-    try:
-        return bcrypt.checkpw(pw.encode("utf-8"), hashed.encode("utf-8"))
-    except Exception:
-        return False
-
+    try: return bcrypt.checkpw(pw.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception: return False
 
 def create_access_token(user_id: str, email: str) -> str:
-    payload = {
-        "sub": user_id, "email": email, "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRE_MIN),
-    }
+    payload = {"sub": user_id, "email": email, "type": "access",
+               "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRE_MIN)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
 
 def create_refresh_token(user_id: str) -> str:
-    payload = {
-        "sub": user_id, "type": "refresh",
-        "exp": datetime.now(timezone.utc) + timedelta(days=REFRESH_EXPIRE_DAYS),
-    }
+    payload = {"sub": user_id, "type": "refresh",
+               "exp": datetime.now(timezone.utc) + timedelta(days=REFRESH_EXPIRE_DAYS)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
 
 def set_auth_cookies(response: Response, access: str, refresh: str):
     response.set_cookie("access_token", access, httponly=True, secure=True, samesite="none", max_age=ACCESS_EXPIRE_MIN*60, path="/")
     response.set_cookie("refresh_token", refresh, httponly=True, secure=True, samesite="none", max_age=REFRESH_EXPIRE_DAYS*86400, path="/")
 
-
 def clear_auth_cookies(response: Response):
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
-
 
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get("access_token")
     if not token:
         auth = request.headers.get("Authorization", "")
-        if auth.startswith("Bearer "):
-            token = auth[7:]
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        if auth.startswith("Bearer "): token = auth[7:]
+    if not token: raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
+        if payload.get("type") != "access": raise HTTPException(status_code=401, detail="Invalid token type")
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        user["id"] = str(user["_id"])
-        user.pop("_id", None)
-        user.pop("password_hash", None)
+        if not user: raise HTTPException(status_code=401, detail="User not found")
+        user["id"] = str(user["_id"]); user.pop("_id", None); user.pop("password_hash", None)
         return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.ExpiredSignatureError: raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError: raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # ============== MODELS ==============
@@ -110,59 +91,54 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=6)
     callsign: str = Field(min_length=2, max_length=24)
 
-
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
 
-
 class CharacterCreateIn(BaseModel):
     class_id: str
 
-
 class CombatActionIn(BaseModel):
-    action: str  # "attack" | "skill" | "defend" | "item"
+    action: str
     skill_id: Optional[str] = None
     item_id: Optional[str] = None
 
-
 class MissionStartIn(BaseModel):
     mission_id: str
+
+class TalentAllocateIn(BaseModel):
+    talent_id: str
+
+class EquipIn(BaseModel):
+    item_id: str
+
+class UnequipIn(BaseModel):
+    slot: str
 
 
 # ============== AUTH ROUTES ==============
 @api.post("/auth/register")
 async def register(body: RegisterIn, response: Response):
     email = body.email.lower().strip()
-    existing = await db.users.find_one({"email": email})
-    if existing:
+    if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Email already registered")
-    doc = {
-        "email": email,
-        "password_hash": hash_password(body.password),
-        "callsign": body.callsign.strip(),
-        "role": "player",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
+    doc = {"email": email, "password_hash": hash_password(body.password), "callsign": body.callsign.strip(),
+           "role": "player", "created_at": datetime.now(timezone.utc).isoformat()}
     res = await db.users.insert_one(doc)
     uid = str(res.inserted_id)
     set_auth_cookies(response, create_access_token(uid, email), create_refresh_token(uid))
     return {"id": uid, "email": email, "callsign": body.callsign, "role": "player", "has_character": False}
-
 
 @api.post("/auth/login")
 async def login(body: LoginIn, request: Request, response: Response):
     email = body.email.lower().strip()
     ip = request.client.host if request.client else "unknown"
     key = f"{ip}:{email}"
-
-    # brute force check
     lock = await db.login_attempts.find_one({"identifier": key})
     if lock and lock.get("locked_until"):
         locked_until = datetime.fromisoformat(lock["locked_until"])
         if locked_until > datetime.now(timezone.utc):
             raise HTTPException(status_code=429, detail="Too many attempts. Try again later.")
-
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["password_hash"]):
         attempts = (lock.get("count", 0) if lock else 0) + 1
@@ -171,75 +147,120 @@ async def login(body: LoginIn, request: Request, response: Response):
             update["locked_until"] = (datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)).isoformat()
         await db.login_attempts.update_one({"identifier": key}, {"$set": update}, upsert=True)
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
     await db.login_attempts.delete_one({"identifier": key})
     uid = str(user["_id"])
     set_auth_cookies(response, create_access_token(uid, email), create_refresh_token(uid))
     char = await db.characters.find_one({"user_id": uid}, {"_id": 0})
-    return {
-        "id": uid, "email": email, "callsign": user.get("callsign"),
-        "role": user.get("role", "player"), "has_character": char is not None,
-    }
-
+    return {"id": uid, "email": email, "callsign": user.get("callsign"), "role": user.get("role", "player"), "has_character": char is not None}
 
 @api.post("/auth/logout")
 async def logout(response: Response):
     clear_auth_cookies(response)
     return {"ok": True}
 
-
 @api.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    return {
-        "id": user["id"], "email": user["email"], "callsign": user.get("callsign"),
-        "role": user.get("role", "player"), "has_character": char is not None,
-    }
+    return {"id": user["id"], "email": user["email"], "callsign": user.get("callsign"),
+            "role": user.get("role", "player"), "has_character": char is not None}
 
 
-# ============== GAME: CHARACTER ==============
+# ============== CHARACTER ==============
 def build_character(user_id: str, callsign: str, class_id: str) -> dict:
     cls = get_class(class_id)
-    if not cls:
-        raise HTTPException(status_code=400, detail="Unknown class")
+    if not cls: raise HTTPException(status_code=400, detail="Unknown class")
     return {
-        "user_id": user_id,
-        "callsign": callsign,
-        "class_id": class_id,
-        "level": 1,
-        "xp": 0,
-        "xp_next": xp_for_level(1),
+        "user_id": user_id, "callsign": callsign, "class_id": class_id,
+        "level": 1, "xp": 0, "xp_next": xp_for_level(1),
         "credits": 50,
-        "hp": cls["base_hp"],
-        "max_hp": cls["base_hp"],
-        "energy": cls["base_energy"],
-        "max_energy": cls["base_energy"],
-        "attack": cls["base_attack"],
-        "defense": cls["base_defense"],
+        "hp": cls["base_hp"], "max_hp": cls["base_hp"],
+        "energy": cls["base_energy"], "max_energy": cls["base_energy"],
+        "attack": cls["base_attack"], "defense": cls["base_defense"],
         "inventory": list(STARTER_INVENTORY),
         "completed_missions": [],
+        "talent_points": 1,
+        "talents_owned": [],
+        "equipped": {"weapon": None, "armor": None, "relic": None},
+        "equipment_stash": [],
+        "lore_unlocked": 3,  # start with 3 fragments already excavated
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
+def recompute_effective(char: dict) -> dict:
+    """Recompute derived stats from base + talents + equipped gear. Keeps HP/energy ratio."""
+    cls = get_class(char["class_id"])
+    # Base (level scaling already baked into max_hp/max_energy/attack/defense via apply_level_ups)
+    base_max_hp = cls["base_hp"] + (char["level"] - 1) * (20 + cls["base_hp"] // 20)
+    base_max_en = cls["base_energy"] + (char["level"] - 1) * (10 + cls["base_energy"] // 20)
+    base_atk    = cls["base_attack"]  + (char["level"] - 1) * 3
+    base_def    = cls["base_defense"] + (char["level"] - 1) * 2
+
+    bonus = {"max_hp": 0, "max_energy": 0, "attack": 0, "defense": 0,
+             "crit_pct": 0, "reflect_pct": 0, "energy_regen": 0,
+             "element_dmg_pct": 0, "lifesteal_pct": 0, "wounded_dmg_pct": 0,
+             "heal_bonus_pct": 0, "bleed_bonus": 0}
+
+    for tid in char.get("talents_owned", []):
+        t = get_talent(tid)
+        if not t: continue
+        for k, v in t["effect"].items():
+            bonus[k] = bonus.get(k, 0) + v
+
+    equipped = char.get("equipped", {})
+    for slot, item_id in equipped.items():
+        if not item_id: continue
+        eq = next((e for e in char.get("equipment_stash", []) if e["item_id"] == item_id), None)
+        if not eq: continue
+        for k, v in eq.get("stats", {}).items():
+            bonus[k] = bonus.get(k, 0) + v
+
+    old_max_hp = char.get("max_hp", base_max_hp)
+    old_max_en = char.get("max_energy", base_max_en)
+
+    new_max_hp = base_max_hp + bonus["max_hp"]
+    new_max_en = base_max_en + bonus["max_energy"]
+
+    # Preserve HP/energy ratios on recompute
+    hp_ratio = char.get("hp", old_max_hp) / old_max_hp if old_max_hp > 0 else 1
+    en_ratio = char.get("energy", old_max_en) / old_max_en if old_max_en > 0 else 1
+
+    char["max_hp"]     = new_max_hp
+    char["max_energy"] = new_max_en
+    char["hp"]         = max(1, min(new_max_hp, int(new_max_hp * hp_ratio)))
+    char["energy"]     = max(0, min(new_max_en, int(new_max_en * en_ratio)))
+    char["attack"]     = base_atk + bonus["attack"]
+    char["defense"]    = base_def + bonus["defense"]
+    char["bonus"]      = bonus  # exposed for combat math + UI
+    return char
+
+
 @api.post("/game/character")
 async def create_character(body: CharacterCreateIn, user: dict = Depends(get_current_user)):
-    existing = await db.characters.find_one({"user_id": user["id"]})
-    if existing:
+    if await db.characters.find_one({"user_id": user["id"]}):
         raise HTTPException(status_code=400, detail="Character already exists")
     char = build_character(user["id"], user.get("callsign", "UNKNOWN"), body.class_id)
+    char = recompute_effective(char)
     await db.characters.insert_one(dict(char))
     char.pop("_id", None)
     return char
 
-
 @api.get("/game/character")
 async def get_character(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not char:
-        raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    char = recompute_effective(char)
     return char
 
+@api.post("/game/character/rest")
+async def rest(user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]})
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    char = recompute_effective(char)
+    char["hp"] = char["max_hp"]; char["energy"] = char["max_energy"]
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {"hp": char["hp"], "energy": char["energy"]}})
+    char.pop("_id", None); char.pop("bonus", None)
+    return await get_character(user)
 
 @api.post("/game/character/reset")
 async def reset_character(user: dict = Depends(get_current_user)):
@@ -248,26 +269,9 @@ async def reset_character(user: dict = Depends(get_current_user)):
     return {"ok": True}
 
 
-@api.post("/game/character/rest")
-async def rest(user: dict = Depends(get_current_user)):
-    char = await db.characters.find_one({"user_id": user["id"]})
-    if not char:
-        raise HTTPException(status_code=404, detail="No character")
-    await db.characters.update_one(
-        {"user_id": user["id"]},
-        {"$set": {"hp": char["max_hp"], "energy": char["max_energy"]}}
-    )
-    char["hp"] = char["max_hp"]
-    char["energy"] = char["max_energy"]
-    char.pop("_id", None)
-    return char
-
-
-# ============== GAME: STATIC DATA ==============
+# ============== STATIC DATA ==============
 @api.get("/game/classes")
-async def list_classes():
-    return list(CLASSES.values())
-
+async def list_classes(): return list(CLASSES.values())
 
 @api.get("/game/missions")
 async def list_missions(user: dict = Depends(get_current_user)):
@@ -276,46 +280,226 @@ async def list_missions(user: dict = Depends(get_current_user)):
     level = char.get("level", 1) if char else 1
     out = []
     for m in MISSIONS:
-        out.append({
-            **m,
-            "completed": m["id"] in completed,
-            "locked": level < m["min_level"],
-            "enemies_detail": [ENEMIES[e] for e in m["enemies"]],
-        })
+        out.append({**m, "completed": m["id"] in completed, "locked": level < m["min_level"],
+                    "enemies_detail": [ENEMIES[e] for e in m["enemies"]]})
     return out
 
-
 @api.get("/game/items")
-async def list_items():
-    return ITEMS
+async def list_items(): return ITEMS
+
+@api.get("/game/meta")
+async def meta():
+    """Static meta data used across UI: statuses, element colors/sigils, talent tree, weakness matrix."""
+    return {"status": STATUS, "element_color": ELEMENT_COLOR, "element_sigil": ELEMENT_SIGIL,
+            "weakness": WEAKNESS, "talents": TALENTS, "abilities": ABILITIES}
 
 
-# ============== GAME: COMBAT ==============
+# ============== TALENT ENDPOINTS ==============
+@api.post("/game/talents/allocate")
+async def allocate_talent(body: TalentAllocateIn, user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    talent = get_talent(body.talent_id)
+    if not talent: raise HTTPException(status_code=400, detail="Unknown talent")
+    owned = char.get("talents_owned", [])
+    if body.talent_id in owned: raise HTTPException(status_code=400, detail="Already unlocked")
+    if talent.get("prereq") and talent["prereq"] not in owned:
+        raise HTTPException(status_code=400, detail=f"Requires prior tier: {talent['prereq']}")
+    if char.get("talent_points", 0) <= 0:
+        raise HTTPException(status_code=400, detail="No talent points remaining")
+
+    owned.append(body.talent_id)
+    char["talents_owned"] = owned
+    char["talent_points"] = char.get("talent_points", 0) - 1
+    char = recompute_effective(char)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {
+        "talents_owned": char["talents_owned"], "talent_points": char["talent_points"],
+        "max_hp": char["max_hp"], "max_energy": char["max_energy"],
+        "hp": char["hp"], "energy": char["energy"],
+        "attack": char["attack"], "defense": char["defense"],
+    }})
+    char.pop("bonus", None)
+    return char
+
+
+# ============== EQUIPMENT ENDPOINTS ==============
+@api.post("/game/equipment/equip")
+async def equip(body: EquipIn, user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    eq = next((e for e in char.get("equipment_stash", []) if e["item_id"] == body.item_id), None)
+    if not eq: raise HTTPException(status_code=400, detail="Item not in stash")
+    char.setdefault("equipped", {"weapon": None, "armor": None, "relic": None})
+    char["equipped"][eq["slot"]] = eq["item_id"]
+    char = recompute_effective(char)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {
+        "equipped": char["equipped"], "max_hp": char["max_hp"], "max_energy": char["max_energy"],
+        "hp": char["hp"], "energy": char["energy"],
+        "attack": char["attack"], "defense": char["defense"],
+    }})
+    char.pop("bonus", None)
+    return char
+
+@api.post("/game/equipment/unequip")
+async def unequip(body: UnequipIn, user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    char.setdefault("equipped", {"weapon": None, "armor": None, "relic": None})
+    if body.slot not in char["equipped"]:
+        raise HTTPException(status_code=400, detail="Invalid slot")
+    char["equipped"][body.slot] = None
+    char = recompute_effective(char)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {
+        "equipped": char["equipped"], "max_hp": char["max_hp"], "max_energy": char["max_energy"],
+        "hp": char["hp"], "energy": char["energy"],
+        "attack": char["attack"], "defense": char["defense"],
+    }})
+    char.pop("bonus", None)
+    return char
+
+
+# ============== LORE (INFINITE) ==============
+@api.get("/game/lore")
+async def lore(offset: int = 0, limit: int = 12, user: dict = Depends(get_current_user)):
+    """Returns a paginated infinite stream of procedurally-generated lore fragments,
+    capped to what the player has 'excavated' (lore_unlocked). Player unlocks more by playing."""
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    unlocked = char.get("lore_unlocked", 3) if char else 3
+    limit = max(1, min(24, limit))
+    offset = max(0, offset)
+    total_available = max(unlocked, 3)
+    end = min(offset + limit, total_available)
+    items = [generate_lore_fragment(i, user["id"]) for i in range(offset, end)]
+    return {"items": items, "offset": offset, "limit": limit, "unlocked": total_available,
+            "has_more": end < total_available, "infinite": True}
+
+@api.post("/game/lore/excavate")
+async def excavate_lore(user: dict = Depends(get_current_user)):
+    """Spend 20 credits to dig up a new lore fragment."""
+    char = await db.characters.find_one({"user_id": user["id"]})
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    COST = 20
+    if char.get("credits", 0) < COST:
+        raise HTTPException(status_code=400, detail="Insufficient credits (20 required)")
+    new_unlocked = char.get("lore_unlocked", 3) + 1
+    new_credits = char["credits"] - COST
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {
+        "lore_unlocked": new_unlocked, "credits": new_credits
+    }})
+    fragment = generate_lore_fragment(new_unlocked - 1, user["id"])
+    return {"fragment": fragment, "unlocked": new_unlocked, "credits": new_credits}
+
+
+# ============== COMBAT ==============
 def apply_level_ups(char: dict) -> dict:
+    leveled = False
     while char["xp"] >= char["xp_next"]:
         char["xp"] -= char["xp_next"]
         char["level"] += 1
-        cls = get_class(char["class_id"])
-        gain_hp = 20 + cls["base_hp"] // 20
-        gain_energy = 10 + cls["base_energy"] // 20
-        char["max_hp"] += gain_hp
-        char["max_energy"] += gain_energy
-        char["hp"] = char["max_hp"]
-        char["energy"] = char["max_energy"]
-        char["attack"] += 3
-        char["defense"] += 2
+        char["talent_points"] = char.get("talent_points", 0) + 1
         char["xp_next"] = xp_for_level(char["level"])
+        leveled = True
+    if leveled:
+        char = recompute_effective(char)
+        char["hp"] = char["max_hp"]; char["energy"] = char["max_energy"]
     return char
+
+
+def roll_crit(crit_pct_bonus: int = 0, base: float = 0.12) -> bool:
+    return random.random() < (base + crit_pct_bonus / 100.0)
+
+def calc_damage_v2(power: int, attacker_atk: int, defender_def: int,
+                   attacker_element: str, defender_element: str,
+                   crit_pct_bonus: int = 0, elem_dmg_pct: int = 0,
+                   wounded_dmg_pct: int = 0, wounded: bool = False,
+                   marked: bool = False) -> tuple[int, bool, bool]:
+    """Returns (damage, crit, elemental_weakness_hit)."""
+    roll = random.randint(-3, 4)
+    raw = power + attacker_atk // 3 + roll
+    mitigated = max(1, raw - defender_def // 2)
+    # Elemental weakness
+    weak_hit = False
+    if defender_element in WEAKNESS.get(attacker_element, []):
+        mitigated = int(mitigated * 1.30)
+        weak_hit = True
+    # Element damage bonus (talents/gear)
+    if elem_dmg_pct:
+        mitigated = int(mitigated * (1 + elem_dmg_pct / 100.0))
+    # Wounded bonus
+    if wounded and wounded_dmg_pct:
+        mitigated = int(mitigated * (1 + wounded_dmg_pct / 100.0))
+    # Marked bonus
+    if marked:
+        mitigated = int(mitigated * 1.25)
+    # Crit
+    crit = roll_crit(crit_pct_bonus)
+    if crit:
+        mitigated = int(mitigated * 1.75)
+    return mitigated, crit, weak_hit
+
+
+def pick_intent(enemy_state: dict) -> dict:
+    """Resolve the enemy's next ability from its rotation by turn counter."""
+    enemy = ENEMIES[enemy_state["id"]]
+    rot = enemy["rotation"]
+    idx = enemy_state.get("rotation_idx", 0) % len(rot)
+    ability_id = rot[idx]
+    return {"ability_id": ability_id, **ABILITIES[ability_id]}
+
+
+def first_alive(enemies: list) -> Optional[int]:
+    for i, e in enumerate(enemies):
+        if e["alive"]: return i
+    return None
+
+
+def tick_status_on(target: dict, max_hp_key: str = "max_hp") -> list[str]:
+    """Apply status effects for one turn. Returns log lines. Mutates target."""
+    lines = []
+    statuses = target.get("statuses", [])
+    new_statuses = []
+    for s in statuses:
+        sid = s["id"]
+        if sid == "bleed":
+            dmg = max(1, int(target[max_hp_key] * 0.08 * s.get("stacks", 1)))
+            target["hp"] = max(0, target["hp"] - dmg)
+            lines.append(f"▸ BLEED → {target.get('name', 'YOU')} loses {dmg}")
+        elif sid == "burn":
+            dmg = max(1, int(target[max_hp_key] * 0.06))
+            target["hp"] = max(0, target["hp"] - dmg)
+            lines.append(f"▸ BURN → {target.get('name', 'YOU')} loses {dmg}")
+        s["dur"] -= 1
+        if s["dur"] > 0:
+            new_statuses.append(s)
+    target["statuses"] = new_statuses
+    return lines
+
+
+def add_status(target: dict, sid: str, dur: int = 3, stacks: int = 1):
+    target.setdefault("statuses", [])
+    existing = next((s for s in target["statuses"] if s["id"] == sid), None)
+    if existing:
+        existing["dur"] = max(existing["dur"], dur)
+        if sid == "bleed":
+            existing["stacks"] = min(3, existing.get("stacks", 1) + stacks)
+    else:
+        entry = {"id": sid, "dur": dur}
+        if sid == "bleed":
+            entry["stacks"] = stacks
+        target["statuses"].append(entry)
+
+
+def has_status(target: dict, sid: str) -> bool:
+    return any(s["id"] == sid for s in target.get("statuses", []))
 
 
 @api.post("/game/combat/start")
 async def combat_start(body: MissionStartIn, user: dict = Depends(get_current_user)):
     mission = get_mission(body.mission_id)
-    if not mission:
-        raise HTTPException(status_code=404, detail="Mission not found")
+    if not mission: raise HTTPException(status_code=404, detail="Mission not found")
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char:
-        raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    char = recompute_effective(char)
     if char["level"] < mission["min_level"]:
         raise HTTPException(status_code=400, detail=f"Requires level {mission['min_level']}")
     if char["hp"] <= 0:
@@ -325,66 +509,94 @@ async def combat_start(body: MissionStartIn, user: dict = Depends(get_current_us
     for eid in mission["enemies"]:
         e = ENEMIES[eid]
         enemies_state.append({
-            "id": eid, "name": e["name"], "sigil": e["sigil"],
+            "id": eid, "name": e["name"], "sigil": e["sigil"], "element": e["element"],
             "hp": e["hp"], "max_hp": e["hp"],
             "attack": e["attack"], "defense": e["defense"], "xp": e["xp"], "alive": True,
+            "statuses": [], "rotation_idx": 0,
         })
 
     session = {
-        "user_id": user["id"],
-        "mission_id": mission["id"],
-        "enemies": enemies_state,
-        "player_shield": 0,
+        "user_id": user["id"], "mission_id": mission["id"],
+        "enemies": enemies_state, "player_shield": 0, "player_statuses": [],
         "turn": 1,
         "log": [f"▸ TRANSMISSION OPEN — {mission['name']}", f"▸ {mission['briefing']}"],
-        "status": "active",
+        "status": "active", "mode": "campaign",
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.combat_sessions.delete_many({"user_id": user["id"]})
     await db.combat_sessions.insert_one(dict(session))
     session.pop("_id", None)
-    char.pop("_id", None)
+    char["player_statuses"] = []
+    char.pop("_id", None); char.pop("bonus", None)
     return {"session": session, "character": char, "mission": mission}
-
-
-def calc_damage(base: int, attack: int, defense: int, crit_chance: float = 0.12) -> tuple[int, bool]:
-    roll = random.randint(-3, 4)
-    raw = base + attack // 3 + roll
-    mitigated = max(1, raw - defense // 2)
-    crit = random.random() < crit_chance
-    if crit:
-        mitigated = int(mitigated * 1.75)
-    return mitigated, crit
-
-
-def first_alive(enemies: list) -> Optional[int]:
-    for i, e in enumerate(enemies):
-        if e["alive"]:
-            return i
-    return None
 
 
 @api.post("/game/combat/action")
 async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_user)):
     session = await db.combat_sessions.find_one({"user_id": user["id"], "status": "active"})
-    if not session:
-        raise HTTPException(status_code=400, detail="No active combat")
+    if not session: raise HTTPException(status_code=400, detail="No active combat")
     char = await db.characters.find_one({"user_id": user["id"]})
-    if not char:
-        raise HTTPException(status_code=404, detail="No character")
+    if not char: raise HTTPException(status_code=404, detail="No character")
+    char = recompute_effective(char)
+    bonus = char["bonus"]
 
     log = session["log"]
     enemies = session["enemies"]
     shield = session.get("player_shield", 0)
-    target_idx = first_alive(enemies)
-    if target_idx is None:
-        raise HTTPException(status_code=400, detail="No enemies left")
+    player_statuses = session.get("player_statuses", [])
 
-    # PLAYER ACTION
+    # === STATUS TICK: PLAYER ===
+    player_proxy = {"hp": char["hp"], "max_hp": char["max_hp"], "name": "YOU", "statuses": player_statuses}
+    log.extend(tick_status_on(player_proxy))
+    char["hp"] = player_proxy["hp"]
+    player_statuses = player_proxy["statuses"]
+
+    if char["hp"] <= 0:
+        session["status"] = "defeat"
+        log.append("▸ DEFEAT — bled out to the static")
+        session["player_statuses"] = player_statuses
+        await _persist(user["id"], char, session, log, shield, enemies)
+        char.pop("_id", None); char.pop("bonus", None)
+        session.pop("_id", None)
+        return {"session": session, "character": char}
+
+    target_idx = first_alive(enemies)
+    if target_idx is None: raise HTTPException(status_code=400, detail="No enemies left")
+
+    cls = get_class(char["class_id"])
+    player_element = cls["element"]
+
+    # === PLAYER ACTION ===
+    wounded = char["hp"] <= char["max_hp"] * 0.4
+    crit_bonus = bonus.get("crit_pct", 0)
+    elem_bonus = bonus.get("element_dmg_pct", 0)
+    wound_bonus = bonus.get("wounded_dmg_pct", 0)
+    lifesteal = bonus.get("lifesteal_pct", 0)
+    heal_bonus = bonus.get("heal_bonus_pct", 0)
+
+    def deal_dmg(target, power, attacker_elem, status_id=None, status_dur=3, elem_override=None):
+        target_elem = target.get("element", "kinetic")
+        dmg, crit, weak = calc_damage_v2(
+            power, char["attack"], target["defense"], elem_override or attacker_elem, target_elem,
+            crit_bonus, elem_bonus, wound_bonus, wounded,
+            marked=has_status(target, "marked")
+        )
+        target["hp"] = max(0, target["hp"] - dmg)
+        tag = ""
+        if crit: tag += " CRIT"
+        if weak: tag += " WEAK"
+        log.append(f"▸ YOU HIT {target['name']} — {dmg}{tag}")
+        if status_id:
+            add_status(target, status_id, status_dur, stacks=1 + bonus.get("bleed_bonus", 0) if status_id == "bleed" else 1)
+            log.append(f"▸ {target['name']} AFFLICTED // {STATUS[status_id]['name']}")
+        if lifesteal:
+            heal = max(1, int(dmg * lifesteal / 100))
+            char["hp"] = min(char["max_hp"], char["hp"] + heal)
+            log.append(f"▸ LIFE-SIPHON +{heal}")
+        return dmg
+
     if body.action == "attack":
-        dmg, crit = calc_damage(18, char["attack"], enemies[target_idx]["defense"], 0.15)
-        enemies[target_idx]["hp"] = max(0, enemies[target_idx]["hp"] - dmg)
-        log.append(f"▸ YOU STRIKE {enemies[target_idx]['name']} — {dmg}{' CRIT' if crit else ''}")
+        deal_dmg(enemies[target_idx], 18, player_element)
 
     elif body.action == "defend":
         gained = 20 + char["defense"]
@@ -392,33 +604,28 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         log.append(f"▸ YOU BRACE — +{gained} SHIELD")
 
     elif body.action == "skill":
-        cls = get_class(char["class_id"])
         skill = next((s for s in cls["skills"] if s["id"] == body.skill_id), None)
-        if not skill:
-            raise HTTPException(status_code=400, detail="Unknown skill")
-        if char["energy"] < skill["cost"]:
-            raise HTTPException(status_code=400, detail="Not enough energy")
+        if not skill: raise HTTPException(status_code=400, detail="Unknown skill")
+        if char["energy"] < skill["cost"]: raise HTTPException(status_code=400, detail="Not enough energy")
         char["energy"] -= skill["cost"]
         if skill["type"] == "damage":
-            dmg, crit = calc_damage(skill["power"], char["attack"], enemies[target_idx]["defense"], 0.2)
-            enemies[target_idx]["hp"] = max(0, enemies[target_idx]["hp"] - dmg)
-            log.append(f"▸ {skill['name']} → {enemies[target_idx]['name']} — {dmg}{' CRIT' if crit else ''}")
+            deal_dmg(enemies[target_idx], skill["power"], player_element, status_id=skill.get("status"), elem_override=skill["element"])
         elif skill["type"] == "shield":
-            shield += skill["power"]
-            log.append(f"▸ {skill['name']} — +{skill['power']} SHIELD")
+            gained = skill["power"]
+            shield += gained
+            log.append(f"▸ {skill['name']} — +{gained} SHIELD")
         elif skill["type"] == "heal":
-            healed = min(skill["power"], char["max_hp"] - char["hp"])
+            heal_amt = int(skill["power"] * (1 + heal_bonus / 100))
+            healed = min(heal_amt, char["max_hp"] - char["hp"])
             char["hp"] += healed
             log.append(f"▸ {skill['name']} — +{healed} HP RESTORED")
 
     elif body.action == "item":
         inv = char.get("inventory", [])
         entry = next((i for i in inv if i["item_id"] == body.item_id and i["qty"] > 0), None)
-        if not entry:
-            raise HTTPException(status_code=400, detail="Item not available")
+        if not entry: raise HTTPException(status_code=400, detail="Item not available")
         item = ITEMS.get(body.item_id)
-        if not item:
-            raise HTTPException(status_code=400, detail="Unknown item")
+        if not item: raise HTTPException(status_code=400, detail="Unknown item")
         entry["qty"] -= 1
         if item["type"] == "heal":
             healed = min(item["power"], char["max_hp"] - char["hp"])
@@ -427,23 +634,31 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         elif item["type"] == "energy":
             restored = min(item["power"], char["max_energy"] - char["energy"])
             char["energy"] += restored
-            log.append(f"▸ {item['name']} USED — +{restored} ENERGY")
+            log.append(f"▸ {item['name']} USED — +{restored} EN")
         elif item["type"] == "damage":
-            enemies[target_idx]["hp"] = max(0, enemies[target_idx]["hp"] - item["power"])
-            log.append(f"▸ {item['name']} DETONATED — {item['power']} DMG")
-        # clean up empty stacks
+            dmg, crit, weak = calc_damage_v2(item["power"], char["attack"], enemies[target_idx]["defense"],
+                                             "kinetic", enemies[target_idx].get("element", "kinetic"),
+                                             crit_bonus, elem_bonus, wound_bonus, wounded,
+                                             marked=has_status(enemies[target_idx], "marked"))
+            enemies[target_idx]["hp"] = max(0, enemies[target_idx]["hp"] - dmg)
+            log.append(f"▸ {item['name']} DETONATED — {dmg}{' WEAK' if weak else ''}{' CRIT' if crit else ''}")
+        elif item["type"] == "cleanse":
+            if player_statuses:
+                log.append(f"▸ {item['name']} USED — statuses purged")
+            player_statuses = []
         char["inventory"] = [i for i in inv if i["qty"] > 0]
     else:
         raise HTTPException(status_code=400, detail="Unknown action")
 
-    # Resolve deaths
+    # Resolve enemy deaths
     for e in enemies:
         if e["alive"] and e["hp"] <= 0:
             e["alive"] = False
             log.append(f"▸ {e['name']} FALLS")
 
-    # Check win
-    if all(not e["alive"] for e in enemies):
+    victory = all(not e["alive"] for e in enemies)
+
+    if victory:
         session["status"] = "victory"
         total_xp = sum(e["xp"] for e in enemies)
         mission = get_mission(session["mission_id"])
@@ -451,73 +666,163 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
         credit_reward = mission["credit_reward"] if mission else 0
         char["xp"] += total_xp + xp_reward
         char["credits"] = char.get("credits", 0) + credit_reward
+        first_clear = False
         if mission and mission["id"] not in char.get("completed_missions", []):
             char.setdefault("completed_missions", []).append(mission["id"])
+            first_clear = True
+        # Always roll an equipment drop (tier = mission tier, first clear grants better)
+        drop_tier = mission["tier"] if mission else 1
+        if first_clear:
+            drop_tier = min(5, drop_tier + 1)
+        seed = f"{user['id']}:{mission['id']}:{session['turn']}:{random.randint(0,999999)}"
+        eq = roll_equipment(drop_tier, seed=seed)
+        char.setdefault("equipment_stash", []).append(eq)
+        log.append(f"▸ SALVAGE ACQUIRED // {eq['name']} [T{eq['tier']} {eq['slot'].upper()}]")
+        # Unlock lore fragments
+        unlocks = 1 + (2 if first_clear else 0)
+        char["lore_unlocked"] = char.get("lore_unlocked", 3) + unlocks
+        log.append(f"▸ LORE UNLOCKED — {unlocks} FRAGMENT{'S' if unlocks != 1 else ''}")
         apply_level_ups(char)
         log.append(f"▸ VICTORY — +{total_xp + xp_reward} XP / +{credit_reward} CR")
-        if mission:
-            log.append(f"▸ {mission['epilogue']}")
+        if mission: log.append(f"▸ {mission['epilogue']}")
     else:
-        # ENEMY TURN
+        # === ENEMY TURN ===
         for i, e in enumerate(enemies):
-            if not e["alive"]:
+            if not e["alive"]: continue
+            # status tick on enemy
+            proxy = {"hp": e["hp"], "max_hp": e["max_hp"], "name": e["name"], "statuses": e.get("statuses", []), "defense": e["defense"]}
+            log.extend(tick_status_on(proxy))
+            e["hp"] = proxy["hp"]
+            e["statuses"] = proxy["statuses"]
+            if e["hp"] <= 0:
+                e["alive"] = False
+                log.append(f"▸ {e['name']} FALLS")
                 continue
-            dmg, crit = calc_damage(14, e["attack"], char["defense"], 0.10)
-            absorbed = min(shield, dmg)
-            shield -= absorbed
-            remaining = dmg - absorbed
-            char["hp"] = max(0, char["hp"] - remaining)
-            if absorbed > 0:
-                log.append(f"▸ {e['name']} HITS — {dmg}{' CRIT' if crit else ''} (shield absorbs {absorbed})")
-            else:
-                log.append(f"▸ {e['name']} HITS — {dmg}{' CRIT' if crit else ''}")
-            if char["hp"] <= 0:
-                break
+            # shock skip
+            if has_status(e, "shock") and random.random() < 0.3:
+                log.append(f"▸ {e['name']} // SHOCKED — skips action")
+                e["rotation_idx"] = (e.get("rotation_idx", 0) + 1) % len(ENEMIES[e["id"]]["rotation"])
+                continue
+            intent = pick_intent(e)
+            atk_mult = 0.5 if has_status(e, "frozen") else 1.0
+            # ATK debuff from BURN
+            effective_atk = e["attack"] - (2 if has_status(e, "burn") else 0)
+            if intent["kind"] == "damage":
+                # player defender element: treat as class element
+                dmg, crit, weak = calc_damage_v2(
+                    intent["power"], int(effective_atk * atk_mult), char["defense"],
+                    intent["element"], get_class(char["class_id"])["element"],
+                    0, 0, 0, False,
+                    marked=has_status(player_proxy, "marked")
+                )
+                absorbed = min(shield, dmg)
+                shield -= absorbed
+                remaining = dmg - absorbed
+                char["hp"] = max(0, char["hp"] - remaining)
+                tag = ""
+                if crit: tag += " CRIT"
+                if weak: tag += " WEAK"
+                if absorbed > 0:
+                    log.append(f"▸ {e['name']} // {intent['name']} — {dmg}{tag} (shield {absorbed})")
+                else:
+                    log.append(f"▸ {e['name']} // {intent['name']} — {dmg}{tag}")
+                # Reflect
+                if bonus.get("reflect_pct", 0) and dmg > 0:
+                    ref = max(1, int(dmg * bonus["reflect_pct"] / 100))
+                    e["hp"] = max(0, e["hp"] - ref)
+                    log.append(f"▸ REBUKE → {e['name']} takes {ref}")
+                    if e["hp"] <= 0:
+                        e["alive"] = False
+                        log.append(f"▸ {e['name']} FALLS")
+                # Apply status
+                if intent.get("status") and remaining > 0:
+                    pproxy = {"statuses": player_statuses}
+                    add_status(pproxy, intent["status"], 3)
+                    player_statuses = pproxy["statuses"]
+                    log.append(f"▸ YOU AFFLICTED // {STATUS[intent['status']]['name']}")
+            elif intent["kind"] == "heal":
+                heal = min(intent["power"], e["max_hp"] - e["hp"])
+                e["hp"] += heal
+                log.append(f"▸ {e['name']} // {intent['name']} — +{heal} HP")
+            elif intent["kind"] == "shield":
+                # enemy temporarily buffs defense — simulate with one-turn flag
+                e["defense"] = min(e["defense"] + intent["power"] // 3, e["defense"] + 10)
+                log.append(f"▸ {e['name']} // {intent['name']} — defense rises")
 
-        # decay shield slightly
-        shield = max(0, int(shield * 0.6))
+            e["rotation_idx"] = (e.get("rotation_idx", 0) + 1) % len(ENEMIES[e["id"]]["rotation"])
+            if char["hp"] <= 0: break
 
+        shield = max(0, int(shield * 0.65))
         if char["hp"] <= 0:
             session["status"] = "defeat"
             log.append("▸ DEFEAT — you fall into the static")
 
+    # Energy regen (talent)
+    if bonus.get("energy_regen", 0) and session["status"] == "active":
+        char["energy"] = min(char["max_energy"], char["energy"] + bonus["energy_regen"])
+
     session["player_shield"] = shield
+    session["player_statuses"] = player_statuses
     session["enemies"] = enemies
-    session["log"] = log[-25:]
+    session["log"] = log[-30:]
     session["turn"] = session.get("turn", 1) + 1
 
-    # persist
+    # Precompute next intents for UI telegraph
+    for e in enemies:
+        if e["alive"]:
+            e["next_intent"] = pick_intent(e)
+        else:
+            e["next_intent"] = None
+
+    await _persist(user["id"], char, session, session["log"], shield, enemies)
+
+    if session["status"] in ("victory", "defeat"):
+        await db.combat_sessions.update_one(
+            {"user_id": user["id"], "mission_id": session["mission_id"], "status": {"$in": ["victory", "defeat"]}},
+            {"$set": {"status": "archived"}}
+        )
+
+    char.pop("_id", None); char.pop("bonus", None)
+    session.pop("_id", None)
+    return {"session": session, "character": char}
+
+
+async def _persist(user_id, char, session, log, shield, enemies):
     await db.combat_sessions.update_one(
-        {"user_id": user["id"], "status": {"$ne": "archived"}},
+        {"user_id": user_id, "status": {"$ne": "archived"}},
         {"$set": {
             "enemies": enemies, "player_shield": shield,
-            "log": session["log"], "turn": session["turn"], "status": session["status"],
+            "player_statuses": session.get("player_statuses", []),
+            "log": log, "turn": session["turn"], "status": session["status"]
         }}
     )
     await db.characters.update_one(
-        {"user_id": user["id"]},
+        {"user_id": user_id},
         {"$set": {
             "hp": char["hp"], "energy": char["energy"], "xp": char["xp"], "xp_next": char["xp_next"],
             "level": char["level"], "max_hp": char["max_hp"], "max_energy": char["max_energy"],
             "attack": char["attack"], "defense": char["defense"], "credits": char.get("credits", 0),
-            "inventory": char.get("inventory", []), "completed_missions": char.get("completed_missions", []),
+            "inventory": char.get("inventory", []),
+            "completed_missions": char.get("completed_missions", []),
+            "talent_points": char.get("talent_points", 0),
+            "talents_owned": char.get("talents_owned", []),
+            "equipment_stash": char.get("equipment_stash", []),
+            "equipped": char.get("equipped", {"weapon": None, "armor": None, "relic": None}),
+            "lore_unlocked": char.get("lore_unlocked", 3),
         }}
     )
-
-    if session["status"] in ("victory", "defeat"):
-        await db.combat_sessions.update_one(
-            {"user_id": user["id"], "mission_id": session["mission_id"]},
-            {"$set": {"status": "archived"}}
-        )
-
-    char.pop("_id", None)
-    session.pop("_id", None)
-    return {"session": session, "character": char}
 
 
 @api.get("/game/combat/current")
 async def current_combat(user: dict = Depends(get_current_user)):
     session = await db.combat_sessions.find_one({"user_id": user["id"], "status": "active"}, {"_id": 0})
+    if session:
+        # Attach next intent for each alive enemy
+        for e in session.get("enemies", []):
+            if e.get("alive"):
+                e["next_intent"] = pick_intent(e)
+            else:
+                e["next_intent"] = None
     return session
 
 
@@ -533,18 +838,14 @@ async def on_start():
     except Exception as e:
         logger.warning(f"Index setup error: {e}")
 
-
 @app.on_event("shutdown")
 async def on_stop():
     client.close()
 
-
 @api.get("/")
-async def root():
-    return {"name": "AETHER//EXILE", "status": "online"}
+async def root(): return {"name": "AETHER//EXILE", "status": "online"}
 
 
-# CORS — need explicit origins for cookies
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 origins = [frontend_url, "http://localhost:3000"]
 app.add_middleware(
