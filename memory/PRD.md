@@ -21,10 +21,11 @@ Todo o conteúdo visível (UI, lore, logs, mensagens de erro, dados do jogo) é 
 ## Conteúdo (estático, definido em `/app/backend/game_data.py`)
 - **3 classes** (REVENANT / NULL-SEER / HOLLOW-BLADE) com 4 skills + ultimate
 - **4 origens** de personagem com bónus stat
-- **8 missões** de campanha progressiva
-- **8 inimigos** com rotações e enrage patterns
+- **18 missões** de campanha progressiva (tier 1→5, nível 1→12)
+- **18 inimigos** com rotações e enrage patterns, incluindo chefes finais
+- **21 habilidades** de inimigo com telegraphs únicos
 - **5 status effects** (Hemorragia, Queimadura, Choque, Marcado, Congelado)
-- **5 terrenos** de missão com modificadores
+- **8 terrenos** de missão com modificadores mecânicos (chuva âmbar, inverno vermelho, nove olhos, pulso áurico…)
 - **15 talentos** em 3 ramos (FERRO / VAZIO / SANGUE)
 - **4 facções** com sistema de reputação (0→300)
 - **Equipamento aleatório** (arma/armadura/relíquia) por tier 1-5
@@ -47,10 +48,11 @@ Todo o conteúdo visível (UI, lore, logs, mensagens de erro, dados do jogo) é 
 - Codex (perfil + histórico)
 
 ## Changelog (Feb 2026 — continuidade)
-- ✅ Tradução PT-PT completa e verificada (Ago: game_data.py reescrito, server.py error details + logs de combate traduzidos, HUD tooltips, Combat ELEMENT_LABEL, branches FERRO/VAZIO/SANGUE nos talents)
-- ✅ Tema vermelho-dominante implementado (CSS vars, HUD corners, hovers, HP bar, grad-text-amber redefinido, panel-amber → panel-red, shadcn vars, todas as refs `#D11124` migradas para `#E31230`)
-- ✅ Sessões de combate legacy na DB purgadas para refletir novas strings
-- ✅ Smoke test: Landing, Hub, Talents, Combat — todos em PT-PT + visuais vermelho-dominantes
+- ✅ Tradução PT-PT completa e verificada
+- ✅ Tema vermelho-dominante implementado
+- ✅ Sessões de combate legacy na DB purgadas
+- ✅ Smoke test passou (Landing, Hub, Talents, Combat)
+- ✅ Expansão de conteúdo: **+10 inimigos** (IRMÃO FERAL → O PRIMEIRO NOME, tiers 1-5), **+10 missões** (m9-m18, nível 2-12), **+8 habilidades de inimigo** (AMARRAR, SUSSURRO, CHUVA DE BRASA, HINO, GOLPE DE NOME, QUEBRA DE JURAMENTO, VEREDICTO FRIO, GOLPE GÉMEO), **+3 terrenos** (Inverno Vermelho, Nove Olhos, Pulso Áurico)
 
 ## Roadmap (P1 — próximas tarefas)
 - Decidir sobre `/app/backend/game_ext.py` (integrar as expansões ou remover)

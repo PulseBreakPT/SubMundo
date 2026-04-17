@@ -87,8 +87,12 @@ TERRAINS = {
     "void_fog":  {"id":"void_fog","name":"NÉVOA DO VAZIO","desc":"15% de hipótese de qualquer ataque falhar.","color":"#E31230","miss_chance":15},
     "cold_orbit":{"id":"cold_orbit","name":"ÓRBITA FRIA","desc":"Todo o dano -10%. CONGELADO dura mais.","color":"#F4F0EB","damage_reduction":10,"frozen_extend":True},
     "gold_line": {"id":"gold_line","name":"SINAL LINHA DOURADA","desc":"CRIT +10% para todos.","color":"#F5A623","crit_boost":10},
+    "red_winter":{"id":"red_winter","name":"INVERNO VERMELHO","desc":"+10% dano. Curas -15%. O sangue congela em cima.","color":"#A80D1D","dmg_boost":10,"heal_penalty":15},
+    "nine_eyes": {"id":"nine_eyes","name":"NOVE OLHOS","desc":"MARCADO aplica +5% de dano extra. Algo observa.","color":"#E31230","marked_bonus":5},
+    "auric_pulse":{"id":"auric_pulse","name":"PULSO ÁURICO","desc":"+5 regen EN/ronda. A linha âmbar canta baixo.","color":"#F5A623","player_energy_regen":5},
 }
-MISSION_TERRAINS = {"m3":"void_fog","m4":"rust_seas","m5":"gold_line","m6":"cold_orbit","m7":"amber_rain","m8":"void_fog"}
+MISSION_TERRAINS = {"m3":"void_fog","m4":"rust_seas","m5":"gold_line","m6":"cold_orbit","m7":"amber_rain","m8":"void_fog",
+                    "m10":"auric_pulse","m11":"red_winter","m13":"nine_eyes","m15":"amber_rain","m16":"void_fog","m17":"cold_orbit","m18":"nine_eyes"}
 
 # ============== HABILIDADES (inimigos) ==============
 ABILITIES = {
@@ -105,6 +109,15 @@ ABILITIES = {
     "doom_choir":   {"name":"CORO DO FIM","kind":"damage","power":34,"element":"amber","status":"burn","telegraph":"O coro começa."},
     "sovereign":    {"name":"PALAVRA SOBERANA","kind":"damage","power":42,"element":"void","status":"marked","telegraph":"O nome de cada um que caiu."},
     "last_breath":  {"name":"ÚLTIMO FÔLEGO","kind":"damage","power":48,"element":"rust","status":"bleed","telegraph":"Se ele morre, tu também."},
+    # === Novas habilidades ===
+    "bind":         {"name":"AMARRAR","kind":"damage","power":14,"element":"kinetic","status":"shock","telegraph":"Puxa uma cadeia invisível."},
+    "whisper":      {"name":"SUSSURRO","kind":"damage","power":19,"element":"psi","status":"marked","telegraph":"Murmura o teu nome devagar."},
+    "ember_rain":   {"name":"CHUVA DE BRASA","kind":"damage","power":26,"element":"amber","status":"burn","telegraph":"Faíscas douradas caem do nada."},
+    "hymn":         {"name":"HINO","kind":"heal","power":28,"element":"amber","status":None,"telegraph":"Canta uma nota que cura."},
+    "name_strike":  {"name":"GOLPE DE NOME","kind":"damage","power":38,"element":"void","status":"marked","telegraph":"Pronuncia o teu nome antes de acertar."},
+    "oath_break":   {"name":"QUEBRA DE JURAMENTO","kind":"damage","power":40,"element":"rust","status":"bleed","telegraph":"Quebra uma promessa antiga. Em ti."},
+    "cold_verdict": {"name":"VEREDICTO FRIO","kind":"damage","power":30,"element":"psi","status":"frozen","telegraph":"Decreta a tua pausa."},
+    "twin_blow":    {"name":"GOLPE GÉMEO","kind":"damage","power":44,"element":"rust","status":"bleed","telegraph":"Duas mãos. Um mesmo nome."},
 }
 
 # ============== INIMIGOS ==============
@@ -120,6 +133,17 @@ ENEMIES = {
     "null_prince":   _e("null_prince","PRÍNCIPE NULO",3,190,26,12,170,"♛","void",["void_howl","brace","unmake","strike"],["sovereign","unmake","void_howl","unmake"],"Três corações. Todos errados."),
     "hollow_titan":  _e("hollow_titan","TITÃ OCO",4,260,30,16,240,"▲","kinetic",["strike","rupture","brace","strike","knit"],["flurry","rupture","flurry","last_breath"],"Catedral ambulante."),
     "the_unmade":    _e("the_unmade","O DESFEITO",5,380,38,20,450,"∞","void",["unmake","void_howl","freeze_pulse","unmake","scream"],["sovereign","unmake","sovereign","last_breath","void_howl"],"Comeu o próprio nome."),
+    # === Nova geração ===
+    "feral_sibling":   _e("feral_sibling","IRMÃO FERAL",1,75,15,3,50,"⚸","rust",["rupture","strike","rupture"],None,"Dentes partidos e um nome teu nos bolsos."),
+    "gold_scribe":     _e("gold_scribe","ESCRIBA DOURADO",2,100,16,7,85,"✎","amber",["ember_lance","hymn","ember_lance","scream"],None,"Escreve profecias em tinta em chamas."),
+    "chrome_matron":   _e("chrome_matron","MATRIARCA CRÓMIO",3,175,22,14,145,"♔","kinetic",["strike","hymn","brace","flurry"],["flurry","hymn","last_breath","strike"],"Governa as crias do bazar com uma agulha."),
+    "vault_warden":    _e("vault_warden","VIGIA DO COFRE",3,210,20,18,160,"⛉","void",["brace","bind","void_howl","brace"],["unmake","bind","brace","void_howl"],"O cofre tem os nomes. Ele tem o cofre."),
+    "psi_suffragan":   _e("psi_suffragan","SUFRAGÂNEO PSI",3,165,24,9,150,"☩","psi",["whisper","freeze_pulse","scream","whisper"],["cold_verdict","whisper","scream","freeze_pulse"],"Reza na língua dos não-nascidos."),
+    "rust_juggernaut": _e("rust_juggernaut","AUTÓMATO DE FERRUGEM",4,290,28,20,260,"⊞","rust",["strike","oath_break","brace","rupture"],["oath_break","flurry","last_breath","rupture"],"O coração não bate. Está trancado."),
+    "amber_choirmaster": _e("amber_choirmaster","MESTRE DO CORO",4,240,26,14,275,"⌇","amber",["ember_rain","hymn","doom_choir","ember_lance"],["doom_choir","ember_rain","doom_choir","hymn"],"Afina cinco vozes que não podem morrer."),
+    "void_anchorite":  _e("void_anchorite","ANACORETA DO VAZIO",4,280,28,18,290,"⧗","void",["unmake","whisper","brace","void_howl"],["name_strike","unmake","name_strike","whisper"],"Jejua em silêncio há nove anos. Finalmente falou."),
+    "martyr_twin":     _e("martyr_twin","GÉMEO MÁRTIR",5,340,34,16,400,"♊","psi",["twin_blow","whisper","cold_verdict","twin_blow"],["twin_blow","twin_blow","name_strike","whisper"],"Nasceste com ele. Só um sai."),
+    "the_first_name":  _e("the_first_name","O PRIMEIRO NOME",5,440,40,22,550,"Ω","void",["name_strike","sovereign","unmake","void_howl","name_strike"],["sovereign","name_strike","sovereign","name_strike","unmake"],"Antes de haver galáxia, já existia. Esperou por ti."),
 }
 
 # ============== MISSÕES ==============
@@ -140,6 +164,27 @@ MISSIONS = [
      "briefing":"O Titã desperta com o sol vermelho.","epilogue":"Subiste ao ombro dele e viste o horizonte curvar."},
     {"id":"m8","index":8,"name":"O DESFEITO","location":"Para Além da Linha Zero","tier":5,"min_level":9,"xp_reward":650,"credit_reward":1500,"enemies":["the_unmade"],
      "briefing":"O último nome. O que te chamou.","epilogue":"A galáxia respira novamente. Não sabes se está grata."},
+    # === NOVAS MISSÕES ===
+    {"id":"m9","index":9,"name":"FESTIM DOS IRMÃOS","location":"Becos da Cascádia — Bairro Nono","tier":1,"min_level":2,"xp_reward":95,"credit_reward":200,"enemies":["feral_sibling","feral_sibling"],
+     "briefing":"Dois irmãos ferais dividem um cadáver. Querem um terceiro.","epilogue":"No bolso do mais novo, uma lista. Nomes riscados. O teu, o último."},
+    {"id":"m10","index":10,"name":"A TINTA QUE ARDE","location":"Scriptorium Âmbar — Colónia Penitente","tier":2,"min_level":3,"xp_reward":175,"credit_reward":360,"enemies":["gold_scribe","rust_cultist"],
+     "briefing":"Um escriba reescreve as profecias. Nenhuma delas acaba bem para ti.","epilogue":"A página final dizia: \"ELE NÃO LÊ ISTO ATÉ SER TARDE.\" Estavas a lê-la."},
+    {"id":"m11","index":11,"name":"A MATRIARCA","location":"Coração do Bazar Crómio — Nível Negro Inferior","tier":3,"min_level":4,"xp_reward":260,"credit_reward":540,"enemies":["chrome_matron","chrome_reaver"],
+     "briefing":"A Matriarca é mãe de todos os piratas. E não perdoa dívidas.","epilogue":"Ela sorriu, quebrou a agulha ao meio. \"Diz ao teu pai que chegaste tarde.\""},
+    {"id":"m12","index":12,"name":"COFRE DE NOMES","location":"Arquivo Imperial — Reentrância Lunar","tier":3,"min_level":5,"xp_reward":310,"credit_reward":680,"enemies":["vault_warden","husk_drone","husk_drone"],
+     "briefing":"Existe um cofre. Dentro, todos os nomes que a Linha Zero apagou. Há um quarto no fundo.","epilogue":"Só abriste três gavetas. Só precisavas de uma. Sabes qual é."},
+    {"id":"m13","index":13,"name":"O SUFRAGÂNEO","location":"Capela Submersa — Delta Afogado","tier":3,"min_level":6,"xp_reward":340,"credit_reward":740,"enemies":["psi_suffragan","amber_witch"],
+     "briefing":"Rezam na língua dos não-nascidos. Tentam chamar alguém. Pensam que é Deus.","epilogue":"Não era Deus. Era alguém a ouvir-te dormir. Tem mão fria."},
+    {"id":"m14","index":14,"name":"MÁQUINA DE ÓDIO","location":"Forja Derrubada — Fosso da Cicatriz","tier":4,"min_level":7,"xp_reward":460,"credit_reward":1000,"enemies":["rust_juggernaut","rust_cultist","rust_cultist"],
+     "briefing":"Os cultistas construíram uma máquina. Só dorme quando alguém sangra por dentro dela.","epilogue":"A máquina parou. Ficaste sozinho numa sala que respirava. Ainda respira."},
+    {"id":"m15","index":15,"name":"O ÚLTIMO CORO","location":"Catedral Âmbar — Órbita Leste","tier":4,"min_level":8,"xp_reward":540,"credit_reward":1150,"enemies":["amber_choirmaster","amber_witch","gold_scribe"],
+     "briefing":"Três vozes afinam o último canto. Se acabarem, o céu cai. Se os interromperes, cai mais depressa.","epilogue":"A quarta voz — tua — fechou a harmonia. O coro calou-se. O silêncio pesa mais."},
+    {"id":"m16","index":16,"name":"O ANACORETA","location":"Gruta do Silêncio — Cinturão Exterior","tier":4,"min_level":8,"xp_reward":580,"credit_reward":1200,"enemies":["void_anchorite","void_hound","void_hound"],
+     "briefing":"Ele rezou calado durante nove anos. No décimo, abriu a boca. Disse um nome.","epilogue":"Era teu. A gruta colapsou atrás de ti. Ainda ouves o nome quando pestanejas."},
+    {"id":"m17","index":17,"name":"GÉMEO DE SANGUE","location":"Sala de Espelhos — Fundo da Linha Zero","tier":5,"min_level":10,"xp_reward":720,"credit_reward":1700,"enemies":["martyr_twin"],
+     "briefing":"Nasceste com ele. Nunca o viste. Sempre soubeste. Agora está à tua frente e tem o teu rosto.","epilogue":"Um de vós caiu. O outro leva os dois nomes para casa."},
+    {"id":"m18","index":18,"name":"O PRIMEIRO NOME","location":"Antes da Galáxia — Fora do Tempo","tier":5,"min_level":12,"xp_reward":980,"credit_reward":2400,"enemies":["the_first_name"],
+     "briefing":"Antes do cosmos se lembrar de si, alguém disse uma palavra. Essa palavra foi Ele. E está à tua espera.","epilogue":"Disseste o teu nome. Ele disse o dele. Só um dos dois ficou escrito."},
 ]
 
 # ============== ITENS (consumíveis) ==============
