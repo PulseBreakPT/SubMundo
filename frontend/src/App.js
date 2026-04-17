@@ -11,13 +11,17 @@ import Codex from "@/pages/Codex";
 import Talents from "@/pages/Talents";
 import Armory from "@/pages/Armory";
 import Lore from "@/pages/Lore";
+import Station from "@/pages/Station";
+import Explore from "@/pages/Explore";
+import Quests from "@/pages/Quests";
+import Arena from "@/pages/Arena";
 
 function LandingOrHub() {
   const { user } = useAuth();
   if (user === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="font-display text-2xl grad-text-amber flicker">ESTABLISHING LINK</p>
+        <p className="font-display text-2xl grad-text-amber flicker">A ESTABELECER LIGAÇÃO</p>
       </div>
     );
   }
@@ -40,6 +44,10 @@ function App() {
             <Route path="/talents" element={<ProtectedRoute requireCharacter><Talents /></ProtectedRoute>} />
             <Route path="/armory" element={<ProtectedRoute requireCharacter><Armory /></ProtectedRoute>} />
             <Route path="/lore" element={<ProtectedRoute requireCharacter><Lore /></ProtectedRoute>} />
+            <Route path="/station" element={<ProtectedRoute requireCharacter><Station /></ProtectedRoute>} />
+            <Route path="/explore" element={<ProtectedRoute requireCharacter><Explore /></ProtectedRoute>} />
+            <Route path="/quests" element={<ProtectedRoute requireCharacter><Quests /></ProtectedRoute>} />
+            <Route path="/arena" element={<ProtectedRoute requireCharacter><Arena /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

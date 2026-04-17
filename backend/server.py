@@ -21,7 +21,10 @@ from game_data import (
     ABILITIES, STATUS, WEAKNESS, ELEMENT_COLOR, ELEMENT_SIGIL,
     TALENTS, get_talent,
     roll_equipment, generate_lore_fragment,
-    xp_for_level, get_class, get_enemy, get_mission
+    xp_for_level, get_class, get_enemy, get_mission,
+    ZONES, get_zone, QUESTS, get_quest, get_dialog,
+    CRAFTING_RECIPES, get_recipe, MATERIALS, MARKET_GOODS,
+    FACTIONS, rank_for, DAILY_TASKS, ACHIEVEMENTS,
 )
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -182,7 +185,20 @@ def build_character(user_id: str, callsign: str, class_id: str) -> dict:
         "talents_owned": [],
         "equipped": {"weapon": None, "armor": None, "relic": None},
         "equipment_stash": [],
-        "lore_unlocked": 3,  # start with 3 fragments already excavated
+        "lore_unlocked": 3,
+        # Phase 1 expansion fields
+        "stamina": 100, "max_stamina": 100,
+        "materials": {},  # material_id -> qty
+        "faction_rep": {"directorate": 0, "exiles": 0, "gold_line": 0, "reavers": 0},
+        "daily_progress": {},  # dl_combat -> count
+        "daily_date": "",
+        "daily_claimed": [],
+        "quests_active": [],
+        "quests_completed": [],
+        "quest_dialog": {},  # quest_id -> current dialog id
+        "arena_best_wave": 0,
+        "zone_events_completed": 0,
+        "crafts_done": 0,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -245,10 +261,29 @@ async def create_character(body: CharacterCreateIn, user: dict = Depends(get_cur
     char.pop("_id", None)
     return char
 
+def _ensure_phase1_fields(char: dict) -> dict:
+    """Backfill new character fields for pre-existing characters."""
+    defaults = {
+        "stamina": 100, "max_stamina": 100,
+        "materials": {}, "faction_rep": {"directorate": 0, "exiles": 0, "gold_line": 0, "reavers": 0},
+        "daily_progress": {}, "daily_date": "", "daily_claimed": [],
+        "quests_active": [], "quests_completed": [], "quest_dialog": {},
+        "arena_best_wave": 0, "zone_events_completed": 0, "crafts_done": 0,
+    }
+    for k, v in defaults.items():
+        if k not in char or char[k] is None:
+            char[k] = v
+    # Ensure all 4 factions exist in rep
+    for fid in ["directorate", "exiles", "gold_line", "reavers"]:
+        char["faction_rep"].setdefault(fid, 0)
+    return char
+
+
 @api.get("/game/character")
 async def get_character(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
     if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
     char = recompute_effective(char)
     return char
 
@@ -256,9 +291,10 @@ async def get_character(user: dict = Depends(get_current_user)):
 async def rest(user: dict = Depends(get_current_user)):
     char = await db.characters.find_one({"user_id": user["id"]})
     if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
     char = recompute_effective(char)
-    char["hp"] = char["max_hp"]; char["energy"] = char["max_energy"]
-    await db.characters.update_one({"user_id": user["id"]}, {"$set": {"hp": char["hp"], "energy": char["energy"]}})
+    char["hp"] = char["max_hp"]; char["energy"] = char["max_energy"]; char["stamina"] = char.get("max_stamina", 100)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {"hp": char["hp"], "energy": char["energy"], "stamina": char["stamina"]}})
     char.pop("_id", None); char.pop("bonus", None)
     return await get_character(user)
 
@@ -660,6 +696,10 @@ async def combat_action(body: CombatActionIn, user: dict = Depends(get_current_u
 
     if victory:
         session["status"] = "victory"
+        # Daily task: combat win
+        char = _ensure_phase1_fields(char)
+        _reset_daily_if_needed(char)
+        char["daily_progress"]["dl_combat"] = char["daily_progress"].get("dl_combat", 0) + 1
         total_xp = sum(e["xp"] for e in enemies)
         mission = get_mission(session["mission_id"])
         xp_reward = mission["xp_reward"] if mission else 0
@@ -824,6 +864,466 @@ async def current_combat(user: dict = Depends(get_current_user)):
             else:
                 e["next_intent"] = None
     return session
+
+
+# ========================================================================
+# ============== PHASE 1 EXPANSION: World, Quests, Economy ===============
+# ========================================================================
+
+def _apply_rewards(char: dict, rewards: dict) -> list[str]:
+    """Apply a generic reward dict (credits/xp/lore/materials/faction_delta/hp_cost/equipment) and return log lines."""
+    lines = []
+    if "credits" in rewards:
+        char["credits"] = max(0, char.get("credits", 0) + rewards["credits"])
+        lines.append(f"▸ {'+' if rewards['credits'] >= 0 else ''}{rewards['credits']} CR")
+    if "xp" in rewards:
+        char["xp"] = char.get("xp", 0) + rewards["xp"]
+        lines.append(f"▸ +{rewards['xp']} XP")
+    if "lore" in rewards:
+        char["lore_unlocked"] = char.get("lore_unlocked", 0) + rewards["lore"]
+        lines.append(f"▸ +{rewards['lore']} FRAGMENTO(S) DE LORE")
+    if "materials" in rewards:
+        mats = char.setdefault("materials", {})
+        for mid, qty in rewards["materials"].items():
+            mats[mid] = mats.get(mid, 0) + qty
+            lines.append(f"▸ +{qty} {MATERIALS[mid]['name']}")
+    if "faction_delta" in rewards:
+        rep = char.setdefault("faction_rep", {})
+        for fid, delta in rewards["faction_delta"].items():
+            rep[fid] = rep.get(fid, 0) + delta
+            sign = "+" if delta >= 0 else ""
+            lines.append(f"▸ {FACTIONS[fid]['name']} {sign}{delta}")
+    if "hp_cost" in rewards:
+        char["hp"] = max(1, char["hp"] - rewards["hp_cost"])
+        lines.append(f"▸ -{rewards['hp_cost']} VIDA")
+    if "equipment" in rewards:
+        eq_spec = rewards["equipment"]
+        eq = roll_equipment(eq_spec.get("tier", 1), seed=f"zone:{random.randint(0,99999)}", slot=eq_spec.get("slot"))
+        char.setdefault("equipment_stash", []).append(eq)
+        lines.append(f"▸ EQUIPAMENTO SALVADO // {eq['name']}")
+    return lines
+
+
+def _today_str() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def _reset_daily_if_needed(char: dict):
+    today = _today_str()
+    if char.get("daily_date") != today:
+        char["daily_date"] = today
+        char["daily_progress"] = {}
+        char["daily_claimed"] = []
+
+
+def _strip_char(char: dict) -> dict:
+    char.pop("_id", None)
+    char.pop("bonus", None)
+    return char
+
+
+# ============== ZONES / EXPLORATION ==============
+@api.get("/game/zones")
+async def list_zones(user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    level = char.get("level", 1) if char else 1
+    out = []
+    for z in ZONES:
+        out.append({**z, "locked": level < z["min_level"]})
+    return out
+
+
+class ZoneEnterIn(BaseModel):
+    zone_id: str
+
+
+@api.post("/game/zone/event")
+async def zone_event(body: ZoneEnterIn, user: dict = Depends(get_current_user)):
+    """Pick a random event from the zone. Consume stamina. Return event or auto-combat link."""
+    zone = get_zone(body.zone_id)
+    if not zone: raise HTTPException(status_code=404, detail="Zona desconhecida")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    if char["level"] < zone["min_level"]:
+        raise HTTPException(status_code=400, detail=f"Requer nível {zone['min_level']}")
+    if char["stamina"] < zone["stamina_cost"]:
+        raise HTTPException(status_code=400, detail="Stamina insuficiente. Descansa primeiro.")
+    char["stamina"] -= zone["stamina_cost"]
+    event = random.choice(zone["events"])
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {"stamina": char["stamina"]}})
+    return {"zone": {"id": zone["id"], "name": zone["name"]}, "event": event, "stamina": char["stamina"]}
+
+
+class ZoneChoiceIn(BaseModel):
+    zone_id: str
+    event_id: str
+    choice_index: int
+
+
+@api.post("/game/zone/resolve")
+async def zone_resolve(body: ZoneChoiceIn, user: dict = Depends(get_current_user)):
+    zone = get_zone(body.zone_id)
+    if not zone: raise HTTPException(status_code=404, detail="Zona desconhecida")
+    event = next((e for e in zone["events"] if e["id"] == body.event_id), None)
+    if not event: raise HTTPException(status_code=404, detail="Evento desconhecido")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    lines = []
+    if "combat" in event:
+        lines.append("▸ COMBATE IMINENTE — usa /combat/start-encounter")
+        await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+        return {"lines": lines, "combat": event["combat"], "character": _strip_char(char)}
+    choices = event.get("choices", [])
+    if body.choice_index < 0 or body.choice_index >= len(choices):
+        raise HTTPException(status_code=400, detail="Escolha inválida")
+    outcome = choices[body.choice_index].get("outcome", {})
+    lines = _apply_rewards(char, outcome)
+    char["zone_events_completed"] = char.get("zone_events_completed", 0) + 1
+    # Daily task progress
+    char.setdefault("daily_progress", {})
+    _reset_daily_if_needed(char)
+    char["daily_progress"]["dl_explore"] = char["daily_progress"].get("dl_explore", 0) + 1
+    apply_level_ups(char)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    char = recompute_effective(char)
+    return {"lines": lines, "character": _strip_char(char)}
+
+
+# ============== QUESTS ==============
+@api.get("/game/quests")
+async def list_quests(user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    completed = set(char.get("completed_missions", []))
+    out = []
+    for q in QUESTS:
+        available = q["required_mission"] in completed
+        state = "locked"
+        if q["id"] in char.get("quests_completed", []):
+            state = "completed"
+        elif q["id"] in char.get("quests_active", []):
+            state = "active"
+        elif available:
+            state = "available"
+        cur_dialog = char.get("quest_dialog", {}).get(q["id"], q["dialogs"][0]["id"] if q["dialogs"] else None)
+        out.append({**q, "state": state, "current_dialog": cur_dialog})
+    return out
+
+
+class QuestStartIn(BaseModel):
+    quest_id: str
+
+
+@api.post("/game/quest/start")
+async def quest_start(body: QuestStartIn, user: dict = Depends(get_current_user)):
+    q = get_quest(body.quest_id)
+    if not q: raise HTTPException(status_code=404, detail="Quest desconhecida")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    if q["required_mission"] not in char.get("completed_missions", []):
+        raise HTTPException(status_code=400, detail="Tens de completar a missão pré-requisito primeiro")
+    if body.quest_id in char.get("quests_completed", []):
+        raise HTTPException(status_code=400, detail="Quest já completa")
+    if body.quest_id not in char.get("quests_active", []):
+        char.setdefault("quests_active", []).append(body.quest_id)
+    char.setdefault("quest_dialog", {})[body.quest_id] = q["dialogs"][0]["id"]
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    return {"ok": True, "current_dialog": q["dialogs"][0]["id"]}
+
+
+class QuestChoiceIn(BaseModel):
+    quest_id: str
+    dialog_id: str
+    choice_index: int
+
+
+@api.post("/game/quest/choose")
+async def quest_choose(body: QuestChoiceIn, user: dict = Depends(get_current_user)):
+    q = get_quest(body.quest_id)
+    if not q: raise HTTPException(status_code=404, detail="Quest desconhecida")
+    d = get_dialog(q, body.dialog_id)
+    if not d: raise HTTPException(status_code=404, detail="Diálogo desconhecido")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    lines = []
+    # Leaf dialog: apply outcome + end quest
+    if d.get("end"):
+        lines = _apply_rewards(char, d.get("outcome", {}))
+        char.setdefault("xp", 0)
+        char["xp"] += q.get("xp_reward", 0)
+        char["credits"] = char.get("credits", 0) + q.get("credit_reward", 0)
+        for fid, delta in q.get("faction_reward", {}).items():
+            char.setdefault("faction_rep", {})[fid] = char["faction_rep"].get(fid, 0) + delta
+        lines.append(f"▸ QUEST COMPLETA — +{q.get('xp_reward',0)} XP / +{q.get('credit_reward',0)} CR")
+        char.setdefault("quests_completed", []).append(q["id"])
+        if q["id"] in char.get("quests_active", []):
+            char["quests_active"].remove(q["id"])
+        char.get("quest_dialog", {}).pop(q["id"], None)
+        apply_level_ups(char)
+        await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+        char = recompute_effective(char)
+        return {"lines": lines, "character": _strip_char(char), "ended": True}
+    # Branch: apply outcome + move to next
+    choices = d.get("choices", [])
+    if body.choice_index < 0 or body.choice_index >= len(choices):
+        raise HTTPException(status_code=400, detail="Escolha inválida")
+    choice = choices[body.choice_index]
+    if choice.get("outcome"):
+        lines = _apply_rewards(char, choice["outcome"])
+    next_id = choice.get("next")
+    if next_id:
+        char.setdefault("quest_dialog", {})[q["id"]] = next_id
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    char = recompute_effective(char)
+    return {"lines": lines, "character": _strip_char(char), "next_dialog": next_id, "ended": False}
+
+
+# ============== MARKET ==============
+@api.get("/game/market")
+async def list_market():
+    return MARKET_GOODS
+
+
+class MarketBuyIn(BaseModel):
+    good_id: str
+
+
+@api.post("/game/market/buy")
+async def market_buy(body: MarketBuyIn, user: dict = Depends(get_current_user)):
+    good = next((g for g in MARKET_GOODS if g["id"] == body.good_id), None)
+    if not good: raise HTTPException(status_code=404, detail="Bem desconhecido")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    # Dynamic pricing: +/-10% based on faction reputation with reavers (market faction proxy)
+    rep = char.get("faction_rep", {}).get("reavers", 0)
+    discount = max(-10, min(15, rep // 20))  # -10% to +15% based on rep
+    cost = max(1, int(good["cost"] * (100 - discount) / 100))
+    if char["credits"] < cost: raise HTTPException(status_code=400, detail="Créditos insuficientes")
+    char["credits"] -= cost
+    lines = [f"▸ COMPROU {good['name']} — -{cost} CR"]
+    if good["kind"] == "consumable":
+        inv = char.setdefault("inventory", [])
+        entry = next((i for i in inv if i["item_id"] == good["id"]), None)
+        if entry: entry["qty"] += 1
+        else: inv.append({"item_id": good["id"], "qty": 1})
+    elif good["kind"] == "cache":
+        eq = roll_equipment(good.get("tier", 2), seed=f"cache:{random.randint(0,99999)}")
+        char.setdefault("equipment_stash", []).append(eq)
+        lines.append(f"▸ CACHE ABRIU // {eq['name']}")
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    char = recompute_effective(char)
+    return {"lines": lines, "character": _strip_char(char), "actual_cost": cost}
+
+
+# ============== CRAFTING ==============
+@api.get("/game/crafting")
+async def list_crafting(): return {"recipes": CRAFTING_RECIPES, "materials": MATERIALS}
+
+
+class CraftIn(BaseModel):
+    recipe_id: str
+
+
+@api.post("/game/craft")
+async def craft(body: CraftIn, user: dict = Depends(get_current_user)):
+    r = get_recipe(body.recipe_id)
+    if not r: raise HTTPException(status_code=404, detail="Receita desconhecida")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    mats = char.setdefault("materials", {})
+    for mid, qty in r["cost_materials"].items():
+        if mats.get(mid, 0) < qty:
+            raise HTTPException(status_code=400, detail=f"Faltam materiais: {MATERIALS[mid]['name']}")
+    if char["credits"] < r["cost_credits"]:
+        raise HTTPException(status_code=400, detail="Créditos insuficientes")
+    for mid, qty in r["cost_materials"].items():
+        mats[mid] -= qty
+    char["credits"] -= r["cost_credits"]
+    lines = [f"▸ FABRICADO {r['name']} — -{r['cost_credits']} CR"]
+    prod = r["produces"]
+    if "item_id" in prod:
+        inv = char.setdefault("inventory", [])
+        entry = next((i for i in inv if i["item_id"] == prod["item_id"]), None)
+        if entry: entry["qty"] += prod.get("qty", 1)
+        else: inv.append({"item_id": prod["item_id"], "qty": prod.get("qty", 1)})
+    elif prod.get("kind") == "equipment":
+        eq = roll_equipment(prod["tier"], seed=f"craft:{random.randint(0,99999)}")
+        char.setdefault("equipment_stash", []).append(eq)
+        lines.append(f"▸ EQUIPAMENTO // {eq['name']}")
+    char["crafts_done"] = char.get("crafts_done", 0) + 1
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    char = recompute_effective(char)
+    return {"lines": lines, "character": _strip_char(char)}
+
+
+# ============== FACTIONS ==============
+@api.get("/game/factions")
+async def list_factions(user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    rep = char.get("faction_rep", {})
+    out = []
+    for fid, f in FACTIONS.items():
+        r = rep.get(fid, 0)
+        out.append({**f, "rep": r, "rank": rank_for(r)})
+    return out
+
+
+# ============== DAILY ==============
+@api.get("/game/daily")
+async def get_daily(user: dict = Depends(get_current_user)):
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    _reset_daily_if_needed(char)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": {
+        "daily_date": char["daily_date"], "daily_progress": char["daily_progress"], "daily_claimed": char["daily_claimed"]
+    }})
+    progress = char["daily_progress"]
+    claimed = char["daily_claimed"]
+    return {"tasks": [{**t, "current": progress.get(t["id"], 0), "claimed": t["id"] in claimed,
+                       "done": progress.get(t["id"], 0) >= t["target"]} for t in DAILY_TASKS],
+            "today": char["daily_date"]}
+
+
+class DailyClaimIn(BaseModel):
+    task_id: str
+
+
+@api.post("/game/daily/claim")
+async def daily_claim(body: DailyClaimIn, user: dict = Depends(get_current_user)):
+    task = next((t for t in DAILY_TASKS if t["id"] == body.task_id), None)
+    if not task: raise HTTPException(status_code=404, detail="Tarefa desconhecida")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    _reset_daily_if_needed(char)
+    if body.task_id in char.get("daily_claimed", []):
+        raise HTTPException(status_code=400, detail="Já reclamada")
+    if char.get("daily_progress", {}).get(body.task_id, 0) < task["target"]:
+        raise HTTPException(status_code=400, detail="Tarefa não concluída")
+    lines = _apply_rewards(char, task["reward"])
+    char.setdefault("daily_claimed", []).append(body.task_id)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    char = recompute_effective(char)
+    return {"lines": lines, "character": _strip_char(char)}
+
+
+# ============== ARENA ==============
+@api.post("/game/arena/start")
+async def arena_start(user: dict = Depends(get_current_user)):
+    """Starts an endless arena run. Session stored like combat but with wave counter."""
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not char: raise HTTPException(status_code=404, detail="Sem personagem")
+    char = _ensure_phase1_fields(char)
+    if char["hp"] <= 0:
+        raise HTTPException(status_code=400, detail="Estás caído. Descansa primeiro.")
+    # Clear any previous arena session
+    await db.combat_sessions.delete_many({"user_id": user["id"], "mode": "arena"})
+    # Wave 1: one tier 1 enemy
+    enemies = _arena_enemies_for_wave(1)
+    session = {
+        "user_id": user["id"], "mission_id": "arena", "mode": "arena",
+        "turn": 1, "wave": 1, "enemies": enemies, "log": ["▸ ARENA — ONDA 01"],
+        "player_statuses": [], "shield": 0, "status": "active",
+        "terrain": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.combat_sessions.insert_one(dict(session))
+    for e in session["enemies"]:
+        e["next_intent"] = pick_intent(e)
+    session.pop("_id", None)
+    char = recompute_effective(char)
+    return {"session": session, "character": _strip_char(char)}
+
+
+def _arena_enemies_for_wave(wave: int) -> list:
+    """Scale difficulty with wave number. Every 5 waves: boss tier."""
+    pool_t1 = ["husk_drone", "rust_cultist", "feral_sibling"]
+    pool_t2 = ["void_hound", "chrome_reaver", "gold_scribe"]
+    pool_t3 = ["amber_witch", "null_prince", "vault_warden", "psi_suffragan", "chrome_matron"]
+    pool_t4 = ["hollow_titan", "rust_juggernaut", "amber_choirmaster", "void_anchorite"]
+    pool_t5 = ["the_unmade", "martyr_twin", "the_first_name"]
+    if wave % 10 == 0:
+        ids = [random.choice(pool_t5)]
+    elif wave % 5 == 0:
+        ids = [random.choice(pool_t4), random.choice(pool_t3)] if wave >= 15 else [random.choice(pool_t4)]
+    elif wave >= 12:
+        ids = [random.choice(pool_t3), random.choice(pool_t2)]
+    elif wave >= 7:
+        ids = [random.choice(pool_t2), random.choice(pool_t1)]
+    elif wave >= 3:
+        ids = [random.choice(pool_t2)]
+    else:
+        ids = [random.choice(pool_t1)]
+    scale = 1 + max(0, (wave - 1) * 0.08)
+    enemies = []
+    for eid in ids:
+        base = ENEMIES[eid]
+        e = dict(base)
+        e["hp"] = int(base["hp"] * scale)
+        e["max_hp"] = e["hp"]
+        e["attack"] = int(base["attack"] * (1 + (wave - 1) * 0.05))
+        e["alive"] = True
+        e["rotation_idx"] = 0
+        e["statuses"] = []
+        enemies.append(e)
+    return enemies
+
+
+@api.post("/game/arena/advance")
+async def arena_advance(user: dict = Depends(get_current_user)):
+    """Called after a wave is won: spawn next wave, give loot."""
+    session = await db.combat_sessions.find_one({"user_id": user["id"], "mode": "arena"})
+    if not session: raise HTTPException(status_code=404, detail="Sem arena ativa")
+    char = await db.characters.find_one({"user_id": user["id"]}, {"_id": 0})
+    char = _ensure_phase1_fields(char)
+    wave = session.get("wave", 1)
+    # Victory rewards
+    cr_reward = 50 + wave * 20
+    xp_reward = 20 + wave * 10
+    char["credits"] = char.get("credits", 0) + cr_reward
+    char["xp"] = char.get("xp", 0) + xp_reward
+    # Best wave tracking
+    if wave > char.get("arena_best_wave", 0):
+        char["arena_best_wave"] = wave
+    apply_level_ups(char)
+    # Next wave
+    wave += 1
+    session["wave"] = wave
+    session["turn"] = 1
+    session["enemies"] = _arena_enemies_for_wave(wave)
+    session["shield"] = 0
+    session["player_statuses"] = []
+    session["status"] = "active"
+    session["log"] = session.get("log", []) + [f"▸ ONDA {wave:02d} — +{cr_reward} CR / +{xp_reward} XP"]
+    # Every 3 waves: equipment drop
+    if wave % 3 == 0:
+        tier = min(5, 1 + wave // 5)
+        eq = roll_equipment(tier, seed=f"arena:{wave}")
+        char.setdefault("equipment_stash", []).append(eq)
+        session["log"].append(f"▸ SALVADO // {eq['name']}")
+    await db.combat_sessions.replace_one({"user_id": user["id"], "mode": "arena"}, session)
+    await db.characters.update_one({"user_id": user["id"]}, {"$set": char})
+    for e in session["enemies"]:
+        e["next_intent"] = pick_intent(e)
+    session.pop("_id", None)
+    char = recompute_effective(char)
+    return {"session": session, "character": _strip_char(char)}
+
+
+@api.post("/game/arena/flee")
+async def arena_flee(user: dict = Depends(get_current_user)):
+    await db.combat_sessions.delete_many({"user_id": user["id"], "mode": "arena"})
+    return {"ok": True}
 
 
 # ============== STARTUP ==============
