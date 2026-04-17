@@ -1,0 +1,323 @@
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { api, formatApiError } from "@/lib/api";
+import HUD from "@/components/HUD";
+import { Sword, Shield, Sparkles, Package, Trophy, Skull, ArrowRight, X } from "lucide-react";
+
+const COMBAT_BG = "https://static.prod-images.emergentagent.com/jobs/3b1c9518-5d7f-4467-adb8-43830b406907/images/b124b26f41f06a69f7b3cf45a8b09de14ad44e1504627a8f1cb7e229483be2ec.png";
+
+export default function Combat() {
+  const { missionId } = useParams();
+  const nav = useNavigate();
+  const [session, setSession] = useState(null);
+  const [character, setCharacter] = useState(null);
+  const [mission, setMission] = useState(null);
+  const [classData, setClassData] = useState(null);
+  const [panel, setPanel] = useState(null); // "skill" | "item" | null
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [items, setItems] = useState({});
+  const logRef = useRef(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [cur, ch, classes, itms] = await Promise.all([
+          api.get("/game/combat/current"),
+          api.get("/game/character"),
+          api.get("/game/classes"),
+          api.get("/game/items"),
+        ]);
+        setCharacter(ch.data);
+        setItems(itms.data);
+        setClassData(classes.data.find((c) => c.id === ch.data.class_id));
+        if (cur.data) {
+          setSession(cur.data);
+          const ms = await api.get("/game/missions");
+          setMission(ms.data.find((m) => m.id === cur.data.mission_id));
+        } else {
+          const start = await api.post("/game/combat/start", { mission_id: missionId });
+          setSession(start.data.session);
+          setCharacter(start.data.character);
+          setMission(start.data.mission);
+        }
+      } catch (e) {
+        setErr(formatApiError(e.response?.data?.detail));
+      }
+    })();
+  }, [missionId]);
+
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [session?.log?.length]);
+
+  const doAction = async (payload) => {
+    if (busy || !session || session.status !== "active") return;
+    setBusy(true);
+    setErr("");
+    try {
+      const { data } = await api.post("/game/combat/action", payload);
+      setSession(data.session);
+      setCharacter(data.character);
+      setPanel(null);
+    } catch (e) {
+      setErr(formatApiError(e.response?.data?.detail));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!session || !character || !classData) {
+    return <div className="min-h-screen flex items-center justify-center"><p className="font-display text-2xl grad-text-amber flicker">ENGAGING COMBAT LINK</p></div>;
+  }
+
+  const activeEnemy = session.enemies.find((e) => e.alive);
+  const status = session.status;
+  const shieldPct = Math.min(100, (session.player_shield / character.max_hp) * 100);
+
+  return (
+    <div className="min-h-screen relative overflow-hidden" data-testid="combat-page">
+      <div
+        className="absolute inset-0 opacity-35"
+        style={{ backgroundImage: `url(${COMBAT_BG})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/90 to-[#050505]" />
+      <div className="absolute inset-0 scanlines" />
+
+      <div className="relative z-10">
+        <HUD character={character} />
+
+        <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 sm:py-8">
+          {/* Mission header */}
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+            <div>
+              <p className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold">◆ LIVE ENGAGEMENT</p>
+              <h2 className="font-display text-lg sm:text-2xl font-black uppercase tracking-tight text-[#F4F0EB]">
+                {mission?.name}
+              </h2>
+            </div>
+            <div className="text-right">
+              <p className="text-[0.55rem] tracking-[0.35em] text-[#8A8A8A]">TURN</p>
+              <p className="font-display text-2xl font-black grad-text-amber">{String(session.turn).padStart(2, "0")}</p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-6">
+            {/* LEFT: Player card */}
+            <div className="lg:col-span-4 panel hud-corners p-5">
+              <p className="text-[0.55rem] tracking-[0.4em] font-bold mb-2" style={{ color: classData.accent }}>
+                ◆ OPERATIVE
+              </p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-display text-xl font-black uppercase tracking-tight text-[#F4F0EB]">
+                    {character.callsign}
+                  </h3>
+                  <p className="text-[0.65rem] tracking-[0.2em] text-[#8A8A8A] uppercase">
+                    {classData.name} // LVL {character.level}
+                  </p>
+                </div>
+                <span className="text-4xl" style={{ color: classData.accent }}>{classData.sigil}</span>
+              </div>
+
+              {/* HP */}
+              <div className="mt-6">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#D11124] font-bold">HP</span>
+                  <span className="font-mono text-[#F4F0EB]" data-testid="combat-player-hp">{character.hp}/{character.max_hp}</span>
+                </div>
+                <div className="bar-track">
+                  <div className="bar-fill-hp" style={{ width: `${(character.hp / character.max_hp) * 100}%` }} />
+                  <div className="bar-segments" />
+                </div>
+              </div>
+              {/* Energy */}
+              <div className="mt-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">EN</span>
+                  <span className="font-mono text-[#F4F0EB]" data-testid="combat-player-energy">{character.energy}/{character.max_energy}</span>
+                </div>
+                <div className="bar-track">
+                  <div className="bar-fill-energy" style={{ width: `${(character.energy / character.max_energy) * 100}%` }} />
+                  <div className="bar-segments" />
+                </div>
+              </div>
+              {/* Shield */}
+              {session.player_shield > 0 && (
+                <div className="mt-3" data-testid="combat-player-shield">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-[0.55rem] tracking-[0.3em] text-[#F4F0EB] font-bold">SHIELD</span>
+                    <span className="font-mono text-[#F4F0EB]">+{session.player_shield}</span>
+                  </div>
+                  <div className="bar-track !h-[8px]">
+                    <div className="bar-fill-shield" style={{ width: `${shieldPct}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6 grid grid-cols-2 gap-2 text-[0.6rem] tracking-[0.2em]">
+                <div className="border border-[rgba(244,240,235,0.08)] p-2 text-center">
+                  <p className="text-[#8A8A8A]">ATK</p>
+                  <p className="font-display text-lg font-black text-[#F4F0EB]">{character.attack}</p>
+                </div>
+                <div className="border border-[rgba(244,240,235,0.08)] p-2 text-center">
+                  <p className="text-[#8A8A8A]">DEF</p>
+                  <p className="font-display text-lg font-black text-[#F4F0EB]">{character.defense}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CENTER: Enemies + Log */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="space-y-3">
+                {session.enemies.map((e, i) => (
+                  <div
+                    key={i}
+                    className={`panel p-5 transition-all ${e.alive ? "!border-[#D11124]" : "opacity-40 grayscale"} ${e === activeEnemy ? "pulse-alert" : ""}`}
+                    data-testid={`combat-enemy-${i}`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <Skull className="w-5 h-5 text-[#D11124]" />
+                        <div>
+                          <p className="font-display text-lg font-black uppercase text-[#F4F0EB]">
+                            {e.name}
+                          </p>
+                          <p className="text-[0.55rem] tracking-[0.3em] text-[#8A8A8A]">
+                            ATK {e.attack} // DEF {e.defense}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-3xl text-[#D11124]">{e.sigil || "⌖"}</span>
+                    </div>
+                    <div className="bar-track">
+                      <div className="bar-fill-hp" style={{ width: e.alive ? `${(e.hp / e.max_hp) * 100}%` : "0%" }} />
+                      <div className="bar-segments" />
+                    </div>
+                    <p className="mt-1 text-[0.6rem] tracking-[0.25em] text-[#8A8A8A] font-mono text-right" data-testid={`combat-enemy-${i}-hp`}>
+                      {e.hp}/{e.max_hp} {!e.alive && "// NEUTRALIZED"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Battle log */}
+              <div className="panel p-4">
+                <p className="text-[0.55rem] tracking-[0.4em] text-[#F5A623] font-bold mb-3">◆ FIELD LOG</p>
+                <div ref={logRef} className="h-40 overflow-y-auto font-mono text-xs space-y-1 pr-2" data-testid="combat-log">
+                  {session.log.map((line, i) => (
+                    <p key={i} className="text-[#F4F0EB]/85 leading-relaxed">{line}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Actions */}
+            <div className="lg:col-span-3 panel hud-corners p-5 relative">
+              <p className="text-[0.55rem] tracking-[0.4em] text-[#D11124] font-bold mb-4">◆ COMMAND</p>
+
+              {status === "active" && !panel && (
+                <div className="space-y-2" data-testid="action-panel">
+                  <button onClick={() => doAction({ action: "attack" })} disabled={busy} className="btn-brutal w-full justify-start" data-testid="action-attack">
+                    <Sword className="w-4 h-4" /> ATTACK
+                  </button>
+                  <button onClick={() => setPanel("skill")} disabled={busy} className="btn-ghost w-full justify-start flex items-center gap-2" data-testid="action-skill">
+                    <Sparkles className="w-4 h-4" /> SKILL
+                  </button>
+                  <button onClick={() => doAction({ action: "defend" })} disabled={busy} className="btn-ghost w-full justify-start flex items-center gap-2" data-testid="action-defend">
+                    <Shield className="w-4 h-4" /> DEFEND
+                  </button>
+                  <button onClick={() => setPanel("item")} disabled={busy || !character.inventory?.length} className="btn-ghost w-full justify-start flex items-center gap-2" data-testid="action-item">
+                    <Package className="w-4 h-4" /> ITEM
+                  </button>
+                </div>
+              )}
+
+              {status === "active" && panel === "skill" && (
+                <div className="space-y-2" data-testid="skill-panel">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">SELECT SKILL</p>
+                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#D11124]" data-testid="close-skill-panel"><X className="w-4 h-4" /></button>
+                  </div>
+                  {classData.skills.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => doAction({ action: "skill", skill_id: s.id })}
+                      disabled={busy || character.energy < s.cost}
+                      className="w-full text-left p-3 border border-[rgba(244,240,235,0.12)] hover:border-[#F5A623] disabled:opacity-30 transition"
+                      data-testid={`skill-${s.id}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <p className="font-display text-xs font-black uppercase tracking-tight text-[#F4F0EB]">{s.name}</p>
+                        <span className="text-[0.55rem] tracking-[0.2em] text-[#F5A623] font-mono">{s.cost}EN</span>
+                      </div>
+                      <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{s.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {status === "active" && panel === "item" && (
+                <div className="space-y-2" data-testid="item-panel">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-[0.55rem] tracking-[0.3em] text-[#F5A623] font-bold">SELECT ITEM</p>
+                    <button onClick={() => setPanel(null)} className="text-[#8A8A8A] hover:text-[#D11124]" data-testid="close-item-panel"><X className="w-4 h-4" /></button>
+                  </div>
+                  {character.inventory.length === 0 && (
+                    <p className="text-xs text-[#8A8A8A]">INVENTORY EMPTY</p>
+                  )}
+                  {character.inventory.map((entry) => {
+                    const it = items[entry.item_id];
+                    if (!it) return null;
+                    return (
+                      <button
+                        key={entry.item_id}
+                        onClick={() => doAction({ action: "item", item_id: entry.item_id })}
+                        disabled={busy || entry.qty <= 0}
+                        className="w-full text-left p-3 border border-[rgba(244,240,235,0.12)] hover:border-[#F5A623] disabled:opacity-30 transition"
+                        data-testid={`item-${entry.item_id}`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <p className="font-display text-xs font-black uppercase tracking-tight text-[#F4F0EB]">{it.name}</p>
+                          <span className="text-[0.55rem] tracking-[0.2em] text-[#F5A623] font-mono">×{entry.qty}</span>
+                        </div>
+                        <p className="text-[0.6rem] text-[#8A8A8A] mt-1">{it.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {status === "victory" && (
+                <div className="space-y-4" data-testid="victory-panel">
+                  <Trophy className="w-10 h-10 text-[#F5A623]" />
+                  <p className="font-display text-3xl font-black uppercase grad-text-amber">VICTORY</p>
+                  <p className="text-xs text-[#8A8A8A] leading-relaxed italic">"{mission?.epilogue}"</p>
+                  <button onClick={() => nav("/hub")} className="btn-brutal w-full" data-testid="return-hub-btn">
+                    RETURN TO HUB <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {status === "defeat" && (
+                <div className="space-y-4" data-testid="defeat-panel">
+                  <Skull className="w-10 h-10 text-[#D11124]" />
+                  <p className="font-display text-3xl font-black uppercase grad-text-red">DEFEAT</p>
+                  <p className="text-xs text-[#8A8A8A] leading-relaxed">The static took you. Rest, regather. The galaxy still waits.</p>
+                  <button
+                    onClick={async () => { await api.post("/game/character/rest"); nav("/hub"); }}
+                    className="btn-brutal w-full" data-testid="retry-hub-btn"
+                  >
+                    REST & RETURN <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {err && <p className="mt-4 text-xs text-[#D11124]" data-testid="combat-error">{err}</p>}
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
