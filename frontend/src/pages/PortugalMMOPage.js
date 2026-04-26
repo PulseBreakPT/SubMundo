@@ -1,270 +1,336 @@
 import { useMemo, useState } from 'react';
-import { Car, Flame, ShieldAlert, Skull, Sword, Target, Wallet } from 'lucide-react';
+import {
+  Briefcase,
+  Car,
+  Flame,
+  ShieldAlert,
+  Skull,
+  Sword,
+  Target,
+  TrendingUp,
+  Wallet
+} from 'lucide-react';
 
-const PORTUGAL_ZONES = [
-  {
-    id: 'porto',
-    nome: 'Porto Noturno',
-    regiao: 'Norte',
-    risco: 2,
-    recompensa: 140,
-    descricao: 'Docas, contrabando e corridas ilegais junto ao Douro.'
-  },
-  {
-    id: 'coimbra',
-    nome: 'Coimbra Subterrânea',
-    regiao: 'Centro',
-    risco: 3,
-    recompensa: 190,
-    descricao: 'Hackers académicos e missões de infiltração universitária.'
-  },
-  {
-    id: 'lisboa',
-    nome: 'Lisboa Criminal District',
-    regiao: 'Lisboa',
-    risco: 4,
-    recompensa: 260,
-    descricao: 'Capital das facções, assaltos de alto nível e mercado negro VIP.'
-  },
-  {
-    id: 'setubal',
-    nome: 'Setúbal Dock Wars',
-    regiao: 'Setúbal',
-    risco: 3,
-    recompensa: 180,
-    descricao: 'Guerra de contentores, escoltas e extração de carga valiosa.'
-  },
-  {
-    id: 'algarve',
-    nome: 'Algarve Neon Coast',
-    regiao: 'Sul',
-    risco: 5,
-    recompensa: 320,
-    descricao: 'Casinos ilegais, corrupção e golpes milionários em resorts.'
-  }
+const ZONAS = [
+  { id: 'porto', nome: 'Porto Noturno', riscoBase: 2, recompensaBase: 140 },
+  { id: 'coimbra', nome: 'Coimbra Subterrânea', riscoBase: 3, recompensaBase: 185 },
+  { id: 'lisboa', nome: 'Lisboa Criminal District', riscoBase: 4, recompensaBase: 250 },
+  { id: 'setubal', nome: 'Setúbal Dock Wars', riscoBase: 3, recompensaBase: 200 },
+  { id: 'algarve', nome: 'Algarve Neon Coast', riscoBase: 5, recompensaBase: 320 }
 ];
 
-const ACTIONS = [
-  {
-    id: 'assalto',
-    nome: 'Assalto Rápido',
-    heat: 18,
-    xp: 85,
-    bonus: 1,
-    icon: Target
-  },
-  {
-    id: 'guerra',
-    nome: 'Guerra de Território',
-    heat: 25,
-    xp: 120,
-    bonus: 1.35,
-    icon: Sword
-  },
-  {
-    id: 'contrabando',
-    nome: 'Rota de Contrabando',
-    heat: 14,
-    xp: 70,
-    bonus: 1.1,
-    icon: Car
-  }
+const TIPOS_MISSAO = [
+  { id: 'assalto', nome: 'Assalto Tático', icon: Target, bonus: 1 },
+  { id: 'territorio', nome: 'Guerra Territorial', icon: Sword, bonus: 1.3 },
+  { id: 'contrabando', nome: 'Rota de Contrabando', icon: Car, bonus: 1.15 },
+  { id: 'corporativo', nome: 'Golpe Corporativo', icon: Briefcase, bonus: 1.45 }
 ];
 
-const getRank = (xp) => {
-  if (xp >= 1200) return 'Lenda do Submundo';
-  if (xp >= 750) return 'Chefe de Facção';
-  if (xp >= 350) return 'Operador de Rua';
-  return 'Recruta';
+const TITULOS = [
+  'Recruta de Rua',
+  'Operador Urbano',
+  'Capitão da Facção',
+  'Arquitecto do Crime',
+  'Lenda Rockstar do Submundo'
+];
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const getTitulo = (nivel) => {
+  if (nivel >= 30) return TITULOS[4];
+  if (nivel >= 20) return TITULOS[3];
+  if (nivel >= 12) return TITULOS[2];
+  if (nivel >= 6) return TITULOS[1];
+  return TITULOS[0];
+};
+
+const criarMissao = (zona, nivel, turno, influencia) => {
+  const tipo = TIPOS_MISSAO[Math.floor(Math.random() * TIPOS_MISSAO.length)];
+  const escala = 1 + nivel * 0.08 + turno * 0.015;
+  const risco = clamp(Math.round((zona.riscoBase + influencia * 0.25) * escala * 0.5), 1, 10);
+  const payout = Math.round(zona.recompensaBase * tipo.bonus * (1 + nivel * 0.06 + turno * 0.02));
+  const xp = Math.round(70 + risco * 20 + nivel * 8);
+
+  return {
+    id: `${zona.id}-${tipo.id}-${Date.now()}-${Math.floor(Math.random() * 9999)}`,
+    zonaId: zona.id,
+    zonaNome: zona.nome,
+    tipo: tipo.id,
+    nome: tipo.nome,
+    icon: tipo.icon,
+    risco,
+    payout,
+    xp,
+    calor: clamp(8 + risco * 4, 10, 48)
+  };
+};
+
+const gerarPacoteInfinito = (nivel, turno, controlo) => {
+  const contratos = [];
+  const qtd = 4;
+  for (let i = 0; i < qtd; i += 1) {
+    const zona = ZONAS[Math.floor(Math.random() * ZONAS.length)];
+    contratos.push(criarMissao(zona, nivel, turno, controlo[zona.id] || 0));
+  }
+  return contratos;
 };
 
 export default function PortugalMMOPage() {
-  const [zoneId, setZoneId] = useState(PORTUGAL_ZONES[2].id);
-  const [actionId, setActionId] = useState(ACTIONS[0].id);
-  const [player, setPlayer] = useState({
-    nome: 'Jogador PT',
-    vida: 100,
-    heat: 12,
-    cash: 500,
-    xp: 0,
-    energia: 100,
-    historico: ['Conectado ao servidor nacional.']
+  const [estado, setEstado] = useState(() => {
+    const baseControlo = Object.fromEntries(ZONAS.map((z) => [z.id, 0]));
+    return {
+      nome: 'GhostPT',
+      nivel: 1,
+      xp: 0,
+      vida: 100,
+      energia: 100,
+      heat: 8,
+      cash: 500,
+      turno: 1,
+      contratos: gerarPacoteInfinito(1, 1, baseControlo),
+      controlo: baseControlo,
+      feed: ['Servidor iniciado. O submundo nunca dorme.']
+    };
   });
 
-  const zonaAtual = useMemo(
-    () => PORTUGAL_ZONES.find((zone) => zone.id === zoneId) || PORTUGAL_ZONES[0],
-    [zoneId]
-  );
+  const titulo = useMemo(() => getTitulo(estado.nivel), [estado.nivel]);
 
-  const acaoAtual = useMemo(
-    () => ACTIONS.find((action) => action.id === actionId) || ACTIONS[0],
-    [actionId]
-  );
+  const subirNivelSePreciso = (xpTotal, nivelAtual) => {
+    let nivelNovo = nivelAtual;
+    let threshold = nivelNovo * 220;
+    while (xpTotal >= threshold) {
+      nivelNovo += 1;
+      threshold = nivelNovo * 220;
+    }
+    return nivelNovo;
+  };
 
-  const jogarTurno = () => {
-    setPlayer((atual) => {
-      if (atual.energia < 20 || atual.vida <= 0) {
+  const regenerarContratos = (draft) => {
+    if (draft.contratos.length >= 3) return draft;
+    return {
+      ...draft,
+      contratos: [...draft.contratos, ...gerarPacoteInfinito(draft.nivel, draft.turno, draft.controlo)]
+    };
+  };
+
+  const executarContrato = (contratoId) => {
+    setEstado((atual) => {
+      const contrato = atual.contratos.find((c) => c.id === contratoId);
+      if (!contrato) return atual;
+
+      if (atual.vida <= 0) {
         return {
           ...atual,
-          historico: [
-            'Sem energia suficiente. Descansa para continuar.',
-            ...atual.historico
-          ].slice(0, 6)
+          feed: ['☠️ Estás caído. Descansa para continuar.', ...atual.feed].slice(0, 8)
         };
       }
 
-      const riscoBase = zonaAtual.risco * 0.16 + acaoAtual.heat * 0.01;
-      const sucesso = Math.random() > riscoBase;
-      const ganho = Math.round(zonaAtual.recompensa * acaoAtual.bonus);
-      const dano = Math.round(zonaAtual.risco * 6 + acaoAtual.heat * 0.35);
+      if (atual.energia < 15) {
+        return {
+          ...atual,
+          feed: ['⚠️ Energia baixa. Precisas descansar.', ...atual.feed].slice(0, 8)
+        };
+      }
+
+      const poderJogador = atual.nivel * 0.03 + atual.energia * 0.002;
+      const dificuldade = contrato.risco * 0.06 + atual.heat * 0.003;
+      const chanceSucesso = clamp(0.82 + poderJogador - dificuldade, 0.2, 0.92);
+      const sucesso = Math.random() <= chanceSucesso;
 
       if (sucesso) {
-        return {
-          ...atual,
-          cash: atual.cash + ganho,
-          xp: atual.xp + acaoAtual.xp,
-          heat: Math.min(100, atual.heat + acaoAtual.heat),
-          energia: Math.max(0, atual.energia - 20),
-          historico: [
-            `✅ ${acaoAtual.nome} em ${zonaAtual.nome}: +€${ganho} | +${acaoAtual.xp} XP`,
-            ...atual.historico
-          ].slice(0, 6)
+        const xpNovo = atual.xp + contrato.xp;
+        const nivelNovo = subirNivelSePreciso(xpNovo, atual.nivel);
+        const bónusNivel = nivelNovo > atual.nivel ? 1 + (nivelNovo - atual.nivel) * 0.15 : 1;
+        const ganhoFinal = Math.round(contrato.payout * bónusNivel);
+
+        const controloNovo = {
+          ...atual.controlo,
+          [contrato.zonaId]: clamp((atual.controlo[contrato.zonaId] || 0) + 1, -10, 40)
         };
+
+        let draft = {
+          ...atual,
+          xp: xpNovo,
+          nivel: nivelNovo,
+          cash: atual.cash + ganhoFinal,
+          vida: clamp(atual.vida - Math.round(contrato.risco * 1.5), 0, 100),
+          energia: clamp(atual.energia - 15, 0, 100),
+          heat: clamp(atual.heat + contrato.calor, 0, 100),
+          turno: atual.turno + 1,
+          controlo: controloNovo,
+          contratos: atual.contratos.filter((c) => c.id !== contratoId),
+          feed: [
+            `✅ ${contrato.nome} em ${contrato.zonaNome}: +€${ganhoFinal} | +${contrato.xp} XP`,
+            nivelNovo > atual.nivel ? `🏆 Subiste para nível ${nivelNovo}!` : null,
+            ...atual.feed
+          ].filter(Boolean).slice(0, 8)
+        };
+
+        return regenerarContratos(draft);
       }
 
-      return {
+      const dano = Math.round(10 + contrato.risco * 3 + atual.heat * 0.05);
+      let draftFalha = {
         ...atual,
-        vida: Math.max(0, atual.vida - dano),
-        heat: Math.min(100, atual.heat + acaoAtual.heat + 8),
-        energia: Math.max(0, atual.energia - 20),
-        historico: [
-          `❌ Operação falhou em ${zonaAtual.nome}: -${dano} HP | polícia ativa`,
-          ...atual.historico
-        ].slice(0, 6)
+        vida: clamp(atual.vida - dano, 0, 100),
+        energia: clamp(atual.energia - 15, 0, 100),
+        heat: clamp(atual.heat + contrato.calor + 8, 0, 100),
+        turno: atual.turno + 1,
+        contratos: atual.contratos.filter((c) => c.id !== contratoId),
+        controlo: {
+          ...atual.controlo,
+          [contrato.zonaId]: clamp((atual.controlo[contrato.zonaId] || 0) - 1, -10, 40)
+        },
+        feed: [`❌ Operação falhou (${contrato.zonaNome}): -${dano} HP`, ...atual.feed].slice(0, 8)
       };
+
+      return regenerarContratos(draftFalha);
     });
   };
 
   const descansar = () => {
-    setPlayer((atual) => ({
-      ...atual,
-      vida: Math.min(100, atual.vida + 20),
-      energia: Math.min(100, atual.energia + 35),
-      heat: Math.max(0, atual.heat - 10),
-      historico: ['🛌 Descansaste num esconderijo seguro.', ...atual.historico].slice(0, 6)
-    }));
+    setEstado((atual) => {
+      const cura = 18 + Math.round(atual.nivel * 0.8);
+      return {
+        ...atual,
+        vida: clamp(atual.vida + cura, 0, 100),
+        energia: clamp(atual.energia + 36, 0, 100),
+        heat: clamp(atual.heat - 14, 0, 100),
+        turno: atual.turno + 1,
+        feed: ['🛌 Descanso feito. Autoridades perderam o teu rasto.', ...atual.feed].slice(0, 8)
+      };
+    });
+  };
+
+  const resetRun = () => {
+    const baseControlo = Object.fromEntries(ZONAS.map((z) => [z.id, 0]));
+    setEstado({
+      nome: 'GhostPT',
+      nivel: 1,
+      xp: 0,
+      vida: 100,
+      energia: 100,
+      heat: 8,
+      cash: 500,
+      turno: 1,
+      contratos: gerarPacoteInfinito(1, 1, baseControlo),
+      controlo: baseControlo,
+      feed: ['🔁 Nova temporada iniciada. Domina Portugal outra vez.']
+    });
   };
 
   return (
     <main className="min-h-screen bg-background text-text-primary px-4 py-8 md:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <header className="border border-primary/40 bg-surface p-6">
-          <p className="text-xs uppercase tracking-[0.25em] text-secondary mb-2">Portugal Text MMO RPG</p>
-          <h1 className="text-3xl md:text-5xl font-bold text-primary">SubMundo: Mapa de Portugal</h1>
-          <p className="text-text-secondary mt-3 max-w-3xl">
-            Estilo urbano inspirado em crime sandbox: escolhe uma zona, executa ações e evolui o teu personagem em tempo real.
-          </p>
+      <div className="max-w-6xl mx-auto space-y-5">
+        <header className="border border-primary/40 bg-surface p-5">
+          <p className="text-xs uppercase tracking-[0.22em] text-secondary">Portugal Infinite Text MMO</p>
+          <h1 className="text-3xl md:text-5xl text-primary font-bold">SubMundo Rockstar Loop</h1>
+          <p className="text-text-secondary mt-2">Loop infinito: completa contratos, ganha território e escala dificuldade sem fim.</p>
         </header>
 
-        <section className="grid lg:grid-cols-3 gap-4">
-          <article className="border border-border bg-surface p-4 space-y-3">
-            <h2 className="text-lg text-secondary">Operador</h2>
-            <p className="font-semibold">{player.nome}</p>
-            <p className="text-sm text-gold">Rank: {getRank(player.xp)}</p>
-            <div className="space-y-2 text-sm">
-              <p className="flex justify-between"><span>Vida</span><span>{player.vida}%</span></p>
-              <p className="flex justify-between"><span>Energia</span><span>{player.energia}%</span></p>
-              <p className="flex justify-between"><span>Heat</span><span>{player.heat}%</span></p>
-              <p className="flex justify-between"><span>XP</span><span>{player.xp}</span></p>
-              <p className="flex justify-between text-success"><span>Dinheiro</span><span>€{player.cash}</span></p>
-            </div>
-          </article>
-
-          <article className="border border-border bg-surface p-4 lg:col-span-2">
-            <h2 className="text-lg text-secondary mb-3">Mapa Tático de Portugal</h2>
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {PORTUGAL_ZONES.map((zone) => (
-                <button
-                  key={zone.id}
-                  type="button"
-                  onClick={() => setZoneId(zone.id)}
-                  className={`text-left border p-3 transition ${
-                    zone.id === zoneId ? 'border-primary bg-primary/10' : 'border-border hover:border-secondary/60'
-                  }`}
-                >
-                  <p className="font-semibold">{zone.nome}</p>
-                  <p className="text-xs text-text-secondary">{zone.regiao}</p>
-                  <p className="text-xs mt-2">Risco: {zone.risco}/5 • Recompensa base: €{zone.recompensa}</p>
-                </button>
-              ))}
-            </div>
-            <p className="text-sm text-text-secondary mt-4">{zonaAtual.descricao}</p>
-          </article>
+        <section className="grid md:grid-cols-5 gap-3">
+          <div className="border border-border bg-surface p-3 md:col-span-2">
+            <p className="text-sm text-secondary">Operador</p>
+            <p className="font-semibold">{estado.nome}</p>
+            <p className="text-gold text-sm">{titulo}</p>
+            <p className="text-xs text-text-secondary mt-2">Turno #{estado.turno}</p>
+          </div>
+          <div className="border border-border bg-surface p-3 text-center">
+            <TrendingUp className="mx-auto mb-1 text-secondary" size={16} />
+            <p className="text-xs text-text-secondary">Nível</p>
+            <p className="font-bold">{estado.nivel}</p>
+          </div>
+          <div className="border border-border bg-surface p-3 text-center">
+            <Wallet className="mx-auto mb-1 text-success" size={16} />
+            <p className="text-xs text-text-secondary">Caixa</p>
+            <p className="font-bold">€{estado.cash}</p>
+          </div>
+          <div className="border border-border bg-surface p-3 text-center">
+            <Flame className="mx-auto mb-1 text-error" size={16} />
+            <p className="text-xs text-text-secondary">Heat</p>
+            <p className="font-bold">{estado.heat}%</p>
+          </div>
         </section>
 
-        <section className="grid lg:grid-cols-2 gap-4">
-          <article className="border border-border bg-surface p-4 space-y-4">
-            <h2 className="text-lg text-secondary">Ação MMO</h2>
+        <section className="grid lg:grid-cols-3 gap-4">
+          <article className="border border-border bg-surface p-4 lg:col-span-2">
+            <h2 className="text-secondary mb-3">Contratos Ativos (geração infinita)</h2>
             <div className="space-y-2">
-              {ACTIONS.map((action) => {
-                const Icon = action.icon;
+              {estado.contratos.slice(0, 6).map((contrato) => {
+                const Icon = contrato.icon;
                 return (
                   <button
+                    key={contrato.id}
                     type="button"
-                    key={action.id}
-                    onClick={() => setActionId(action.id)}
-                    className={`w-full border p-3 flex items-center justify-between ${
-                      action.id === actionId ? 'border-secondary bg-secondary/10' : 'border-border'
-                    }`}
+                    onClick={() => executarContrato(contrato.id)}
+                    className="w-full border border-border hover:border-primary/70 bg-background/40 p-3 text-left"
                   >
-                    <span className="flex items-center gap-2"><Icon size={16} /> {action.nome}</span>
-                    <span className="text-xs">+{action.xp} XP</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 font-semibold"><Icon size={15} /> {contrato.nome}</span>
+                      <span className="text-xs">Risco {contrato.risco}/10</span>
+                    </div>
+                    <p className="text-xs text-text-secondary mt-1">{contrato.zonaNome}</p>
+                    <p className="text-xs mt-1">€{contrato.payout} • +{contrato.xp} XP • +{contrato.calor}% heat</p>
                   </button>
                 );
               })}
             </div>
-
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button type="button" onClick={jogarTurno} className="border border-primary bg-primary/20 px-4 py-2">
-                Executar Turno
-              </button>
+            <div className="flex flex-wrap gap-2 mt-4">
               <button type="button" onClick={descansar} className="border border-success/80 bg-success/10 px-4 py-2">
                 Descansar
+              </button>
+              <button type="button" onClick={resetRun} className="border border-warning/80 bg-warning/10 px-4 py-2">
+                Reiniciar Temporada
               </button>
             </div>
           </article>
 
           <article className="border border-border bg-surface p-4">
-            <h2 className="text-lg text-secondary mb-3">Feed de Operações</h2>
+            <h2 className="text-secondary mb-2">Status de Sobrevivência</h2>
+            <p className="text-sm flex justify-between"><span>Vida</span><span>{estado.vida}%</span></p>
+            <p className="text-sm flex justify-between"><span>Energia</span><span>{estado.energia}%</span></p>
+            <p className="text-sm flex justify-between"><span>XP total</span><span>{estado.xp}</span></p>
+            <p className="text-sm flex justify-between"><span>Próximo nível</span><span>{estado.nivel * 220} XP</span></p>
+
+            <h3 className="text-secondary mt-4 mb-2">Influência por zona</h3>
+            <div className="space-y-1 text-sm">
+              {ZONAS.map((z) => (
+                <p key={z.id} className="flex justify-between">
+                  <span>{z.nome}</span>
+                  <span>{estado.controlo[z.id]}</span>
+                </p>
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <section className="grid lg:grid-cols-2 gap-4">
+          <article className="border border-border bg-surface p-4">
+            <h2 className="text-secondary mb-2">Feed do Submundo</h2>
             <ul className="space-y-2 text-sm">
-              {player.historico.map((item) => (
+              {estado.feed.map((item) => (
                 <li key={item} className="border border-border bg-background/50 p-2">{item}</li>
               ))}
             </ul>
           </article>
-        </section>
 
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="border border-border bg-surface p-3 text-center">
-            <Flame className="mx-auto mb-2 text-error" size={18} />
-            <p className="text-xs text-text-secondary">Alerta Policial</p>
-            <p className="font-semibold">{player.heat >= 60 ? 'Crítico' : 'Controlado'}</p>
-          </div>
-          <div className="border border-border bg-surface p-3 text-center">
-            <Wallet className="mx-auto mb-2 text-success" size={18} />
-            <p className="text-xs text-text-secondary">Carteira</p>
-            <p className="font-semibold">€{player.cash}</p>
-          </div>
-          <div className="border border-border bg-surface p-3 text-center">
-            <ShieldAlert className="mx-auto mb-2 text-warning" size={18} />
-            <p className="text-xs text-text-secondary">Sobrevivência</p>
-            <p className="font-semibold">{player.vida}%</p>
-          </div>
-          <div className="border border-border bg-surface p-3 text-center">
-            <Skull className="mx-auto mb-2 text-primary" size={18} />
-            <p className="text-xs text-text-secondary">Status</p>
-            <p className="font-semibold">{player.vida === 0 ? 'Derrotado' : 'Em jogo'}</p>
-          </div>
+          <article className="border border-border bg-surface p-4">
+            <h2 className="text-secondary mb-2">Alertas Rockstar</h2>
+            <div className="space-y-3 text-sm">
+              <div className="border border-border p-2 flex items-center gap-2">
+                <ShieldAlert size={15} className="text-warning" />
+                Quanto maior o heat, menor a chance de sucesso.
+              </div>
+              <div className="border border-border p-2 flex items-center gap-2">
+                <Skull size={15} className="text-primary" />
+                Se vida cair para 0, só descanso te recoloca no jogo.
+              </div>
+              <div className="border border-border p-2 flex items-center gap-2">
+                <TrendingUp size={15} className="text-secondary" />
+                O jogo escala sem limite: nível e turno aumentam dificuldade e recompensa.
+              </div>
+            </div>
+          </article>
         </section>
       </div>
     </main>
