@@ -35,7 +35,7 @@ import {
   MessageSquare, MessageCircle, MessagesSquare, Quote,
   Newspaper, Rss, Radio, Tv, Monitor, Smartphone,
   Tablet, Watch, Headphones, Speaker, Music, Music2,
-  Mic2, Radio as RadioIcon, Airplay, Cast, Bluetooth
+  Mic as Mic2, Radio as RadioIcon, Airplay, Cast, Bluetooth
 } from 'lucide-react';
 import clsx from 'clsx';
 
