@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, ProgressBar } from '../components/ProgressBar';
 import { Button, Badge, Modal, Tooltip, FadeIn, Alert, Toggle, Checkbox, Accordion, CopyButton } from '../components/UI';
 import { 
-  ScrollText, Check, X, AlertTriangle, Gavel, UserX, Shield, Scale, FileWarning, Ban,
+  ScrollText, Check, X, AlertTriangle, Gavel, UserX, Shield, Scale, FileText as FileWarning, Ban,
   ChevronDown, ChevronUp, ChevronRight, Search, Eye, EyeOff, Download, Printer,
   Calendar, Clock, ExternalLink, Mail, Phone, Globe, MessageSquare,
   Info, HelpCircle, Bookmark, Share2, FileText, Book, List, Hash,
