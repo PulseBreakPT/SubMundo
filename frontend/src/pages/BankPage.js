@@ -22,7 +22,7 @@ import {
   ShieldCheck, ShieldAlert, ShieldOff, Key, Fingerprint,
   Database, Server, Cpu, HardDrive, Cloud, CloudOff,
   Wifi, WifiOff, Signal, Battery, Power, Loader2,
-  Timer, Hourglass, Alarm, TimerReset, PlayCircle,
+  Timer, Hourglass, AlarmClock, TimerReset, PlayCircle,
   PauseCircle, StopCircle, SkipForward, SkipBack,
   Volume2, VolumeX, Mic, Camera, Image, Video,
   Folder, File, FilePlus, FileCheck, FileX, Files,
