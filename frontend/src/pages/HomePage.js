@@ -39,7 +39,7 @@ import {
   FileCheck, FileX, FileSearch, FilePenLine as FileEdit, FileImage, FileVideo,
   FileAudio, FileArchive, Code, Terminal, Command, Hash as HashIcon,
   Binary, Braces, Brackets, Slash, Slash as Backslash, Asterisk, AtSign as At,
-  Ampersand, Percent as PercentIcon, DollarSign as Dollar, Euro, Pound, Yen,
+  Ampersand, Percent as PercentIcon, DollarSign as Dollar, Euro, Currency as Pound, Currency as Yen,
   Bitcoin, Coins as Ethereum, Currency, Landmark, Landmark as Bank, Vault, Vault as Safe,
   Gem, Crown as CrownIcon, Medal, Badge as BadgeIcon, Award as AwardIcon,
   Gift as GiftIcon, PartyPopper, PartyPopper as Confetti, Cake, Balloon, Sparkles as Fireworks,
@@ -47,8 +47,8 @@ import {
   Mic, MicOff, Video, VideoOff, Camera, CameraOff, Image,
   ImageOff, ImagePlus, ImageMinus, Palette, Brush, Pen, Pencil,
   Eraser, Highlighter, Type, Bold, Italic, Underline, Strikethrough,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, Indent,
-  Outdent, List as ListIcon, ListOrdered, ListChecks, ListTodo,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, ArrowRight as Indent,
+  ArrowLeft as Outdent, List as ListIcon, ListOrdered, ListChecks, ListTodo,
   CheckSquare, Square as SquareIcon, Circle as CircleIcon
 } from 'lucide-react';
 import clsx from 'clsx';
