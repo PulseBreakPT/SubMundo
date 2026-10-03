@@ -36,6 +36,44 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Validate lucide-react imports
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const exported = new Set(Object.keys(require('lucide-react')));
+          const missing = [];
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(full);
+              else if (/\.(js|jsx|ts|tsx)$/.test(entry.name)) {
+                const source = fs.readFileSync(full, 'utf8');
+                const regex = /import\s*\{([\s\S]*?)\}\s*from\s*['"]lucide-react['"];?/g;
+                let match;
+                while ((match = regex.exec(source))) {
+                  for (const raw of match[1].split(',')) {
+                    const spec = raw.trim();
+                    if (!spec) continue;
+                    const imported = spec.split(/\s+as\s+/)[0].trim();
+                    if (imported && !exported.has(imported)) {
+                      missing.push(`${full}: ${imported}`);
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          walk('src');
+          if (missing.length) {
+            console.error('Invalid lucide-react imports:\n' + [...new Set(missing)].join('\n'));
+            process.exit(1);
+          }
+          console.log('All lucide-react imports are valid.');
+          NODE
+
       - name: Build frontend
         env:
           CI: "false"
