@@ -50,7 +50,7 @@ jobs:
               if (entry.isDirectory()) walk(full);
               else if (/\.(js|jsx|ts|tsx)$/.test(entry.name)) {
                 const source = fs.readFileSync(full, 'utf8');
-                const regex = /import\s*\{([\s\S]*?)\}\s*from\s*['"]lucide-react['"];?/g;
+                const regex = /import\s*\{([^}]*)\}\s*from\s*['"]lucide-react['"];?/g;
                 let match;
                 while ((match = regex.exec(source))) {
                   for (const raw of match[1].split(',')) {
