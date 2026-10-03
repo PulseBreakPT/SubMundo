@@ -25,7 +25,7 @@ import {
   Camera, Image, Video, Music, Headphones, Volume2, VolumeX,
   Monitor, Smartphone, Tablet, Cpu, HardDrive, Server, Database,
   Wifi, WifiOff, Signal, Power, Battery, Bluetooth, Radio as RadioIcon,
-  Timer, Hourglass, Alarm, Play, Pause, Stop, FastForward, Rewind,
+  Timer, Hourglass, AlarmClock, Play, Pause, Stop, FastForward, Rewind,
   BarChart2, PieChart, LineChart, TrendingUpIcon, Calculator,
   FileText, Folder, File, FilePlus, FileCheck, FileX, Files,
   Briefcase, Package, Box, Layers, Grid3X3, LayoutGrid
