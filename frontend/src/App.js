@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
 import { Layout, PublicLayout } from './components/Layout';
 import LandingPage from './pages/LandingPage';
+import PortugalMMOPage from './pages/PortugalMMOPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
@@ -84,7 +85,7 @@ const AppRoutes = () => {
         path="/" 
         element={
           <PublicRoute redirectIfAuth={false}>
-            <LandingPage />
+            <PortugalMMOPage />
           </PublicRoute>
         } 
       />
@@ -247,6 +248,14 @@ const AppRoutes = () => {
         element={
           <PublicLayout>
             <TermsPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/landing"
+        element={
+          <PublicLayout>
+            <LandingPage />
           </PublicLayout>
         }
       />
